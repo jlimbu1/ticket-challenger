@@ -1,0 +1,10 @@
+@font-face {
+  font-family: "MCR";
+  src: url("./fonts/my_chemical_romance.ttf") format("truetype");
+  unicode-range: U+0041-005A, U+0061-007A; /* A-Z, a-z */
+}
+
+@font-face {
+  font-family: "WastedPunk";
+  src: url("./fonts/WastedPunk-2vlyo.ttf") format("truetype");
+}
