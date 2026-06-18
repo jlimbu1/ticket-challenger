@@ -3,19 +3,28 @@
 import { useState, useEffect } from "react";
 import { products } from "@/src/data/products";
 import ProductCard from "@/components/ProductCard";
-import DramaticErrorBoundary from "@/components/DramaticErrorBoundary";
-import GothicEmptyState from "@/components/GothicEmptyState";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import EmptyState from "@/components/EmptyState";
 import VinylSpinner from "@/components/VinylSpinner";
 import type { Product } from "@/src/types";
 
 export default function ProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [productList, setProductList] = useState<Product[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setProductList(products);
-      setIsLoading(false);
+      try {
+        if (!products || !Array.isArray(products)) {
+          throw new Error("Product data is unavailable");
+        }
+        setProductList(products);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load products");
+      } finally {
+        setIsLoading(false);
+      }
     }, 500);
     return () => clearTimeout(timer);
   }, []);
@@ -28,57 +37,37 @@ export default function ProductsPage() {
     );
   }
 
-  if (productList.length === 0) {
+  if (error) {
     return (
-      <DramaticErrorBoundary>
-        <div className="min-h-screen bg-black text-white p-8">
-          <GothicEmptyState
-            title="No Products Found"
-            message="The stage is empty. Check back later for new releases."
-          />
-        </div>
-      </DramaticErrorBoundary>
+      <div className="min-h-screen bg-black text-white p-8">
+        <ErrorBoundary>
+          <div className="text-crimson text-center">
+            <p className="text-2xl font-bold mb-4">Something went wrong</p>
+            <p>{error}</p>
+          </div>
+        </ErrorBoundary>
+      </div>
     );
   }
 
-  const inStockProducts = productList.filter((product: Product) => product.stock > 0);
-  const outOfStockProducts = productList.filter((product: Product) => product.stock <= 0);
+  if (productList.length === 0) {
+    return (
+      <div className="min-h-screen bg-black text-white p-8">
+        <EmptyState message="No products available. The void is empty." />
+      </div>
+    );
+  }
 
   return (
-    <DramaticErrorBoundary>
-      <div className="min-h-screen bg-black text-white">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <h1 className="text-4xl font-bold text-crimson mb-8 text-center tracking-wider uppercase">
-            The Collection
-          </h1>
-
-          {inStockProducts.length > 0 && (
-            <section className="mb-12">
-              <h2 className="text-2xl font-semibold text-gray-300 mb-6 border-b border-gothic-700 pb-2">
-                Available Now
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {inStockProducts.map((product: Product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {outOfStockProducts.length > 0 && (
-            <section>
-              <h2 className="text-2xl font-semibold text-gray-500 mb-6 border-b border-gothic-700 pb-2">
-                Sold Out
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {outOfStockProducts.map((product: Product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
+    <div className="min-h-screen bg-black text-white p-8">
+      <h1 className="text-4xl font-bold text-crimson mb-8 text-center">
+        Merch Collection
+      </h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+        {productList.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
       </div>
-    </DramaticErrorBoundary>
+    </div>
   );
 }
