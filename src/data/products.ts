@@ -1,6 +1,96 @@
 "use client";
 
-import { products } from "@/src/data/products";
 import type { Product } from "@/src/types";
 
-export const productData: Product[] = products;
+export const products: Product[] = [
+  {
+    id: "prod-1",
+    name: "The Black Parade",
+    price: 29.99,
+    image: "/images/black-parade.jpg",
+    description: "My Chemical Romance's magnum opus on 180g black vinyl. Includes exclusive poster.",
+    category: "vinyl",
+    stock: 15,
+  },
+  {
+    id: "prod-2",
+    name: "Three Cheers for Sweet Revenge",
+    price: 24.99,
+    image: "/images/three-cheers.jpg",
+    description: "The album that defined a generation. Blood red vinyl pressing.",
+    category: "vinyl",
+    stock: 22,
+  },
+  {
+    id: "prod-3",
+    name: "I Brought You My Bullets, You Brought Me Your Love",
+    price: 22.99,
+    image: "/images/bullets.jpg",
+    description: "Debut album on limited edition silver vinyl. A rare gem.",
+    category: "vinyl",
+    stock: 8,
+  },
+  {
+    id: "prod-4",
+    name: "Danger Days: True Lives of the Fabulous Killjoys",
+    price: 26.99,
+    image: "/images/danger-days.jpg",
+    description: "Post-apocalyptic punk rock on electric blue vinyl.",
+    category: "vinyl",
+    stock: 12,
+  },
+  {
+    id: "prod-5",
+    name: "Conventional Weapons",
+    price: 19.99,
+    image: "/images/conventional-weapons.jpg",
+    description: "Rare compilation of unreleased tracks on clear vinyl.",
+    category: "vinyl",
+    stock: 5,
+  },
+  {
+    id: "prod-6",
+    name: "Revenge Tour T-Shirt",
+    price: 34.99,
+    image: "/images/revenge-tshirt.jpg",
+    description: "Official Three Cheers tour t-shirt. Black with red skull print.",
+    category: "apparel",
+    stock: 30,
+  },
+  {
+    id: "prod-7",
+    name: "Black Parade Hoodie",
+    price: 59.99,
+    image: "/images/black-parade-hoodie.jpg",
+    description: "Premium black hoodie with The Black Parade skeleton emblem. Heavyweight cotton.",
+    category: "apparel",
+    stock: 18,
+  },
+  {
+    id: "prod-8",
+    name: "MCR Logo Patch",
+    price: 9.99,
+    image: "/images/mcr-patch.jpg",
+    description: "Embroidered My Chemical Romance logo patch. Iron-on backing.",
+    category: "accessory",
+    stock: 45,
+  },
+  {
+    id: "prod-9",
+    name: "Revenge Era Poster",
+    price: 14.99,
+    image: "/images/revenge-poster.jpg",
+    description: "Limited edition Three Cheers era concert poster. 24x36 inches.",
+    category: "poster",
+    stock: 25,
+  },
+  {
+    id: "prod-10",
+    name: "Killjoy Mask Replica",
+    price: 44.99,
+    image: "/images/killjoy-mask.jpg",
+    description: "Official Danger Days Killjoy mask replica. Adjustable straps.",
+    category: "accessory",
+    stock: 10,
+  },
+];

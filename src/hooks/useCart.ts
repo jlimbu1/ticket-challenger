@@ -19,5 +19,13 @@ export function useCart(): UseCartReturn {
   if (!context) {
     throw new Error('useCart must be used within a CartProvider');
   }
-  return context;
+  return {
+    items: context.items,
+    addToCart: context.addToCart,
+    removeFromCart: context.removeFromCart,
+    updateQuantity: context.updateQuantity,
+    clearCart: context.clearCart,
+    itemCount: context.itemCount,
+    totalPrice: context.totalPrice,
+  };
 }
