@@ -30,69 +30,52 @@ const CartItem: React.FC<CartItemProps> = ({
     <div className="cart-item border-b border-crimson-900/30 py-4 last:border-b-0">
       <div className="flex items-start gap-4">
         <div className="relative flex-shrink-0">
-          <img
-            src={item.imageUrl}
-            alt={item.title}
-            className={`w-16 h-16 object-cover rounded border border-crimson-800/50 ${
+          <div
+            className={`w-16 h-16 rounded-full border-2 border-crimson-800/50 overflow-hidden relative ${
               isAnimating ? 'animate-spin' : ''
             }`}
-          />
-          {isAnimating && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded">
-              <svg
-                className="w-8 h-8 text-crimson-500 animate-spin"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  strokeDasharray="31.4 31.4"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
-          )}
+            style={{
+              background: `radial-gradient(circle at 30% 30%, rgba(139,0,0,0.3) 0%, transparent 60%), radial-gradient(circle at 70% 70%, rgba(74,0,130,0.2) 0%, transparent 50%), radial-gradient(circle, #1a1a1a 0%, #2a2a2a 35%, #1a1a1a 50%, #2a2a2a 65%, #1a1a1a 80%, #2a2a2a 100%)`,
+            }}
+          >
+            <img
+              src={item.imageUrl}
+              alt={item.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
+            />
+          </div>
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-gray-200 truncate">
-            {item.title}
-          </h3>
-          <p className="text-sm text-crimson-400 mt-1">
-            {formatPrice(item.price)}
-          </p>
-          <div className="flex items-center gap-2 mt-2">
+          <h3 className="font-serif text-sm text-gray-200 truncate">{item.title}</h3>
+          <p className="text-xs text-gray-400 mt-0.5">{item.artist}</p>
+          <p className="text-sm font-semibold text-crimson-400 mt-1">{formatPrice(item.price)}</p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => handleQuantityChange(item.quantity - 1)}
-              className="w-7 h-7 flex items-center justify-center rounded border border-crimson-800/50 text-gray-400 hover:text-crimson-400 hover:border-crimson-600 transition-colors"
+              className="w-6 h-6 flex items-center justify-center text-xs text-gray-400 border border-gray-700 rounded hover:bg-gray-800 hover:text-gray-200 transition-colors"
               aria-label="Decrease quantity"
             >
               -
             </button>
-            <span className="text-sm text-gray-300 w-6 text-center">
-              {item.quantity}
-            </span>
+            <span className="w-6 text-center text-sm text-gray-200">{item.quantity}</span>
             <button
               onClick={() => handleQuantityChange(item.quantity + 1)}
-              className="w-7 h-7 flex items-center justify-center rounded border border-crimson-800/50 text-gray-400 hover:text-crimson-400 hover:border-crimson-600 transition-colors"
+              className="w-6 h-6 flex items-center justify-center text-xs text-gray-400 border border-gray-700 rounded hover:bg-gray-800 hover:text-gray-200 transition-colors"
               aria-label="Increase quantity"
             >
               +
             </button>
           </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className="text-sm font-medium text-gray-200">
-            {formatPrice(item.price * item.quantity)}
-          </span>
           <button
             onClick={() => onRemove(item.id)}
-            className="text-xs text-gray-500 hover:text-crimson-400 transition-colors"
-            aria-label={`Remove ${item.title} from cart`}
+            className="text-xs text-gray-500 hover:text-crimson-500 transition-colors"
+            aria-label="Remove item"
           >
             Remove
           </button>
