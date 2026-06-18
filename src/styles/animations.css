@@ -101,85 +101,149 @@
     box-shadow: 0 0 5px rgba(139, 0, 0, 0.2), inset 0 0 5px rgba(0, 0, 0, 0.3);
   }
   25% {
-    box-shadow: 0 0 10px rgba(139, 0, 0, 0.3), inset 0 0 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 10px rgba(139, 0, 0, 0.4), inset 0 0 10px rgba(0, 0, 0, 0.4);
   }
   50% {
-    box-shadow: 0 0 15px rgba(139, 0, 0, 0.4), inset 0 0 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 15px rgba(139, 0, 0, 0.6), inset 0 0 15px rgba(0, 0, 0, 0.5);
   }
   75% {
-    box-shadow: 0 0 10px rgba(139, 0, 0, 0.3), inset 0 0 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 10px rgba(139, 0, 0, 0.4), inset 0 0 10px rgba(0, 0, 0, 0.4);
   }
   100% {
     box-shadow: 0 0 5px rgba(139, 0, 0, 0.2), inset 0 0 5px rgba(0, 0, 0, 0.3);
   }
 }
 
-@keyframes dramatic-enter {
-  0% {
-    opacity: 0;
-    transform: scale(0.8) rotate(-5deg);
-    filter: blur(10px);
+@keyframes hover-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(139, 0, 0, 0.2);
   }
   50% {
-    opacity: 0.5;
-    transform: scale(1.05) rotate(2deg);
-    filter: blur(2px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-    filter: blur(0);
+    box-shadow: 0 0 20px rgba(139, 0, 0, 0.6), 0 0 40px rgba(139, 0, 0, 0.3);
   }
 }
 
-@keyframes text-flicker {
+@keyframes slide-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    opacity: 1;
+  }
+  20%, 24%, 55% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes skull-float {
   0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-5px) rotate(2deg);
+  }
+  66% {
+    transform: translateY(3px) rotate(-1deg);
+  }
+}
+
+@keyframes rose-petal {
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
     opacity: 1;
   }
-  5% {
-    opacity: 0.8;
+  100% {
+    transform: translateY(10px) rotate(10deg);
+    opacity: 0;
   }
-  10% {
-    opacity: 1;
+}
+
+@keyframes ritual-glow {
+  0%, 100% {
+    text-shadow: 0 0 5px rgba(139, 0, 0, 0.5), 0 0 10px rgba(139, 0, 0, 0.3);
   }
-  15% {
-    opacity: 0.6;
+  50% {
+    text-shadow: 0 0 15px rgba(139, 0, 0, 0.8), 0 0 30px rgba(139, 0, 0, 0.5), 0 0 45px rgba(139, 0, 0, 0.3);
+  }
+}
+
+@keyframes vinyl-spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes texture-shift {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.1);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.05);
+  }
+  56% {
+    transform: scale(1);
+  }
+}
+
+@keyframes blood-drip {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
   }
   20% {
     opacity: 1;
   }
-  50% {
-    opacity: 0.9;
+  100% {
+    transform: translateY(100%);
+    opacity: 0.3;
   }
-  55% {
+}
+
+@keyframes smoke-float {
+  0% {
+    transform: translateY(0) scale(1);
     opacity: 0.4;
   }
-  60% {
-    opacity: 1;
-  }
-}
-
-@keyframes border-glow {
-  0%, 100% {
-    border-color: rgba(139, 0, 0, 0.3);
-  }
   50% {
-    border-color: rgba(139, 0, 0, 0.8);
+    transform: translateY(-20px) scale(1.2);
+    opacity: 0.2;
   }
-}
-
-@keyframes dust-sparkle {
-  0%, 100% {
+  100% {
+    transform: translateY(-40px) scale(1.5);
     opacity: 0;
-    transform: translateY(0) scale(0);
-  }
-  50% {
-    opacity: 0.6;
-    transform: translateY(-20px) scale(1);
   }
 }
 
-@keyframes record-wobble {
+@keyframes vinyl-wobble {
   0%, 100% {
     transform: rotate(0deg) scale(1);
   }
@@ -191,192 +255,543 @@
   }
 }
 
-.animate-spin {
-  animation: spin 1s linear infinite;
+@keyframes gothic-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
 }
 
-.animate-spin-slow {
-  animation: spin-slow 3s linear infinite;
+@keyframes gothic-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+@keyframes gothic-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.3s ease-out forwards;
+@keyframes gothic-rotate-in {
+  from {
+    opacity: 0;
+    transform: rotate(-10deg) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
 }
 
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out forwards;
+@keyframes gothic-shimmer {
+  0% {
+    background-position: -200% center;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    background-position: 200% center;
+    opacity: 0.3;
+  }
 }
 
-.animate-slide-in-up {
-  animation: slide-in-up 0.3s ease-out forwards;
+@keyframes gothic-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.02);
+    filter: brightness(1.2);
+  }
 }
 
-.animate-scale-in {
-  animation: scale-in 0.2s ease-out forwards;
+@keyframes gothic-float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-3px) rotate(1deg);
+  }
+  75% {
+    transform: translateY(2px) rotate(-1deg);
+  }
 }
 
-.animate-shimmer {
-  animation: shimmer 2s linear infinite;
-  background-size: 200% auto;
+@keyframes gothic-border-glow {
+  0%, 100% {
+    border-color: rgba(139, 0, 0, 0.3);
+    box-shadow: 0 0 5px rgba(139, 0, 0, 0.1);
+  }
+  50% {
+    border-color: rgba(139, 0, 0, 0.8);
+    box-shadow: 0 0 15px rgba(139, 0, 0, 0.4), 0 0 30px rgba(139, 0, 0, 0.2);
+  }
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+@keyframes gothic-text-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
 }
 
-.animate-vinyl-spin {
-  animation: vinyl-spin 2s linear infinite;
+@keyframes gothic-bg-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
-.animate-vinyl-groove {
-  animation: vinyl-groove 3s ease-in-out infinite;
+@keyframes gothic-skull-float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translateY(-4px) rotate(3deg) scale(1.02);
+  }
+  50% {
+    transform: translateY(-2px) rotate(-2deg) scale(0.98);
+  }
+  75% {
+    transform: translateY(-6px) rotate(1deg) scale(1.01);
+  }
 }
 
-.animate-dramatic-enter {
-  animation: dramatic-enter 0.6s ease-out forwards;
+@keyframes gothic-rose-bloom {
+  0% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
 }
 
-.animate-text-flicker {
-  animation: text-flicker 3s ease-in-out infinite;
+@keyframes gothic-blood-drip {
+  0% {
+    transform: translateY(-100%) scaleY(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(0%) scaleY(1);
+    opacity: 0.4;
+  }
 }
 
-.animate-border-glow {
-  animation: border-glow 2s ease-in-out infinite;
+@keyframes gothic-smoke-float {
+  0% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-15px) scale(1.3) rotate(5deg);
+    opacity: 0.15;
+  }
+  100% {
+    transform: translateY(-30px) scale(1.6) rotate(10deg);
+    opacity: 0;
+  }
 }
 
-.animate-dust-sparkle {
-  animation: dust-sparkle 2s ease-in-out infinite;
+@keyframes gothic-vinyl-wobble {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  20% {
+    transform: rotate(3deg) scale(1.01);
+  }
+  40% {
+    transform: rotate(-2deg) scale(0.99);
+  }
+  60% {
+    transform: rotate(4deg) scale(1.005);
+  }
+  80% {
+    transform: rotate(-3deg) scale(0.995);
+  }
 }
 
-.animate-record-wobble {
-  animation: record-wobble 0.5s ease-in-out;
+@keyframes gothic-neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 20px currentColor;
+  }
+  20%, 24%, 55% {
+    opacity: 0.3;
+    text-shadow: none;
+  }
 }
 
-.hover-lift {
-  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+@keyframes gothic-ritual-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(139, 0, 0, 0.3), 0 0 10px rgba(139, 0, 0, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(139, 0, 0, 0.6), 0 0 40px rgba(139, 0, 0, 0.3), 0 0 60px rgba(139, 0, 0, 0.1);
+    transform: scale(1.02);
+  }
 }
 
-.hover-lift:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(139, 0, 0, 0.3);
+@keyframes gothic-heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  10% {
+    transform: scale(1.08);
+  }
+  20% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.04);
+  }
+  40% {
+    transform: scale(1);
+  }
 }
 
-.hover-glow {
-  transition: box-shadow 0.3s ease-out, border-color 0.3s ease-out;
+@keyframes gothic-border-drip {
+  0% {
+    border-image: linear-gradient(to bottom, rgba(139, 0, 0, 0.8), transparent) 1;
+  }
+  50% {
+    border-image: linear-gradient(to bottom, rgba(139, 0, 0, 0.4), rgba(139, 0, 0, 0.8), transparent) 1;
+  }
+  100% {
+    border-image: linear-gradient(to bottom, transparent, rgba(139, 0, 0, 0.8)) 1;
+  }
 }
 
-.hover-glow:hover {
-  box-shadow: 0 0 15px rgba(139, 0, 0, 0.4), 0 0 30px rgba(139, 0, 0, 0.2);
-  border-color: rgba(139, 0, 0, 0.6);
+@keyframes gothic-texture-shift {
+  0% {
+    background-position: 0% 0%;
+  }
+  25% {
+    background-position: 50% 25%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  75% {
+    background-position: 50% 75%;
+  }
+  100% {
+    background-position: 0% 100%;
+  }
 }
 
-.hover-scale {
-  transition: transform 0.3s ease-out;
+@keyframes gothic-skull-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(139, 0, 0, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(139, 0, 0, 0.6)) drop-shadow(0 0 16px rgba(139, 0, 0, 0.3));
+  }
 }
 
-.hover-scale:hover {
-  transform: scale(1.05);
+@keyframes gothic-rose-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(74, 0, 130, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(74, 0, 130, 0.6)) drop-shadow(0 0 16px rgba(74, 0, 130, 0.3));
+  }
 }
 
-.hover-skull-overlay {
-  position: relative;
-  overflow: hidden;
+@keyframes gothic-vinyl-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 3px rgba(139, 0, 0, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(139, 0, 0, 0.5)) drop-shadow(0 0 20px rgba(139, 0, 0, 0.2));
+  }
 }
 
-.hover-skull-overlay::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 10C30 10 15 25 15 45c0 12 6 23 15 30v15h40V75c9-7 15-18 15-30 0-20-15-35-35-35z' fill='white' opacity='0.03'/%3E%3Ccircle cx='40' cy='40' r='5' fill='white' opacity='0.05'/%3E%3Ccircle cx='60' cy='40' r='5' fill='white' opacity='0.05'/%3E%3C/svg%3E");
-  background-size: 80px 80px;
-  background-position: center;
-  background-repeat: no-repeat;
-  opacity: 0;
-  transition: opacity 0.3s ease-out;
-  pointer-events: none;
+@keyframes gothic-loading-pulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.hover-skull-overlay:hover::after {
-  opacity: 1;
+@keyframes gothic-loading-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
 }
 
-.hover-rose-overlay {
-  position: relative;
-  overflow: hidden;
+@keyframes gothic-loading-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
-.hover-rose-overlay::after {
-  content: '\u2740';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  font-size: 4rem;
-  color: rgba(139, 0, 0, 0.15);
-  transition: transform 0.4s ease-out;
-  pointer-events: none;
+@keyframes gothic-loading-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.hover-rose-overlay:hover::after {
-  transform: translate(-50%, -50%) scale(1);
+@keyframes gothic-loading-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(139, 0, 0, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(139, 0, 0, 0.5), 0 0 30px rgba(139, 0, 0, 0.2);
+  }
 }
 
-.hover-distress {
-  position: relative;
-  overflow: hidden;
+@keyframes gothic-loading-skull {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.5;
+  }
+  25% {
+    transform: translateY(-3px) rotate(5deg);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.5;
+  }
+  75% {
+    transform: translateY(3px) rotate(-5deg);
+    opacity: 0.8;
+  }
 }
 
-.hover-distress::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.05) 2px,
-    rgba(0, 0, 0, 0.05) 4px
-  );
-  opacity: 0;
-  transition: opacity 0.3s ease-out;
-  pointer-events: none;
+@keyframes gothic-loading-rose {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.1) rotate(180deg);
+    opacity: 0.8;
+  }
 }
 
-.hover-distress:hover::before {
-  opacity: 1;
+@keyframes gothic-loading-vinyl {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(90deg) scale(1.02);
+  }
+  50% {
+    transform: rotate(180deg) scale(1);
+  }
+  75% {
+    transform: rotate(270deg) scale(0.98);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes gothic-loading-text {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes gothic-loading-border {
+  0%, 100% {
+    border-color: rgba(139, 0, 0, 0.2);
+  }
+  50% {
+    border-color: rgba(139, 0, 0, 0.6);
+  }
+}
+
+@keyframes gothic-loading-drip {
+  0% {
+    transform: translateY(-100%) scaleY(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(0%) scaleY(1);
+    opacity: 0.2;
+  }
+}
+
+@keyframes gothic-loading-smoke {
+  0% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-10px) scale(1.2) rotate(5deg);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translateY(-20px) scale(1.4) rotate(10deg);
+    opacity: 0;
+  }
+}
+
+@keyframes gothic-loading-wobble {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(2deg) scale(1.01);
+  }
+  75% {
+    transform: rotate(-2deg) scale(0.99);
+  }
+}
+
+@keyframes gothic-loading-neon {
+  0%, 100% {
+    text-shadow: 0 0 2px rgba(139, 0, 0, 0.3);
+  }
+  50% {
+    text-shadow: 0 0 8px rgba(139, 0, 0, 0.6), 0 0 16px rgba(139, 0, 0, 0.3);
+  }
+}
+
+@keyframes gothic-loading-ritual {
+  0%, 100% {
+    box-shadow: 0 0 3px rgba(139, 0, 0, 0.2);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(139, 0, 0, 0.5), 0 0 24px rgba(139, 0, 0, 0.2);
+    transform: scale(1.01);
+  }
+}
+
+@keyframes gothic-loading-heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  10% {
+    transform: scale(1.05);
+  }
+  20% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.02);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+@keyframes gothic-loading-border-glow {
+  0%, 100% {
+    border-color: rgba(139, 0, 0, 0.2);
+    box-shadow: 0 0 3px rgba(139, 0, 0, 0.1);
+  }
+  50% {
+    border-color: rgba(139, 0, 0, 0.6);
+    box-shadow: 0 0 10px rgba(139, 0, 0, 0.3), 0 0 20px rgba(139, 0, 0, 0.1);
+  }
+}
+
+@keyframes gothic-loading-texture {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
+}
+
+@keyframes gothic-loading-skull-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 1px rgba(139, 0, 0, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 0 5px rgba(139, 0, 0, 0.5)) drop-shadow(0 0 10px rgba(139, 0, 0, 0.2));
+  }
+}
+
+@keyframes gothic-loading-rose-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 1px rgba(74, 0, 130, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 0 5px rgba(74, 0, 130, 0.5)) drop-shadow(0 0 10px rgba(74, 0, 130, 0.2));
+  }
+}
+
+@keyframes gothic-loading-vinyl-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(139, 0, 0, 0.15));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(139, 0, 0, 0.4)) drop-shadow(0 0 12px rgba(139, 0, 0, 0.15));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-
-  .hover-lift:hover {
-    transform: none;
-    box-shadow: none;
-  }
-
-  .hover-glow:hover {
-    box-shadow: none;
-    border-color: inherit;
-  }
-
-  .hover-scale:hover {
-    transform: none;
-  }
-
-  .hover-skull-overlay::after,
-  .hover-rose-overlay::after,
-  .hover-distress::before {
-    display: none;
   }
 }
