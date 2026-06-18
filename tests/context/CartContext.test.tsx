@@ -63,9 +63,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       }
       return {
         items: state.items.map((item) =>
-          item.product.id === productId
-            ? { ...item, quantity }
-            : item
+          item.product.id === productId ? { ...item, quantity } : item
         ),
       };
     }
@@ -96,7 +94,7 @@ function CartProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch {
-      // Ignore parse errors, start with empty cart
+      // Ignore invalid stored data
     }
   }, []);
 
@@ -109,26 +107,18 @@ function CartProvider({ children }: { children: ReactNode }) {
   }, [state.items]);
 
   const addToCart = useCallback((product: Product, quantity: number = 1) => {
-    if (!product || !product.id) {
-      return;
-    }
-    const safeQuantity = Math.max(1, Math.floor(quantity));
-    dispatch({ type: 'ADD_ITEM', payload: { product, quantity: safeQuantity } });
+    if (quantity <= 0) return;
+    dispatch({ type: 'ADD_ITEM', payload: { product, quantity } });
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
-    if (!productId) {
-      return;
-    }
+    if (!productId) return;
     dispatch({ type: 'REMOVE_ITEM', payload: productId });
   }, []);
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
-    if (!productId) {
-      return;
-    }
-    const safeQuantity = Math.max(0, Math.floor(quantity));
-    dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity: safeQuantity } });
+    if (!productId) return;
+    dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity } });
   }, []);
 
   const clearCart = useCallback(() => {

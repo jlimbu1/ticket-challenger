@@ -115,8 +115,8 @@ function loadCartFromStorage(): CartItem[] {
         return parsed;
       }
     }
-  } catch (error) {
-    console.error('Failed to load cart from localStorage:', error);
+  } catch {
+    // Invalid stored data, start fresh
   }
   return [];
 }
@@ -124,8 +124,8 @@ function loadCartFromStorage(): CartItem[] {
 function saveCartToStorage(items: CartItem[]): void {
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-  } catch (error) {
-    console.error('Failed to save cart to localStorage:', error);
+  } catch {
+    // Storage full or unavailable, silently fail
   }
 }
 
@@ -167,22 +167,22 @@ export function useCart() {
     dispatch({ type: 'SET_ANIMATION_IDLE' });
   }, []);
 
-  const itemCount = state.items.reduce((total, item) => total + item.quantity, 0);
+  const totalItems = state.items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = state.items.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (sum, item) => sum + item.price * item.quantity,
     0
   );
 
   return {
     items: state.items,
-    animationState: state.animationState,
-    lastAddedItemId: state.lastAddedItemId,
     addToCart,
     removeFromCart,
     updateQuantity,
     clearCart,
     setAnimationIdle,
-    itemCount,
+    animationState: state.animationState,
+    lastAddedItemId: state.lastAddedItemId,
+    totalItems,
     totalPrice,
   };
 }
