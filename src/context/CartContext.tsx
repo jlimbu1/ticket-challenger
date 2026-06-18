@@ -45,11 +45,9 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         return { items: updatedItems };
       }
 
-      const newItem: CartItem = {
-        product,
-        quantity: Math.max(1, quantity),
+      return {
+        items: [...state.items, { product, quantity }],
       };
-      return { items: [...state.items, newItem] };
     }
 
     case 'REMOVE_ITEM': {
@@ -88,36 +86,21 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 }
 
 function loadCartFromStorage(): CartItem[] {
-  if (typeof window === 'undefined') {
-    return [];
-  }
   try {
     const stored = localStorage.getItem(CART_STORAGE_KEY);
-    if (!stored) {
-      return [];
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
     }
-    const parsed = JSON.parse(stored);
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-    return parsed.filter(
-      (item: unknown): item is CartItem =>
-        typeof item === 'object' &&
-        item !== null &&
-        'product' in item &&
-        'quantity' in item &&
-        typeof (item as CartItem).quantity === 'number' &&
-        (item as CartItem).quantity > 0
-    );
-  } catch {
-    return [];
+  } catch (error) {
+    console.error('[CartContext] Failed to load cart from localStorage:', error);
   }
+  return [];
 }
 
 function saveCartToStorage(items: CartItem[]): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   } catch (error) {
@@ -125,7 +108,7 @@ function saveCartToStorage(items: CartItem[]): void {
   }
 }
 
-export function CartProvider({ children }: { children: ReactNode }): React.ReactElement {
+export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
 
   useEffect(() => {
@@ -139,7 +122,7 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
     saveCartToStorage(state.items);
   }, [state.items]);
 
-  const addToCart = useCallback((product: Product, quantity: number = 1): void => {
+  const addToCart = useCallback((product: Product, quantity: number = 1) => {
     if (!product || !product.id) {
       console.error('[CartContext] Invalid product provided to addToCart');
       return;
@@ -148,7 +131,7 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
     dispatch({ type: 'ADD_ITEM', payload: { product, quantity: safeQuantity } });
   }, []);
 
-  const removeFromCart = useCallback((productId: string): void => {
+  const removeFromCart = useCallback((productId: string) => {
     if (!productId) {
       console.error('[CartContext] Invalid productId provided to removeFromCart');
       return;
@@ -156,7 +139,7 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
     dispatch({ type: 'REMOVE_ITEM', payload: productId });
   }, []);
 
-  const updateQuantity = useCallback((productId: string, quantity: number): void => {
+  const updateQuantity = useCallback((productId: string, quantity: number) => {
     if (!productId) {
       console.error('[CartContext] Invalid productId provided to updateQuantity');
       return;
@@ -165,18 +148,23 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
     dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity: safeQuantity } });
   }, []);
 
-  const clearCart = useCallback((): void => {
+  const clearCart = useCallback(() => {
     dispatch({ type: 'CLEAR_CART' });
   }, []);
 
-  const value = useMemo<CartContextValue>(() => {
-    const itemCount = state.items.reduce((total, item) => total + item.quantity, 0);
-    const totalPrice = state.items.reduce(
+  const itemCount = useMemo(() => {
+    return state.items.reduce((count, item) => count + item.quantity, 0);
+  }, [state.items]);
+
+  const totalPrice = useMemo(() => {
+    return state.items.reduce(
       (total, item) => total + item.product.price * item.quantity,
       0
     );
+  }, [state.items]);
 
-    return {
+  const contextValue = useMemo<CartContextValue>(
+    () => ({
       items: state.items,
       addToCart,
       removeFromCart,
@@ -184,16 +172,24 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
       clearCart,
       itemCount,
       totalPrice,
-    };
-  }, [state.items, addToCart, removeFromCart, updateQuantity, clearCart]);
+    }),
+    [state.items, addToCart, removeFromCart, updateQuantity, clearCart, itemCount, totalPrice]
+  );
 
-  return React.createElement(CartContext.Provider, { value }, children);
+  return (
+    <CartContext.Provider value={contextValue}>
+      {children}
+    </CartContext.Provider>
+  );
 }
 
 export function useCart(): CartContextValue {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
+    throw new Error(
+      'useCart must be used within a CartProvider. ' +
+      'Wrap your component tree with <CartProvider> to use cart functionality.'
+    );
   }
   return context;
 }

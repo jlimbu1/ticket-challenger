@@ -69,26 +69,35 @@ const AdminDashboardPage: React.FC = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    const newProduct: Product = {
-      id: editingId || `product-${Date.now()}`,
-      name: form.name.trim(),
-      price: Number(form.price),
-      stock: Number(form.stock),
-      description: form.description.trim(),
-      image: form.image.trim(),
-      category: "accessory",
-    };
-
     if (editingId) {
       setProducts((prev) =>
-        prev.map((p) => (p.id === editingId ? newProduct : p))
+        prev.map((p) =>
+          p.id === editingId
+            ? {
+                ...p,
+                name: form.name.trim(),
+                price: Number(form.price),
+                stock: Number(form.stock),
+                description: form.description.trim(),
+                image: form.image.trim(),
+              }
+            : p
+        )
       );
+      setEditingId(null);
     } else {
+      const newProduct: Product = {
+        id: `product-${Date.now()}`,
+        name: form.name.trim(),
+        price: Number(form.price),
+        stock: Number(form.stock),
+        description: form.description.trim(),
+        image: form.image.trim(),
+        category: "accessory",
+      };
       setProducts((prev) => [...prev, newProduct]);
     }
-
     setForm(emptyForm);
-    setEditingId(null);
     setFormErrors({});
   };
 
@@ -113,7 +122,7 @@ const AdminDashboardPage: React.FC = () => {
     }
   };
 
-  const handleCancel = () => {
+  const handleCancelEdit = () => {
     setEditingId(null);
     setForm(emptyForm);
     setFormErrors({});
@@ -122,9 +131,8 @@ const AdminDashboardPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-crimson border-t-transparent" />
-          <p className="text-gothic-400 text-sm">Loading the backstage pass...</p>
+        <div className="animate-spin h-12 w-12 border-4 border-crimson border-t-transparent rounded-full" role="status">
+          <span className="sr-only">Loading admin dashboard...</span>
         </div>
       </div>
     );
@@ -132,83 +140,28 @@ const AdminDashboardPage: React.FC = () => {
 
   return (
     <DramaticErrorBoundary>
-      <div className="min-h-screen bg-black text-white p-8">
+      <div className="min-h-screen bg-black text-white p-6 md:p-8">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl font-bold text-crimson mb-8 tracking-wider uppercase">
-            Backstage Pass - Admin Dashboard
-          </h1>
+          <header className="mb-8 border-b border-gothic-700 pb-4">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-wider text-crimson">
+              Backstage Pass
+            </h1>
+            <p className="text-gothic-300 mt-2 text-sm uppercase tracking-widest">
+              Admin Dashboard &mdash; Manage Your Merchandise
+            </p>
+          </header>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <h2 className="text-2xl font-semibold text-gothic-300 mb-4">
-                Product Catalog
-              </h2>
-              {products.length === 0 ? (
-                <GothicEmptyState
-                  title="No Products"
-                  message="The catalog is empty. Add your first product to begin."
-                />
-              ) : (
-                <div className="space-y-4">
-                  {products.map((product) => (
-                    <div
-                      key={product.id}
-                      className="flex items-center justify-between p-4 border border-gothic-700 bg-gothic-900/50 rounded-lg"
-                    >
-                      <div className="flex items-center gap-4">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-16 h-16 object-cover rounded border border-gothic-600"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = "https://placehold.co/64x64/1a1a2e/ff3366?text=NA";
-                          }}
-                        />
-                        <div>
-                          <h3 className="text-lg font-semibold text-gothic-200">
-                            {product.name}
-                          </h3>
-                          <p className="text-sm text-gothic-400">
-                            ${product.price.toFixed(2)} - Stock: {product.stock}
-                          </p>
-                          <p className="text-xs text-gothic-500 line-clamp-1">
-                            {product.description}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <GothicButton
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleEdit(product)}
-                        >
-                          Edit
-                        </GothicButton>
-                        <GothicButton
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDelete(product.id)}
-                        >
-                          Delete
-                        </GothicButton>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="lg:col-span-1">
-              <h2 className="text-2xl font-semibold text-gothic-300 mb-4">
-                {editingId ? "Edit Product" : "Add Product"}
-              </h2>
-              <form
-                onSubmit={handleSubmit}
-                className="space-y-4 p-4 border border-gothic-700 bg-gothic-900/50 rounded-lg"
-              >
+          <section className="mb-10">
+            <h2 className="text-xl font-semibold mb-4 text-gothic-200">
+              {editingId ? "Edit Product" : "Add New Product"}
+            </h2>
+            <form
+              onSubmit={handleSubmit}
+              className="bg-gothic-900/60 border border-gothic-700 rounded-lg p-6 space-y-4"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="name" className="block text-sm text-gothic-400 mb-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gothic-300 mb-1">
                     Product Name
                   </label>
                   <input
@@ -217,16 +170,15 @@ const AdminDashboardPage: React.FC = () => {
                     type="text"
                     value={form.name}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-gothic-800 border border-gothic-600 rounded text-white focus:outline-none focus:border-crimson"
+                    className="w-full bg-gothic-800 border border-gothic-600 rounded px-3 py-2 text-white placeholder-gothic-500 focus:outline-none focus:border-crimson"
                     placeholder="Enter product name"
                   />
                   {formErrors.name && (
                     <p className="text-rose text-xs mt-1">{formErrors.name}</p>
                   )}
                 </div>
-
                 <div>
-                  <label htmlFor="price" className="block text-sm text-gothic-400 mb-1">
+                  <label htmlFor="price" className="block text-sm font-medium text-gothic-300 mb-1">
                     Price ($)
                   </label>
                   <input
@@ -235,16 +187,15 @@ const AdminDashboardPage: React.FC = () => {
                     type="text"
                     value={form.price}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-gothic-800 border border-gothic-600 rounded text-white focus:outline-none focus:border-crimson"
+                    className="w-full bg-gothic-800 border border-gothic-600 rounded px-3 py-2 text-white placeholder-gothic-500 focus:outline-none focus:border-crimson"
                     placeholder="0.00"
                   />
                   {formErrors.price && (
                     <p className="text-rose text-xs mt-1">{formErrors.price}</p>
                   )}
                 </div>
-
                 <div>
-                  <label htmlFor="stock" className="block text-sm text-gothic-400 mb-1">
+                  <label htmlFor="stock" className="block text-sm font-medium text-gothic-300 mb-1">
                     Stock Quantity
                   </label>
                   <input
@@ -253,34 +204,15 @@ const AdminDashboardPage: React.FC = () => {
                     type="text"
                     value={form.stock}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-gothic-800 border border-gothic-600 rounded text-white focus:outline-none focus:border-crimson"
+                    className="w-full bg-gothic-800 border border-gothic-600 rounded px-3 py-2 text-white placeholder-gothic-500 focus:outline-none focus:border-crimson"
                     placeholder="0"
                   />
                   {formErrors.stock && (
                     <p className="text-rose text-xs mt-1">{formErrors.stock}</p>
                   )}
                 </div>
-
                 <div>
-                  <label htmlFor="description" className="block text-sm text-gothic-400 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    value={form.description}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-3 py-2 bg-gothic-800 border border-gothic-600 rounded text-white focus:outline-none focus:border-crimson resize-none"
-                    placeholder="Describe the product..."
-                  />
-                  {formErrors.description && (
-                    <p className="text-rose text-xs mt-1">{formErrors.description}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="image" className="block text-sm text-gothic-400 mb-1">
+                  <label htmlFor="image" className="block text-sm font-medium text-gothic-300 mb-1">
                     Image URL
                   </label>
                   <input
@@ -289,32 +221,108 @@ const AdminDashboardPage: React.FC = () => {
                     type="text"
                     value={form.image}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 bg-gothic-800 border border-gothic-600 rounded text-white focus:outline-none focus:border-crimson"
+                    className="w-full bg-gothic-800 border border-gothic-600 rounded px-3 py-2 text-white placeholder-gothic-500 focus:outline-none focus:border-crimson"
                     placeholder="https://example.com/image.jpg"
                   />
                   {formErrors.image && (
                     <p className="text-rose text-xs mt-1">{formErrors.image}</p>
                   )}
                 </div>
-
-                <div className="flex gap-2">
-                  <GothicButton type="submit" variant="primary" size="md">
-                    {editingId ? "Update Product" : "Add Product"}
+              </div>
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gothic-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  rows={3}
+                  value={form.description}
+                  onChange={handleInputChange}
+                  className="w-full bg-gothic-800 border border-gothic-600 rounded px-3 py-2 text-white placeholder-gothic-500 focus:outline-none focus:border-crimson resize-none"
+                  placeholder="Describe the product..."
+                />
+                {formErrors.description && (
+                  <p className="text-rose text-xs mt-1">{formErrors.description}</p>
+                )}
+              </div>
+              <div className="flex gap-3 pt-2">
+                <GothicButton type="submit" variant="primary">
+                  {editingId ? "Update Product" : "Add Product"}
+                </GothicButton>
+                {editingId && (
+                  <GothicButton type="button" variant="secondary" onClick={handleCancelEdit}>
+                    Cancel
                   </GothicButton>
-                  {editingId && (
-                    <GothicButton
-                      type="button"
-                      variant="secondary"
-                      size="md"
-                      onClick={handleCancel}
-                    >
-                      Cancel
-                    </GothicButton>
-                  )}
-                </div>
-              </form>
-            </div>
-          </div>
+                )}
+              </div>
+            </form>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold mb-4 text-gothic-200">
+              Product Catalog ({products.length})
+            </h2>
+            {products.length === 0 ? (
+              <GothicEmptyState
+                title="No Products"
+                message="The catalog is empty. Add your first product above."
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-gothic-700 text-left text-gothic-400 text-sm uppercase tracking-wider">
+                      <th className="py-3 px-4 font-medium">Name</th>
+                      <th className="py-3 px-4 font-medium">Price</th>
+                      <th className="py-3 px-4 font-medium">Stock</th>
+                      <th className="py-3 px-4 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products.map((product) => (
+                      <tr
+                        key={product.id}
+                        className="border-b border-gothic-800 hover:bg-gothic-900/40 transition-colors"
+                      >
+                        <td className="py-3 px-4 text-gothic-200">{product.name}</td>
+                        <td className="py-3 px-4 text-gothic-300">${product.price.toFixed(2)}</td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                              product.stock > 0
+                                ? "bg-emerald/20 text-emerald"
+                                : "bg-rose/20 text-rose"
+                            }`}
+                          >
+                            {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex gap-2">
+                            <GothicButton
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleEdit(product)}
+                            >
+                              Edit
+                            </GothicButton>
+                            <GothicButton
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleDelete(product.id)}
+                            >
+                              Delete
+                            </GothicButton>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
         </div>
       </div>
     </DramaticErrorBoundary>

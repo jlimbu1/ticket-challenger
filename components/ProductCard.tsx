@@ -47,12 +47,12 @@ export default function ProductsPage() {
   return (
     <DramaticErrorBoundary>
       <div className="min-h-screen bg-black text-white p-8">
-        <h1 className="text-4xl font-bold text-crimson mb-8 text-center tracking-wider uppercase">
+        <h1 className="text-4xl font-bold text-center mb-8 text-crimson tracking-widest uppercase">
           The Collection
         </h1>
         {inStockProducts.length > 0 && (
-          <section className="mb-12">
-            <h2 className="text-2xl font-semibold text-gothic-300 mb-6 border-b border-gothic-700 pb-2">
+          <div className="mb-12">
+            <h2 className="text-2xl font-semibold mb-6 text-gothic-300 border-b border-gothic-700 pb-2">
               Available Now
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -60,19 +60,19 @@ export default function ProductsPage() {
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-          </section>
+          </div>
         )}
         {outOfStockProducts.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-semibold text-gothic-500 mb-6 border-b border-gothic-700 pb-2">
+          <div>
+            <h2 className="text-2xl font-semibold mb-6 text-gothic-500 border-b border-gothic-800 pb-2">
               Sold Out
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 opacity-60">
               {outOfStockProducts.map((product: Product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-          </section>
+          </div>
         )}
       </div>
     </DramaticErrorBoundary>

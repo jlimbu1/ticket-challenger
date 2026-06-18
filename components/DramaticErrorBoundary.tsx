@@ -46,9 +46,19 @@ export default class DramaticErrorBoundary extends Component<
       error.stack,
       errorInfo.componentStack
     );
+
+    if (typeof window !== "undefined" && window.onerror) {
+      window.onerror(
+        error.message,
+        undefined,
+        undefined,
+        undefined,
+        error
+      );
+    }
   }
 
-  private handleReset = (): void => {
+  handleReset = (): void => {
     this.setState({ hasError: false, error: null });
   };
 
@@ -58,53 +68,50 @@ export default class DramaticErrorBoundary extends Component<
         return this.props.fallback;
       }
 
+      const errorMessage = this.state.error
+        ? this.state.error.message
+        : getRandomErrorMessage();
+
       return (
         <div
+          role="alert"
           className={cn(
             "flex flex-col items-center justify-center gap-6 p-8 text-center",
-            "border border-gothic-700 bg-gothic-900/50 shadow-gothic",
-            "rounded-lg min-h-[200px]",
+            "min-h-[300px] bg-gothic-950 border border-crimson/30",
+            "rounded-lg shadow-gothic",
             this.props.className
           )}
-          role="alert"
         >
-          <div className="relative flex items-center justify-center" aria-hidden="true">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-crimson/40 bg-gothic-800">
-              <span className="text-2xl text-crimson/60">&#9760;</span>
+          <div className="relative" aria-hidden="true">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-crimson/50 bg-gothic-900">
+              <span className="text-4xl text-crimson">&#9760;</span>
             </div>
-            <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-rose/30">
-              <span className="text-xs text-rose">!</span>
+            <div className="absolute -right-1 -top-1 flex h-8 w-8 items-center justify-center rounded-full bg-crimson/20">
+              <span className="text-lg text-crimson">&#9888;</span>
             </div>
           </div>
+
           <div className="space-y-2">
-            <h2 className="font-gothic text-xl font-bold tracking-wider text-crimson">
-              Ritual Interrupted
+            <h2 className="text-2xl font-bold tracking-wider text-crimson">
+              RITUAL INTERRUPTED
             </h2>
-            <p className="max-w-md text-sm text-gothic-300">
-              {getRandomErrorMessage()}
+            <p className="max-w-md text-gothic-300 text-sm leading-relaxed">
+              {errorMessage}
             </p>
-            {this.state.error && (
-              <details className="mt-2 cursor-pointer">
-                <summary className="text-xs text-gothic-500 hover:text-gothic-400">
-                  Technical details
-                </summary>
-                <pre className="mt-2 max-h-32 overflow-auto rounded bg-gothic-950 p-2 text-left text-xs text-gothic-400">
-                  {this.state.error.message}
-                </pre>
-              </details>
-            )}
           </div>
+
           <button
             onClick={this.handleReset}
             className={cn(
-              "rounded border border-crimson/40 bg-crimson/10 px-6 py-2",
-              "font-gothic text-sm tracking-wider text-crimson",
-              "transition-all duration-300",
-              "hover:bg-crimson/20 hover:shadow-gothic-crimson",
-              "focus:outline-none focus:ring-2 focus:ring-crimson/50"
+              "px-6 py-2 rounded-md border border-crimson/40",
+              "bg-gothic-900 text-crimson hover:bg-crimson/10",
+              "transition-colors duration-300 focus:outline-none",
+              "focus:ring-2 focus:ring-crimson/50 focus:ring-offset-2",
+              "focus:ring-offset-gothic-950"
             )}
+            aria-label="Try again"
           >
-            Attempt Recovery
+            Attempt the Ritual Again
           </button>
         </div>
       );
