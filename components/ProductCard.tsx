@@ -47,7 +47,7 @@ export function ProductCard({ product }: ProductCardProps) {
         disabled={product.stock <= 0}
         className="w-full"
       >
-        {added ? 'Added to Cart' : 'Add to Cart'}
+        {added ? 'Added to Cart' : product.stock > 0 ? 'Add to Cart' : 'Sold Out'}
       </GothicButton>
     </div>
   );
