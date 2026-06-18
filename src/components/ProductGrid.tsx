@@ -1,16 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Product } from '../types';
 import { useCart } from '../hooks/useCart';
 import { GothicButton } from './GothicButton';
 import { VinylSpinner } from './VinylSpinner';
-import { EmptyState } from './EmptyState';
 
-interface ProductGridProps {
-  products: Product[];
-  isLoading?: boolean;
-  error?: string | null;
+interface ProductCardProps {
+  product: Product;
 }
 
 const NOISE_PATTERN = `data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E`;
@@ -24,127 +21,146 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     const timer = setTimeout(() => {
       reject(new Error('Operation timed out'));
     }, ms);
-    promise.then(resolve, reject).finally(() => clearTimeout(timer));
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
   });
 }
 
-export function ProductGrid({ products, isLoading = false, error = null }: ProductGridProps) {
-  const { addItem } = useCart();
-  const [addingId, setAddingId] = useState<string | null>(null);
+export function ProductCard({ product }: ProductCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const { addToCart } = useCart();
 
-  const handleAddToCart = useCallback(async (product: Product) => {
-    if (addingId) return;
-    setAddingId(product.id);
+  const handleAddToCart = useCallback(async () => {
+    if (isAddingToCart) return;
+
+    setIsAddingToCart(true);
     setAddError(null);
+
     try {
-      await withTimeout(Promise.resolve(addItem(product)), ADD_TO_CART_TIMEOUT);
+      const addPromise = new Promise<void>((resolve, reject) => {
+        abortControllerRef.current = new AbortController();
+        const { signal } = abortControllerRef.current;
+
+        const timeout = setTimeout(() => {
+          reject(new Error('Add to cart timed out'));
+        }, ADD_TO_CART_TIMEOUT);
+
+        signal.addEventListener('abort', () => {
+          clearTimeout(timeout);
+          reject(new Error('Add to cart cancelled'));
+        });
+
+        try {
+          addToCart(product);
+          clearTimeout(timeout);
+          resolve();
+        } catch (err) {
+          clearTimeout(timeout);
+          reject(err);
+        }
+      });
+
+      await withTimeout(addPromise, ADD_TO_CART_TIMEOUT);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to add item to cart';
       setAddError(message);
     } finally {
-      setAddingId(null);
+      setIsAddingToCart(false);
+      abortControllerRef.current = null;
     }
-  }, [addingId, addItem]);
+  }, [product, addToCart, isAddingToCart]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <VinylSpinner />
-      </div>
-    );
-  }
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+  }, []);
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <EmptyState
-          title="The Record Player is Broken"
-          message="A ghost in the machine has scattered our collection. The vinyls are silent, the needles are still. Perhaps refresh and try again?"
-        />
-      </div>
-    );
-  }
-
-  if (products.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <EmptyState
-          title="The Shelves are Empty"
-          message="Like a forgotten jukebox in an abandoned diner, our collection has vanished into the void. Check back when the ghosts have returned the records."
-        />
-      </div>
-    );
-  }
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-black py-12 px-4">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-serif text-crimson text-center mb-12 tracking-wider uppercase">
-          The Collection
-        </h1>
-        {addError && (
-          <div className="text-crimson text-center mb-6 text-sm" role="alert">
-            {addError}
+    <div
+      className="product-card relative group bg-gray-900 rounded-lg overflow-hidden border border-gray-800 transition-all duration-300 hover:border-crimson-600 hover:shadow-[0_0_30px_rgba(139,0,0,0.3)]"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      role="article"
+      aria-label={`${product.title} by ${product.artist}`}
+    >
+      <div className="relative aspect-square overflow-hidden">
+        <img
+          src={product.imageUrl}
+          alt={`${product.title} vinyl record cover`}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          loading="lazy"
+        />
+
+        {isHovered && (
+          <div
+            className="absolute inset-0 transition-opacity duration-300"
+            style={{
+              backgroundImage: `url(${SKULL_ROSE_OVERLAY}), url(${NOISE_PATTERN})`,
+              backgroundBlendMode: 'overlay, normal',
+              backgroundColor: 'rgba(139, 0, 0, 0.2)',
+            }}
+            data-testid="hover-overlay"
+          />
+        )}
+
+        {!product.inStock && (
+          <div className="absolute top-2 right-2 bg-gray-900/80 text-gray-400 text-xs px-2 py-1 rounded border border-gray-700">
+            Out of Stock
           </div>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="group relative bg-gray-900 rounded-lg overflow-hidden transition-all duration-500 hover:shadow-[0_0_30px_rgba(139,0,0,0.5)]"
-            >
-              <div className="relative aspect-square overflow-hidden">
-                <img
-                  src={product.imageUrl}
-                  alt={`${product.title} by ${product.artist}`}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  loading="lazy"
-                />
-                <div
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                  style={{
-                    backgroundImage: `url(${SKULL_ROSE_OVERLAY}), url(${NOISE_PATTERN})`,
-                    backgroundBlendMode: 'overlay',
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </div>
-              <div className="p-4">
-                <h3 className="text-lg font-serif text-white mb-1 truncate">
-                  {product.title}
-                </h3>
-                <p className="text-sm text-gray-400 mb-1">
-                  {product.artist}
-                </p>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-crimson font-bold">
-                    ${product.price.toFixed(2)}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {product.year}
-                  </span>
-                </div>
-                <GothicButton
-                  onClick={() => handleAddToCart(product)}
-                  disabled={!product.inStock || addingId === product.id}
-                  className="w-full text-sm"
-                >
-                  {addingId === product.id ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <VinylSpinner size="small" />
-                      Adding...
-                    </span>
-                  ) : product.inStock ? (
-                    'Add to Collection'
-                  ) : (
-                    'Out of Stock'
-                  )}
-                </GothicButton>
-              </div>
-            </div>
-          ))}
+      </div>
+
+      <div className="p-4 space-y-2">
+        <h3 className="font-serif text-lg text-white truncate" title={product.title}>
+          {product.title}
+        </h3>
+        <p className="text-sm text-gray-400 truncate" title={product.artist}>
+          {product.artist}
+        </p>
+        <div className="flex items-center justify-between">
+          <span className="text-crimson-400 font-semibold">
+            ${product.price.toFixed(2)}
+          </span>
+          <span className="text-xs text-gray-500">{product.year}</span>
         </div>
+
+        {addError && (
+          <p className="text-red-400 text-xs mt-1" role="alert">
+            {addError}
+          </p>
+        )}
+
+        <GothicButton
+          onClick={handleAddToCart}
+          disabled={!product.inStock || isAddingToCart}
+          className="w-full mt-2"
+          aria-label={isAddingToCart ? 'Adding to cart...' : `Add ${product.title} to cart`}
+        >
+          {isAddingToCart ? (
+            <span className="flex items-center justify-center gap-2">
+              <VinylSpinner size="small" />
+              Adding...
+            </span>
+          ) : product.inStock ? (
+            'Add to Cart'
+          ) : (
+            'Out of Stock'
+          )}
+        </GothicButton>
       </div>
     </div>
   );

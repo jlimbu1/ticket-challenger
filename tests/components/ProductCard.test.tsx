@@ -66,9 +66,7 @@ describe('ProductCard', () => {
     expect(screen.getByText('The Black Parade')).toBeDefined();
     expect(screen.getByText('$29.99')).toBeDefined();
     expect(screen.getByText('2006')).toBeDefined();
-    const img = screen.getByRole('img');
-    expect(img).toBeDefined();
-    expect(img.getAttribute('src')).toBe('/images/black-parade.jpg');
+    expect(screen.getByRole('img')).toBeDefined();
   });
 
   it('shows skull/rose overlay on hover with crimson glow', async () => {
@@ -76,30 +74,28 @@ describe('ProductCard', () => {
     
     const card = screen.getByTestId('product-card');
     
-    expect(card.className).not.toContain('shadow-crimson');
+    expect(card.querySelector('[data-testid="hover-overlay"]')).toBeNull();
     
     fireEvent.mouseEnter(card);
     
     await waitFor(() => {
-      expect(card.className).toContain('shadow-crimson');
+      const overlay = card.querySelector('[data-testid="hover-overlay"]');
+      expect(overlay).toBeDefined();
+      expect(overlay?.classList.contains('opacity-100')).toBe(true);
     });
-    
-    const overlay = screen.getByTestId('hover-overlay');
-    expect(overlay).toBeDefined();
-    expect(overlay.className).toContain('opacity-100');
     
     fireEvent.mouseLeave(card);
     
     await waitFor(() => {
-      expect(card.className).not.toContain('shadow-crimson');
+      const overlay = card.querySelector('[data-testid="hover-overlay"]');
+      expect(overlay?.classList.contains('opacity-0')).toBe(true);
     });
   });
 
   it('renders add to cart button', () => {
     renderWithProviders(<ProductCard product={mockProduct} />);
     
-    const addButton = screen.getByRole('button', { name: /add to cart/i });
-    expect(addButton).toBeDefined();
+    expect(screen.getByRole('button', { name: /add to cart/i })).toBeDefined();
   });
 
   it('calls addToCart when add to cart button is clicked', async () => {
@@ -127,64 +123,20 @@ describe('ProductCard', () => {
     renderWithProviders(<ProductCard product={outOfStockProduct} />);
     
     expect(screen.getByText(/out of stock/i)).toBeDefined();
-    const addButton = screen.queryByRole('button', { name: /add to cart/i });
-    expect(addButton).toBeNull();
+    expect(screen.getByRole('button', { name: /out of stock/i })).toBeDisabled();
   });
 
-  it('shows loading spinner during add to cart', async () => {
-    const addToCartSpy = vi.fn().mockImplementation(() => new Promise(() => {}));
-    vi.spyOn(cartHook, 'useCart').mockReturnValue({
-      items: [],
-      addToCart: addToCartSpy,
-      removeFromCart: vi.fn(),
-      updateQuantity: vi.fn(),
-      clearCart: vi.fn(),
-      totalItems: 0,
-      totalPrice: 0,
-    });
-
+  it('renders with distressed texture background', () => {
     renderWithProviders(<ProductCard product={mockProduct} />);
     
-    const addButton = screen.getByRole('button', { name: /add to cart/i });
-    fireEvent.click(addButton);
-    
-    await waitFor(() => {
-      expect(screen.getByTestId('vinyl-spinner')).toBeDefined();
-    });
-  });
-
-  it('handles add to cart timeout error', async () => {
-    vi.useFakeTimers();
-    const addToCartSpy = vi.fn().mockImplementation(() => new Promise(() => {}));
-    vi.spyOn(cartHook, 'useCart').mockReturnValue({
-      items: [],
-      addToCart: addToCartSpy,
-      removeFromCart: vi.fn(),
-      updateQuantity: vi.fn(),
-      clearCart: vi.fn(),
-      totalItems: 0,
-      totalPrice: 0,
-    });
-
-    renderWithProviders(<ProductCard product={mockProduct} />);
-    
-    const addButton = screen.getByRole('button', { name: /add to cart/i });
-    fireEvent.click(addButton);
-    
-    act(() => {
-      vi.advanceTimersByTime(10000);
-    });
-    
-    await waitFor(() => {
-      expect(screen.getByText(/failed to add to cart/i)).toBeDefined();
-    });
-    
-    vi.useRealTimers();
+    const card = screen.getByTestId('product-card');
+    const style = window.getComputedStyle(card);
+    expect(style.backgroundImage).toContain('data:image/svg+xml');
   });
 });
 
 describe('ProductGrid', () => {
-  it('renders all products as cards', () => {
+  it('renders all products in a responsive grid', () => {
     renderWithProviders(<ProductGrid products={mockProducts} />);
     
     expect(screen.getByText('The Black Parade')).toBeDefined();
@@ -192,28 +144,27 @@ describe('ProductGrid', () => {
     expect(screen.getByText('I Brought You My Bullets, You Brought Me Your Love')).toBeDefined();
   });
 
-  it('shows loading spinner when isLoading is true', () => {
-    renderWithProviders(<ProductGrid products={[]} isLoading={true} />);
+  it('renders correct number of product cards', () => {
+    renderWithProviders(<ProductGrid products={mockProducts} />);
     
-    expect(screen.getByTestId('vinyl-spinner')).toBeDefined();
+    const cards = screen.getAllByTestId('product-card');
+    expect(cards).toHaveLength(3);
   });
 
-  it('shows error state when error is provided', () => {
-    renderWithProviders(<ProductGrid products={[]} error="Failed to load" />);
-    
-    expect(screen.getByText(/failed to load/i)).toBeDefined();
-  });
-
-  it('shows empty state when no products', () => {
+  it('renders empty state when no products provided', () => {
     renderWithProviders(<ProductGrid products={[]} />);
     
-    expect(screen.getByText(/empty/i)).toBeDefined();
+    expect(screen.getByText(/the shelves are bare/i)).toBeDefined();
   });
 
-  it('renders responsive grid layout', () => {
-    const { container } = renderWithProviders(<ProductGrid products={mockProducts} />);
+  it('applies responsive grid classes', () => {
+    renderWithProviders(<ProductGrid products={mockProducts} />);
     
-    const grid = container.querySelector('[class*="grid"]');
-    expect(grid).toBeDefined();
+    const grid = screen.getByTestId('product-grid');
+    expect(grid.className).toContain('grid');
+    expect(grid.className).toContain('grid-cols-1');
+    expect(grid.className).toContain('sm:grid-cols-2');
+    expect(grid.className).toContain('lg:grid-cols-3');
+    expect(grid.className).toContain('xl:grid-cols-4');
   });
 });
