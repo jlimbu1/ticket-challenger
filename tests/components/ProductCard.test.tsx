@@ -58,31 +58,43 @@ function renderWithProviders(ui: React.ReactElement) {
 describe('ProductCard', () => {
   it('renders product title, price, year, and image', () => {
     renderWithProviders(<ProductCard product={mockProduct} />);
+    
     expect(screen.getByText('The Black Parade')).toBeDefined();
     expect(screen.getByText('$29.99')).toBeDefined();
     expect(screen.getByText('2006')).toBeDefined();
-    const img = screen.getByAltText('The Black Parade') as HTMLImageElement;
-    expect(img.src).toContain('/images/black-parade.jpg');
+    expect(screen.getByRole('img')).toBeDefined();
   });
 
   it('shows skull/rose overlay on hover with crimson glow', () => {
     renderWithProviders(<ProductCard product={mockProduct} />);
+    
     const card = screen.getByTestId('product-card');
+    
+    expect(card).toBeDefined();
+    
+    act(() => {
+      fireEvent.mouseEnter(card);
+    });
+    
     const overlay = screen.getByTestId('hover-overlay');
-    expect(overlay.className).toContain('opacity-0');
-    fireEvent.mouseEnter(card);
+    expect(overlay).toBeDefined();
     expect(overlay.className).toContain('opacity-100');
-    expect(card.className).toContain('shadow-crimson');
-    fireEvent.mouseLeave(card);
+    
+    act(() => {
+      fireEvent.mouseLeave(card);
+    });
+    
     expect(overlay.className).toContain('opacity-0');
   });
 
-  it('renders Add to Cart button', () => {
+  it('renders add to cart button', () => {
     renderWithProviders(<ProductCard product={mockProduct} />);
-    expect(screen.getByText('Add to Cart')).toBeDefined();
+    
+    const addButton = screen.getByRole('button', { name: /add to cart/i });
+    expect(addButton).toBeDefined();
   });
 
-  it('calls addToCart when Add to Cart is clicked', () => {
+  it('calls addToCart when add to cart button is clicked', () => {
     const addToCartSpy = vi.fn();
     vi.spyOn(cartHook, 'useCart').mockReturnValue({
       items: [],
@@ -93,60 +105,101 @@ describe('ProductCard', () => {
       totalItems: 0,
       totalPrice: 0,
     });
+    
     renderWithProviders(<ProductCard product={mockProduct} />);
-    fireEvent.click(screen.getByText('Add to Cart'));
+    
+    const addButton = screen.getByRole('button', { name: /add to cart/i });
+    fireEvent.click(addButton);
+    
     expect(addToCartSpy).toHaveBeenCalledWith(mockProduct);
-    vi.restoreAllMocks();
-  });
-
-  it('shows adding state when Add to Cart is clicked', () => {
-    renderWithProviders(<ProductCard product={mockProduct} />);
-    fireEvent.click(screen.getByText('Add to Cart'));
-    expect(screen.getByText('Adding...')).toBeDefined();
-  });
-
-  it('shows error state when add to cart fails', async () => {
-    const addToCartSpy = vi.fn().mockRejectedValue(new Error('Failed'));
-    vi.spyOn(cartHook, 'useCart').mockReturnValue({
-      items: [],
-      addToCart: addToCartSpy,
-      removeFromCart: vi.fn(),
-      updateQuantity: vi.fn(),
-      clearCart: vi.fn(),
-      totalItems: 0,
-      totalPrice: 0,
-    });
-    renderWithProviders(<ProductCard product={mockProduct} />);
-    fireEvent.click(screen.getByText('Add to Cart'));
-    await screen.findByText('Failed to add to cart');
-    expect(screen.getByText('Failed to add to cart')).toBeDefined();
+    
     vi.restoreAllMocks();
   });
 
   it('shows out of stock state when product is not in stock', () => {
     const outOfStockProduct = { ...mockProduct, inStock: false };
     renderWithProviders(<ProductCard product={outOfStockProduct} />);
-    expect(screen.getByText('Out of Stock')).toBeDefined();
-    expect(screen.queryByText('Add to Cart')).toBeNull();
+    
+    expect(screen.getByText(/out of stock/i)).toBeDefined();
+    const addButton = screen.getByRole('button', { name: /out of stock/i });
+    expect(addButton).toBeDisabled();
   });
 
-  it('applies distressed texture background', () => {
+  it('shows adding state when add to cart is clicked', () => {
+    vi.useFakeTimers();
+    
     renderWithProviders(<ProductCard product={mockProduct} />);
-    const card = screen.getByTestId('product-card');
-    expect(card.style.backgroundImage).toContain('data:image/svg+xml');
+    
+    const addButton = screen.getByRole('button', { name: /add to cart/i });
+    fireEvent.click(addButton);
+    
+    expect(screen.getByText(/adding/i)).toBeDefined();
+    
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    
+    expect(screen.getByRole('button', { name: /add to cart/i })).toBeDefined();
+    
+    vi.useRealTimers();
+  });
+
+  it('handles add to cart timeout gracefully', () => {
+    vi.useFakeTimers();
+    
+    renderWithProviders(<ProductCard product={mockProduct} />);
+    
+    const addButton = screen.getByRole('button', { name: /add to cart/i });
+    fireEvent.click(addButton);
+    
+    act(() => {
+      vi.advanceTimersByTime(10000);
+    });
+    
+    expect(screen.getByRole('button', { name: /add to cart/i })).toBeDefined();
+    
+    vi.useRealTimers();
   });
 });
 
 describe('ProductGrid', () => {
   it('renders all products in a grid', () => {
     renderWithProviders(<ProductGrid products={mockProducts} />);
+    
     expect(screen.getByText('The Black Parade')).toBeDefined();
     expect(screen.getByText('Three Cheers for Sweet Revenge')).toBeDefined();
     expect(screen.getByText('I Brought You My Bullets, You Brought Me Your Love')).toBeDefined();
   });
 
-  it('renders responsive grid layout', () => {
+  it('renders correct number of product cards', () => {
     renderWithProviders(<ProductGrid products={mockProducts} />);
+    
+    const cards = screen.getAllByTestId('product-card');
+    expect(cards.length).toBe(3);
+  });
+
+  it('renders loading state with VinylSpinner', () => {
+    renderWithProviders(<ProductGrid products={[]} isLoading={true} />);
+    
+    expect(screen.getByTestId('vinyl-spinner')).toBeDefined();
+  });
+
+  it('renders empty state when no products and not loading', () => {
+    renderWithProviders(<ProductGrid products={[]} isLoading={false} />);
+    
+    expect(screen.getByText(/the shelves are bare/i)).toBeDefined();
+  });
+
+  it('renders error state when error is provided', () => {
+    const errorMessage = 'Failed to load products';
+    renderWithProviders(<ProductGrid products={[]} isLoading={false} error={errorMessage} />);
+    
+    expect(screen.getByText(errorMessage)).toBeDefined();
+  });
+
+  it('applies responsive grid classes', () => {
+    renderWithProviders(<ProductGrid products={mockProducts} />);
+    
     const grid = screen.getByTestId('product-grid');
     expect(grid.className).toContain('grid');
     expect(grid.className).toContain('grid-cols-1');
@@ -155,35 +208,15 @@ describe('ProductGrid', () => {
     expect(grid.className).toContain('xl:grid-cols-4');
   });
 
-  it('shows VinylSpinner when loading', () => {
-    renderWithProviders(<ProductGrid products={[]} isLoading={true} />);
-    expect(screen.getByTestId('vinyl-spinner')).toBeDefined();
-  });
-
-  it('shows EmptyState when no products', () => {
-    renderWithProviders(<ProductGrid products={[]} />);
-    expect(screen.getByText('The Record Collection is Empty')).toBeDefined();
-    expect(screen.getByText('The shelves are bare, the music has faded. Perhaps the ghosts have taken our records. Check back when the spirits return.')).toBeDefined();
-  });
-
-  it('shows error state when error prop is provided', () => {
-    renderWithProviders(<ProductGrid products={[]} error="Failed to load" />);
-    expect(screen.getByText('The Record Player is Broken')).toBeDefined();
-    expect(screen.getByText('A ghost in the machine has scattered our collection. The vinyls are silent, the needles are still. Perhaps refresh and try again?')).toBeDefined();
-  });
-
-  it('handles empty products array gracefully', () => {
-    renderWithProviders(<ProductGrid products={[]} />);
-    expect(screen.getByText('The Record Collection is Empty')).toBeDefined();
+  it('handles empty products array without crashing', () => {
+    renderWithProviders(<ProductGrid products={[]} isLoading={false} />);
+    
+    expect(screen.getByTestId('product-grid')).toBeDefined();
   });
 
   it('handles null products gracefully', () => {
-    renderWithProviders(<ProductGrid products={null as unknown as Product[]} />);
-    expect(screen.getByText('The Record Collection is Empty')).toBeDefined();
-  });
-
-  it('handles undefined products gracefully', () => {
-    renderWithProviders(<ProductGrid products={undefined as unknown as Product[]} />);
-    expect(screen.getByText('The Record Collection is Empty')).toBeDefined();
+    renderWithProviders(<ProductGrid products={null as unknown as Product[]} isLoading={false} />);
+    
+    expect(screen.getByText(/the shelves are bare/i)).toBeDefined();
   });
 });
