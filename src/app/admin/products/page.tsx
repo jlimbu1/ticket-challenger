@@ -1,5 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { Product } from '@/types'
 
 export const metadata: Metadata = {
@@ -26,6 +28,9 @@ function formatPrice(price: number): string {
 
 function getImageUrl(url: string | null): string {
   if (!url) return '/placeholder.svg'
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return '/placeholder.svg'
+  }
   return url
 }
 
@@ -44,6 +49,8 @@ async function deleteProductAction(formData: FormData): Promise<void> {
   if (!res.ok) {
     throw new Error('Failed to delete product')
   }
+  revalidatePath('/admin/products')
+  redirect('/admin/products')
 }
 
 export default async function AdminProductsPage() {
@@ -95,7 +102,7 @@ export default async function AdminProductsPage() {
         {!error && products.length === 0 && (
           <div className="text-center py-12">
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
             <h3 className="mt-2 text-sm font-medium text-gray-900">No products</h3>
             <p className="mt-1 text-sm text-gray-500">Get started by adding your first product.</p>
@@ -145,6 +152,11 @@ export default async function AdminProductsPage() {
                           <div className="text-sm font-medium text-gray-900">
                             {product.name}
                           </div>
+                          <div className="text-sm text-gray-500">
+                            {product.description.length > 100
+                              ? product.description.substring(0, 100) + '...'
+                              : product.description}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -172,7 +184,7 @@ export default async function AdminProductsPage() {
                             type="submit"
                             className="text-red-600 hover:text-red-900"
                             onClick={(e) => {
-                              if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+                              if (!confirm('Are you sure you want to delete this product?')) {
                                 e.preventDefault()
                               }
                             }}

@@ -1,6 +1,8 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { Product } from '@/types'
 
 export const metadata: Metadata = {
@@ -23,6 +25,26 @@ async function getProduct(id: string): Promise<Product | null> {
     console.error('Error fetching product:', error)
     throw error
   }
+}
+
+function validateUrl(url: string | null): string {
+  if (!url) return '/placeholder.svg'
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return '/placeholder.svg'
+    }
+    return url
+  } catch {
+    return '/placeholder.svg'
+  }
+}
+
+function formatPrice(price: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(price)
 }
 
 async function updateProduct(id: string, formData: FormData): Promise<void> {
@@ -53,38 +75,45 @@ async function updateProduct(id: string, formData: FormData): Promise<void> {
     errors.push('Category is required')
   }
 
-  if (errors.length > 0) {
-    throw new Error(errors.join('; '))
+  if (imageUrl && imageUrl.trim().length > 0) {
+    try {
+      const parsed = new URL(imageUrl)
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        errors.push('Image URL must use http or https protocol')
+      }
+    } catch {
+      errors.push('Image URL must be a valid URL')
+    }
   }
 
-  const body: Record<string, unknown> = {
+  if (errors.length > 0) {
+    throw new Error(errors.join('\n'))
+  }
+
+  const body = {
     name: name.trim(),
     description: description.trim(),
     price: priceNum,
     category: category.trim(),
-  }
-
-  if (imageUrl && imageUrl.trim().length > 0) {
-    body.imageUrl = imageUrl.trim()
+    imageUrl: imageUrl && imageUrl.trim().length > 0 ? imageUrl.trim() : null,
   }
 
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`,
     {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     }
   )
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => null)
-    throw new Error(
-      errorData?.message || 'Failed to update product'
-    )
+    throw new Error(errorData?.error || 'Failed to update product')
   }
+
+  revalidatePath('/admin/products')
+  redirect('/admin/products')
 }
 
 export default async function EditProductPage({
@@ -100,21 +129,21 @@ export default async function EditProductPage({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <Link
             href="/admin/products"
-            className="text-indigo-600 hover:text-indigo-800 transition-colors"
+            className="text-sm text-indigo-600 hover:text-indigo-500"
           >
             &larr; Back to Products
           </Link>
+          <h1 className="text-3xl font-bold text-gray-900 mt-2">Edit Product</h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Update the details for {product.name}
+          </p>
         </div>
 
         <div className="bg-white shadow rounded-lg p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">
-            Edit Product
-          </h1>
-
           <form action={updateProduct.bind(null, params.id)}>
             <input type="hidden" name="id" value={params.id} />
 
@@ -124,7 +153,7 @@ export default async function EditProductPage({
                   htmlFor="name"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Name
+                  Product Name
                 </label>
                 <input
                   type="text"
@@ -133,7 +162,7 @@ export default async function EditProductPage({
                   defaultValue={product.name}
                   required
                   minLength={2}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
 
@@ -151,7 +180,7 @@ export default async function EditProductPage({
                   defaultValue={product.description}
                   required
                   minLength={10}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
 
@@ -160,7 +189,7 @@ export default async function EditProductPage({
                   htmlFor="price"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Price
+                  Price (USD)
                 </label>
                 <input
                   type="number"
@@ -170,7 +199,7 @@ export default async function EditProductPage({
                   required
                   min="0.01"
                   step="0.01"
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
 
@@ -186,7 +215,7 @@ export default async function EditProductPage({
                   name="category"
                   defaultValue={product.category}
                   required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 >
                   <option value="">Select a category</option>
                   <option value="Electronics">Electronics</option>
@@ -212,24 +241,34 @@ export default async function EditProductPage({
                   id="imageUrl"
                   name="imageUrl"
                   defaultValue={product.imageUrl || ''}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
+                {product.imageUrl && (
+                  <div className="mt-2">
+                    <p className="text-xs text-gray-500 mb-1">Current image:</p>
+                    <img
+                      src={validateUrl(product.imageUrl)}
+                      alt={product.name}
+                      className="h-20 w-20 object-cover rounded border border-gray-200"
+                    />
+                  </div>
+                )}
               </div>
+            </div>
 
-              <div className="flex justify-end space-x-4">
-                <Link
-                  href="/admin/products"
-                  className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
-                >
-                  Cancel
-                </Link>
-                <button
-                  type="submit"
-                  className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
-                >
-                  Save Changes
-                </button>
-              </div>
+            <div className="mt-8 flex justify-end space-x-4">
+              <Link
+                href="/admin/products"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Cancel
+              </Link>
+              <button
+                type="submit"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Save Changes
+              </button>
             </div>
           </form>
         </div>
