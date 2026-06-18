@@ -54,7 +54,7 @@ export default function HomePage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <EmptyState
           title="The Shelves Are Empty"
-          message="Our collection has been scattered to the winds. The records that once spun tales of tragedy and triumph are nowhere to be found. Check back when the darkness lifts."
+          message="Like a forgotten attic, our collection has vanished into the void. The records have taken their final bow. Check back when the stars align."
         />
       </div>
     );
@@ -64,11 +64,11 @@ export default function HomePage() {
     <main className="min-h-screen bg-black">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-serif text-crimson mb-4 tracking-wider">
-            The Black Parade
+          <h1 className="text-5xl font-bold text-crimson mb-4" style={{ fontFamily: 'var(--font-gothic)' }}>
+            Welcome to the Black Parade
           </h1>
-          <p className="text-xl text-gray-400 font-serif italic">
-            A collection of vinyl records, each with a story to tell
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+            Browse our collection of vinyl records, posters, and memorabilia. Each piece tells a story of heartbreak, rebellion, and redemption.
           </p>
         </div>
         <ProductGrid products={products} />

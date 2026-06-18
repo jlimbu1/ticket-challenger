@@ -16,43 +16,56 @@ const SKULL_ROSE_OVERLAY = `data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmln
 
 const ADD_TO_CART_TIMEOUT = 10000;
 
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error('Operation timed out'));
+    }, ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
+}
+
 export function ProductCard({ product }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [isAdding, setIsAdding] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const { addToCart } = useCart();
 
   const handleAddToCart = useCallback(async () => {
-    if (isAdding) return;
+    if (isAddingToCart) return;
 
-    setIsAdding(true);
+    setIsAddingToCart(true);
     setAddError(null);
 
-    try {
-      const addPromise = addToCart(product);
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        timeoutRef.current = setTimeout(() => {
-          reject(new Error('Add to cart timed out'));
-        }, ADD_TO_CART_TIMEOUT);
-      });
+    abortControllerRef.current = new AbortController();
 
-      await Promise.race([addPromise, timeoutPromise]);
+    try {
+      await withTimeout(
+        addToCart(product),
+        ADD_TO_CART_TIMEOUT
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to add item to cart';
       setAddError(message);
     } finally {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-      setIsAdding(false);
+      setIsAddingToCart(false);
+      abortControllerRef.current = null;
     }
-  }, [product, addToCart, isAdding]);
+  }, [product, addToCart, isAddingToCart]);
 
   return (
     <div
-      className="relative group cursor-pointer overflow-hidden rounded-lg border border-crimson-900/30 bg-black/80 transition-all duration-500 hover:border-crimson-700/60"
+      className="relative group overflow-hidden rounded-lg border border-crimson-900/30 bg-black/80 transition-all duration-500 hover:shadow-[0_0_30px_rgba(139,0,0,0.5)]"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       role="article"
@@ -68,7 +81,7 @@ export function ProductCard({ product }: ProductCardProps) {
       {/* Skull and rose overlay on hover */}
       {isHovered && (
         <div
-          className="absolute inset-0 pointer-events-none z-20 transition-opacity duration-500 opacity-60"
+          className="absolute inset-0 z-20 transition-opacity duration-500 opacity-60"
           style={{ backgroundImage: `url(${SKULL_ROSE_OVERLAY})`, backgroundSize: 'cover' }}
           aria-hidden="true"
         />
@@ -76,9 +89,12 @@ export function ProductCard({ product }: ProductCardProps) {
 
       {/* Crimson glow on hover */}
       <div
-        className={`absolute inset-0 pointer-events-none z-0 transition-shadow duration-500 ${
-          isHovered ? 'shadow-[inset_0_0_60px_rgba(139,0,0,0.4)]' : ''
+        className={`absolute inset-0 z-10 transition-opacity duration-500 pointer-events-none ${
+          isHovered ? 'opacity-30' : 'opacity-0'
         }`}
+        style={{
+          background: 'radial-gradient(circle at center, rgba(139,0,0,0.4) 0%, transparent 70%)',
+        }}
         aria-hidden="true"
       />
 
@@ -86,37 +102,37 @@ export function ProductCard({ product }: ProductCardProps) {
       <div className="relative aspect-square overflow-hidden">
         <img
           src={product.imageUrl}
-          alt={`${product.title} album art`}
+          alt={`${product.title} album cover`}
           className={`w-full h-full object-cover transition-transform duration-700 ${
             isHovered ? 'scale-110' : 'scale-100'
           }`}
           loading="lazy"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%231a1a1a' width='400' height='400'/%3E%3Ctext fill='%238B0000' font-family='serif' font-size='24' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E`;
+            target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"%3E%3Crect fill="%231a1a1a" width="400" height="400"/%3E%3Ctext fill="%238B0000" font-family="serif" font-size="24" x="50" y="200"%3ENo Image%3C/text%3E%3C/svg%3E';
           }}
         />
 
         {/* Out of stock overlay */}
         {!product.inStock && (
           <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-30">
-            <span className="text-crimson-600 font-gothic text-2xl tracking-widest uppercase transform -rotate-12">
-              Sold Out
+            <span className="text-crimson-500 font-gothic text-2xl tracking-widest transform -rotate-12">
+              SOLD OUT
             </span>
           </div>
         )}
       </div>
 
       {/* Product info */}
-      <div className="p-4 space-y-2 relative z-10">
-        <h3 className="font-gothic text-lg text-gray-100 truncate" title={product.title}>
+      <div className="p-4 space-y-2">
+        <h3 className="font-gothic text-lg text-gray-100 truncate">
           {product.title}
         </h3>
-        <p className="text-sm text-gray-400 truncate" title={product.artist}>
+        <p className="text-sm text-gray-400">
           {product.artist}
         </p>
         <div className="flex items-center justify-between">
-          <span className="text-crimson-500 font-bold text-lg">
+          <span className="text-crimson-500 font-bold text-xl">
             ${product.price.toFixed(2)}
           </span>
           <span className="text-xs text-gray-500">
@@ -126,18 +142,21 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {/* Add to cart button */}
         <div className="pt-2">
+          {addError && (
+            <p className="text-red-500 text-xs mb-2" role="alert">
+              {addError}
+            </p>
+          )}
           <GothicButton
             onClick={handleAddToCart}
-            disabled={isAdding || !product.inStock}
-            className={`w-full transition-all duration-300 ${
-              isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-            }`}
+            disabled={!product.inStock || isAddingToCart}
+            className="w-full"
             aria-label={`Add ${product.title} to cart`}
           >
-            {isAdding ? (
+            {isAddingToCart ? (
               <span className="flex items-center justify-center gap-2">
                 <VinylSpinner size="small" />
-                <span>Adding...</span>
+                Adding...
               </span>
             ) : product.inStock ? (
               'Add to Cart'
@@ -146,13 +165,6 @@ export function ProductCard({ product }: ProductCardProps) {
             )}
           </GothicButton>
         </div>
-
-        {/* Error message */}
-        {addError && (
-          <p className="text-red-500 text-xs mt-1" role="alert">
-            {addError}
-          </p>
-        )}
       </div>
     </div>
   );
