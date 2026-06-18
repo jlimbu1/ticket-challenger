@@ -54,40 +54,59 @@ export default class DramaticErrorBoundary extends Component<
 
   render(): ReactNode {
     if (this.state.hasError) {
-      const errorMessage = getRandomErrorMessage();
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
       return (
         <div
           className={cn(
-            "flex flex-col items-center justify-center min-h-[400px] p-8",
-            "bg-gothic-950 border border-crimson/30 rounded-lg",
-            "shadow-gothic text-center",
+            "flex flex-col items-center justify-center gap-6 p-8 text-center",
+            "border border-gothic-700 bg-gothic-900/50 shadow-gothic",
+            "rounded-lg",
             this.props.className
           )}
           role="alert"
         >
-          <div className="mb-6 text-6xl text-crimson/60" aria-hidden="true">
-            &#9760;
+          <div className="relative flex items-center justify-center" aria-hidden="true">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-crimson/40 bg-gothic-800">
+              <span className="text-3xl text-crimson/60">&#9760;</span>
+            </div>
+            <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-rose/30">
+              <span className="text-xs text-rose">!</span>
+            </div>
           </div>
-          <h2 className="text-2xl font-bold text-crimson mb-4 font-gothic">
-            A Dark Omen
-          </h2>
-          <p className="text-gray-300 mb-6 max-w-md">
-            {errorMessage}
-          </p>
-          {this.props.fallback ? (
-            this.props.fallback
-          ) : (
-            <button
-              onClick={this.handleReset}
-              className={cn(
-                "px-6 py-3 bg-crimson text-white font-bold rounded-md",
-                "hover:bg-crimson/80 transition-colors duration-300",
-                "focus:outline-none focus:ring-2 focus:ring-crimson/50"
-              )}
-            >
-              Attempt the Ritual Again
-            </button>
-          )}
+          <div className="space-y-2">
+            <h2 className="font-gothic text-2xl font-bold tracking-wider text-crimson">
+              A Dark Omen
+            </h2>
+            <p className="max-w-md font-mono text-sm text-gothic-300">
+              {getRandomErrorMessage()}
+            </p>
+            {this.state.error && (
+              <details className="mt-4">
+                <summary className="cursor-pointer font-mono text-xs text-gothic-500 hover:text-gothic-300">
+                  View technical details
+                </summary>
+                <pre className="mt-2 max-h-32 overflow-auto rounded bg-gothic-950 p-2 text-left font-mono text-xs text-gothic-400">
+                  {this.state.error.message}
+                  {"\n"}
+                  {this.state.error.stack}
+                </pre>
+              </details>
+            )}
+          </div>
+          <button
+            onClick={this.handleReset}
+            className={cn(
+              "rounded border border-crimson/40 bg-gothic-800 px-6 py-2",
+              "font-mono text-sm text-crimson transition-all duration-300",
+              "hover:bg-crimson/20 hover:shadow-gothic-crimson",
+              "focus:outline-none focus:ring-2 focus:ring-crimson/50"
+            )}
+          >
+            Attempt to Restore the Ritual
+          </button>
         </div>
       );
     }

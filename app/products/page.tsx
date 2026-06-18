@@ -48,37 +48,27 @@ export default function ProductsPage() {
     <DramaticErrorBoundary>
       <div className="min-h-screen bg-black text-white">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <header className="mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">The Collection</h1>
-            <p className="text-gray-400">
-              Browse our curated selection of vinyl, apparel, and accessories.
-            </p>
-          </header>
-
+          <h1 className="text-4xl font-bold text-crimson mb-8 text-center tracking-wider uppercase">
+            Available Relics
+          </h1>
           {inStockProducts.length > 0 && (
-            <section className="mb-12">
-              <h2 className="text-2xl font-semibold text-gray-300 mb-6">
-                Available Now
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {inStockProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </section>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+              {inStockProducts.map((product: Product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
           )}
-
           {outOfStockProducts.length > 0 && (
-            <section>
-              <h2 className="text-2xl font-semibold text-gray-500 mb-6">
-                Sold Out
+            <>
+              <h2 className="text-2xl font-bold text-gothic-400 mb-6 text-center tracking-wider uppercase border-t border-gothic-700 pt-8">
+                Departed Souls
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {outOfStockProducts.map((product) => (
+                {outOfStockProducts.map((product: Product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
-            </section>
+            </>
           )}
         </div>
       </div>

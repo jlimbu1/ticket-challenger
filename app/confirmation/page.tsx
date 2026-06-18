@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { products } from "@/src/data/products";
 import type { Product, CartItem, Order } from "@/src/types";
@@ -34,7 +34,7 @@ interface OrderItemDisplay {
   subtotal: number;
 }
 
-export default function ConfirmationPage() {
+function ConfirmationContent() {
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [order, setOrder] = useState<Order | null>(null);
@@ -44,43 +44,53 @@ export default function ConfirmationPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const itemsParam = searchParams.get("items");
-      const totalParam = searchParams.get("total");
+      try {
+        const itemsParam = searchParams.get("items");
+        const totalParam = searchParams.get("total");
 
-      if (itemsParam && totalParam) {
-        try {
-          const parsedItems: CartItem[] = JSON.parse(itemsParam);
-          const total = parseFloat(totalParam);
+        if (!itemsParam || !totalParam) {
+          setIsLoading(false);
+          return;
+        }
 
-          const displayItems: OrderItemDisplay[] = parsedItems.map((item) => ({
+        const parsedItems: Array<{ productId: string; quantity: number }> = JSON.parse(
+          decodeURIComponent(itemsParam)
+        );
+
+        const items: OrderItemDisplay[] = parsedItems
+          .map((item) => {
+            const product = products.find((p) => p.id === item.productId);
+            if (!product) return null;
+            return {
+              product,
+              quantity: item.quantity,
+              subtotal: product.price * item.quantity,
+            };
+          })
+          .filter((item): item is OrderItemDisplay => item !== null);
+
+        setOrderItems(items);
+
+        const total = items.reduce((sum, item) => sum + item.subtotal, 0);
+
+        setOrder({
+          id: orderId,
+          items: items.map((item) => ({
             product: item.product,
             quantity: item.quantity,
-            subtotal: item.product.price * item.quantity,
-          }));
+          })),
+          total,
+          status: "completed",
+          createdAt: new Date().toISOString(),
+          customerName: "",
+          customerEmail: "",
+        });
 
-          const newOrder: Order = {
-            id: orderId,
-            items: parsedItems,
-            total: total,
-            status: "completed",
-            createdAt: new Date().toISOString(),
-            customerName: searchParams.get("name") || "Valued Customer",
-            customerEmail: searchParams.get("email") || "customer@example.com",
-          };
-
-          setOrder(newOrder);
-          setOrderItems(displayItems);
-        } catch (error) {
-          console.error(
-            "[ConfirmationPage] Failed to parse order data:",
-            error instanceof Error ? error.message : "Unknown error",
-            error instanceof Error ? error.stack : ""
-          );
-          setOrder(null);
-        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error("[ConfirmationPage] Failed to parse order data:", error);
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     }, 800);
 
     return () => clearTimeout(timer);
@@ -100,7 +110,7 @@ export default function ConfirmationPage() {
         <div className="min-h-screen bg-black text-white p-8">
           <GothicEmptyState
             title="No Order Found"
-            message="The spirits have no record of this order. Perhaps it was lost in the void."
+            message="The spirits have no record of this transaction. Perhaps the ritual was never completed."
           />
         </div>
       </DramaticErrorBoundary>
@@ -110,144 +120,118 @@ export default function ConfirmationPage() {
   return (
     <DramaticErrorBoundary>
       <div className="min-h-screen bg-black text-white">
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          {/* Tour Diary Header */}
-          <div className="text-center mb-12">
-            <div className="inline-block border-2 border-crimson/40 rounded-full px-6 py-2 mb-4">
-              <span className="text-crimson text-sm uppercase tracking-widest">
-                Tour Diary Entry
-              </span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
-              Order Confirmed
+        <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="mb-8 text-center">
+            <h1 className="font-gothic text-4xl font-bold tracking-wider text-crimson md:text-5xl">
+              The Ritual is Complete
             </h1>
-            <p className="text-gray-400 text-lg">
-              The ritual is complete. Your relics will be dispatched soon.
+            <p className="mt-2 text-lg text-gothic-300">
+              Your order has been sealed in the archives of the black parade.
             </p>
           </div>
 
-          {/* Order ID and Status */}
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <p className="text-gray-400 text-sm uppercase tracking-wider mb-1">
-                  Order ID
-                </p>
-                <p className="text-white text-xl font-mono">{order.id}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-gray-400 text-sm uppercase tracking-wider mb-1">
-                  Status
-                </p>
-                <span className="inline-block bg-green-900/50 text-green-400 px-3 py-1 rounded-full text-sm">
-                  Completed
-                </span>
-              </div>
+          <div className="mb-8 rounded-lg border border-gothic-700 bg-gothic-900/50 p-6 shadow-gothic">
+            <div className="mb-4 border-b border-gothic-700 pb-4">
+              <h2 className="font-gothic text-2xl font-semibold text-crimson">
+                Tour Diary Entry
+              </h2>
+              <p className="mt-1 text-sm text-gothic-400">
+                Order #{orderId}
+              </p>
             </div>
-          </div>
 
-          {/* Order Items */}
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-8">
-            <h2 className="text-xl font-bold text-white mb-6">Items Ordered</h2>
-            <div className="space-y-4">
-              {orderItems.map((item) => (
-                <div
-                  key={item.product.id}
-                  className="flex items-center justify-between border-b border-gray-800 pb-4 last:border-b-0 last:pb-0"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gray-800 rounded-lg overflow-hidden flex-shrink-0">
-                      {item.product.image ? (
-                        <img
-                          src={item.product.image}
-                          alt={item.product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-600">
-                          <span className="text-2xl">&#9835;</span>
-                        </div>
-                      )}
+            <div className="mb-6 space-y-2 text-sm text-gothic-300">
+              <p>
+                <span className="font-semibold text-gothic-200">Date:</span>{" "}
+                {new Date(order.createdAt).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+              <p>
+                <span className="font-semibold text-gothic-200">Status:</span>{" "}
+                <span className="text-emerald-400">Completed</span>
+              </p>
+              <p>
+                <span className="font-semibold text-gothic-200">
+                  Estimated Delivery:
+                </span>{" "}
+                {estimatedDelivery}
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="mb-3 font-gothic text-lg font-semibold text-crimson">
+                Setlist (Items)
+              </h3>
+              <div className="space-y-3">
+                {orderItems.map((item) => (
+                  <div
+                    key={item.product.id}
+                    className="flex items-center justify-between rounded-md border border-gothic-700 bg-gothic-800/50 p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded border border-gothic-600 bg-gothic-800">
+                        <span className="text-2xl text-crimson/60">&#9835;</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gothic-100">
+                          {item.product.name}
+                        </p>
+                        <p className="text-xs text-gothic-400">
+                          Qty: {item.quantity} x ${item.product.price.toFixed(2)}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-white font-semibold">{item.product.name}</p>
-                      <p className="text-gray-400 text-sm">
-                        Qty: {item.quantity} x ${item.product.price.toFixed(2)}
-                      </p>
-                    </div>
+                    <p className="font-semibold text-gothic-100">
+                      ${item.subtotal.toFixed(2)}
+                    </p>
                   </div>
-                  <p className="text-white font-semibold">
-                    ${item.subtotal.toFixed(2)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Order Summary */}
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-8">
-            <h2 className="text-xl font-bold text-white mb-6">Order Summary</h2>
-            <div className="space-y-3">
-              <div className="flex justify-between text-gray-400">
-                <span>Subtotal</span>
-                <span>${order.total.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-gray-400">
-                <span>Shipping</span>
-                <span className="text-green-400">Free</span>
-              </div>
-              <div className="border-t border-gray-800 pt-3 flex justify-between text-white font-bold text-lg">
-                <span>Total</span>
-                <span>${order.total.toFixed(2)}</span>
+                ))}
               </div>
             </div>
-          </div>
 
-          {/* Estimated Delivery */}
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-8">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-crimson/20 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-crimson text-xl">&#9992;</span>
-              </div>
-              <div>
-                <p className="text-gray-400 text-sm uppercase tracking-wider mb-1">
-                  Estimated Delivery
+            <div className="border-t border-gothic-700 pt-4">
+              <div className="flex items-center justify-between">
+                <p className="font-gothic text-lg font-semibold text-gothic-200">
+                  Total
                 </p>
-                <p className="text-white text-lg font-semibold">
-                  {estimatedDelivery}
+                <p className="font-gothic text-2xl font-bold text-crimson">
+                  ${order.total.toFixed(2)}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Customer Info */}
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-8">
-            <h2 className="text-xl font-bold text-white mb-6">Customer Details</h2>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Name</span>
-                <span className="text-white">{order.customerName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Email</span>
-                <span className="text-white">{order.customerEmail}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Continue Shopping Button */}
           <div className="text-center">
+            <p className="mb-4 text-sm text-gothic-400">
+              A confirmation email will be sent to the address provided during
+              checkout. Keep this order ID for your records.
+            </p>
             <GothicButton
-              onClick={() => {
-                window.location.href = "/products";
-              }}
-              className="px-8 py-3"
+              onClick={() => (window.location.href = "/products")}
+              className="mx-auto"
             >
-              Continue Shopping
+              Return to the Stage
             </GothicButton>
           </div>
         </div>
       </div>
     </DramaticErrorBoundary>
+  );
+}
+
+export default function ConfirmationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+          <VinylSpinner />
+        </div>
+      }
+    >
+      <ConfirmationContent />
+    </Suspense>
   );
 }

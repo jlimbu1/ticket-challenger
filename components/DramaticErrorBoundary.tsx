@@ -58,59 +58,54 @@ export default class DramaticErrorBoundary extends Component<
         return this.props.fallback;
       }
 
-      const errorMessage = this.state.error?.message || getRandomErrorMessage();
-
       return (
         <div
-          role="alert"
           className={cn(
-            "flex flex-col items-center justify-center gap-6 p-12 text-center",
-            "min-h-[400px] bg-gothic-950 border border-crimson/30",
-            "rounded-lg shadow-gothic",
+            "flex flex-col items-center justify-center gap-6 p-8 text-center",
+            "border border-gothic-700 bg-gothic-900/50 shadow-gothic",
+            "rounded-lg min-h-[200px]",
             this.props.className
           )}
+          role="alert"
         >
-          <div className="relative" aria-hidden="true">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-crimson/50 bg-gothic-900">
-              <span className="text-4xl text-crimson">&#9760;</span>
+          <div className="relative flex items-center justify-center" aria-hidden="true">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-crimson/40 bg-gothic-800">
+              <span className="text-2xl text-crimson/60">&#9760;</span>
             </div>
-            <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-full bg-crimson/20">
-              <span className="text-lg text-crimson">&#9888;</span>
+            <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-rose/30">
+              <span className="text-xs text-rose">!</span>
             </div>
           </div>
-
-          <div className="space-y-3">
-            <h2 className="text-2xl font-bold text-crimson tracking-wider uppercase">
+          <div className="space-y-2">
+            <h2 className="font-gothic text-xl font-bold tracking-wider text-crimson">
               Ritual Interrupted
             </h2>
-            <p className="text-gothic-300 text-lg max-w-md mx-auto leading-relaxed">
-              {errorMessage}
+            <p className="max-w-md text-sm text-gothic-300">
+              {getRandomErrorMessage()}
             </p>
+            {this.state.error && (
+              <details className="mt-2 cursor-pointer">
+                <summary className="text-xs text-gothic-500 hover:text-gothic-400">
+                  Technical details
+                </summary>
+                <pre className="mt-2 max-h-32 overflow-auto rounded bg-gothic-950 p-2 text-left text-xs text-gothic-400">
+                  {this.state.error.message}
+                </pre>
+              </details>
+            )}
           </div>
-
           <button
             onClick={this.handleReset}
             className={cn(
-              "px-8 py-3 rounded-md font-semibold tracking-wider uppercase",
-              "bg-crimson text-white hover:bg-crimson/80",
-              "transition-all duration-300 border border-crimson/50",
-              "shadow-lg hover:shadow-crimson/20"
+              "rounded border border-crimson/40 bg-crimson/10 px-6 py-2",
+              "font-gothic text-sm tracking-wider text-crimson",
+              "transition-all duration-300",
+              "hover:bg-crimson/20 hover:shadow-gothic-crimson",
+              "focus:outline-none focus:ring-2 focus:ring-crimson/50"
             )}
-            type="button"
           >
-            Attempt the Ritual Again
+            Attempt Recovery
           </button>
-
-          {this.state.error && (
-            <details className="w-full max-w-md mt-4">
-              <summary className="text-gothic-400 text-sm cursor-pointer hover:text-gothic-300 transition-colors">
-                Technical Details
-              </summary>
-              <pre className="mt-2 p-4 bg-gothic-950 border border-gothic-800 rounded text-xs text-gothic-400 overflow-auto max-h-32 text-left">
-                {this.state.error.stack || this.state.error.message}
-              </pre>
-            </details>
-          )}
         </div>
       );
     }

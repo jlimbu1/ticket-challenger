@@ -1,84 +1,39 @@
-"use client";
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  description: string;
+  category: 'vinyl' | 'apparel' | 'poster' | 'accessory';
+  stock: number;
+}
 
-import { useState, useEffect } from "react";
-import { products } from "@/src/data/products";
-import ProductCard from "@/components/ProductCard";
-import DramaticErrorBoundary from "@/components/DramaticErrorBoundary";
-import GothicEmptyState from "@/components/GothicEmptyState";
-import VinylSpinner from "@/components/VinylSpinner";
-import type { Product } from "@/src/types";
+export interface CartItem {
+  product: Product;
+  quantity: number;
+}
 
-export default function ProductsPage() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [productList, setProductList] = useState<Product[]>([]);
+export interface CartState {
+  items: CartItem[];
+  addItem: (product: Product, quantity?: number) => void;
+  removeItem: (productId: string) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
+  clearCart: () => void;
+}
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setProductList(products);
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+export interface Order {
+  id: string;
+  items: CartItem[];
+  total: number;
+  status: 'pending' | 'completed' | 'cancelled';
+  createdAt: string;
+  customerName: string;
+  customerEmail: string;
+}
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <VinylSpinner />
-      </div>
-    );
-  }
-
-  if (productList.length === 0) {
-    return (
-      <DramaticErrorBoundary>
-        <div className="min-h-screen bg-black text-white p-8">
-          <GothicEmptyState
-            title="No Products Found"
-            message="The stage is empty. Check back later for new releases."
-          />
-        </div>
-      </DramaticErrorBoundary>
-    );
-  }
-
-  const inStockProducts = productList.filter((product: Product) => product.stock > 0);
-  const outOfStockProducts = productList.filter((product: Product) => product.stock <= 0);
-
-  return (
-    <DramaticErrorBoundary>
-      <div className="min-h-screen bg-black text-white">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-8 text-center tracking-wider uppercase">
-            The Collection
-          </h1>
-          
-          {inStockProducts.length > 0 && (
-            <section className="mb-12">
-              <h2 className="text-xl font-semibold mb-4 text-gray-300 tracking-wide">
-                Available Relics
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {inStockProducts.map((product: Product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {outOfStockProducts.length > 0 && (
-            <section>
-              <h2 className="text-xl font-semibold mb-4 text-gray-500 tracking-wide">
-                Lost to the Void
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 opacity-60">
-                {outOfStockProducts.map((product: Product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-      </div>
-    </DramaticErrorBoundary>
-  );
+export interface AdminStats {
+  totalOrders: number;
+  totalRevenue: number;
+  totalProducts: number;
+  pendingOrders: number;
 }
