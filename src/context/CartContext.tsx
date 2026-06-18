@@ -79,7 +79,12 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
     case 'UPDATE_QUANTITY': {
       const { id, quantity } = action.payload;
-      if (quantity < 1) return state;
+      if (quantity < 1) {
+        return {
+          ...state,
+          items: state.items.filter((item) => item.id !== id),
+        };
+      }
 
       return {
         ...state,
@@ -155,15 +160,13 @@ interface CartContextValue {
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   setAnimationIdle: () => void;
+  totalItems: number;
+  totalPrice: number;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-interface CartProviderProps {
-  children: ReactNode;
-}
-
-export function CartProvider({ children }: CartProviderProps) {
+export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, {
     items: [],
     animationState: 'idle',
@@ -201,6 +204,12 @@ export function CartProvider({ children }: CartProviderProps) {
     dispatch({ type: 'SET_ANIMATION_IDLE' });
   }, []);
 
+  const totalItems = state.items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPrice = state.items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+
   const value: CartContextValue = {
     items: state.items,
     animationState: state.animationState,
@@ -210,19 +219,17 @@ export function CartProvider({ children }: CartProviderProps) {
     updateQuantity,
     clearCart,
     setAnimationIdle,
+    totalItems,
+    totalPrice,
   };
 
-  return (
-    <CartContext.Provider value={value}>
-      {children}
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
-export function useCart(): CartContextValue {
+export function useCartContext(): CartContextValue {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
+    throw new Error('useCartContext must be used within a CartProvider');
   }
   return context;
 }
