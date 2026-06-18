@@ -1,8 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // GET /api/products - paginated product list with search and category filter
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -15,7 +15,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
     const where: Record<string, unknown> = {};
     if (search) {
-      where.name = { contains: search };
+      where.name = { contains: search, mode: 'insensitive' };
     }
     if (category) {
       where.category = category;
@@ -85,13 +85,17 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       return res.status(400).json({ error: 'Price is required and must be a positive number' });
     }
 
+    if (!category || typeof category !== 'string' || category.trim().length === 0) {
+      return res.status(400).json({ error: 'Category is required and must be a non-empty string' });
+    }
+
     const product = await prisma.product.create({
       data: {
         name: name.trim(),
         description: description.trim(),
         price,
         image: image || null,
-        category: category || null,
+        category: category.trim(),
       },
     });
 
@@ -112,11 +116,6 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
     const { name, description, price, image, category } = req.body;
 
     // Validate at least one field is provided
-    if (name === undefined && description === undefined && price === undefined && image === undefined && category === undefined) {
-      return res.status(400).json({ error: 'At least one field must be provided for update' });
-    }
-
-    // Validate individual fields if provided
     if (name !== undefined && (typeof name !== 'string' || name.trim().length === 0)) {
       return res.status(400).json({ error: 'Name must be a non-empty string' });
     }
@@ -127,6 +126,10 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
 
     if (price !== undefined && (typeof price !== 'number' || price <= 0)) {
       return res.status(400).json({ error: 'Price must be a positive number' });
+    }
+
+    if (category !== undefined && (typeof category !== 'string' || category.trim().length === 0)) {
+      return res.status(400).json({ error: 'Category must be a non-empty string' });
     }
 
     // Check if product exists
@@ -140,7 +143,7 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
     if (description !== undefined) updateData.description = description.trim();
     if (price !== undefined) updateData.price = price;
     if (image !== undefined) updateData.image = image;
-    if (category !== undefined) updateData.category = category;
+    if (category !== undefined) updateData.category = category.trim();
 
     const product = await prisma.product.update({
       where: { id },
@@ -167,9 +170,7 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    await prisma.product.delete({
-      where: { id },
-    });
+    await prisma.product.delete({ where: { id } });
 
     res.status(204).send();
   } catch (error) {
