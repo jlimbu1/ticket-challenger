@@ -1,3 +1,5 @@
+"use client";
+
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ConfirmationPage } from '@/app/confirmation/page';
@@ -48,5 +50,48 @@ describe('ConfirmationPage', () => {
   it('shows empty state when no order data is present', () => {
     renderWithProviders(<ConfirmationPage />);
     expect(screen.getByText(/no order found/i)).toBeInTheDocument();
+  });
+
+  it('displays order ID when provided via URL params', () => {
+    const mockSearchParams = new URLSearchParams('orderId=ORD-12345&total=59.98');
+    vi.spyOn(globalThis, 'window', 'get').mockImplementation(() => ({
+      location: {
+        search: '?orderId=ORD-12345&total=59.98',
+      },
+    } as Window));
+    renderWithProviders(<ConfirmationPage />);
+    expect(screen.getByText(/ORD-12345/i)).toBeInTheDocument();
+  });
+
+  it('displays total amount when provided via URL params', () => {
+    const mockSearchParams = new URLSearchParams('orderId=ORD-12345&total=59.98');
+    vi.spyOn(globalThis, 'window', 'get').mockImplementation(() => ({
+      location: {
+        search: '?orderId=ORD-12345&total=59.98',
+      },
+    } as Window));
+    renderWithProviders(<ConfirmationPage />);
+    expect(screen.getByText(/\$59\.98/i)).toBeInTheDocument();
+  });
+
+  it('renders without crashing when URL params are missing', () => {
+    vi.spyOn(globalThis, 'window', 'get').mockImplementation(() => ({
+      location: {
+        search: '',
+      },
+    } as Window));
+    renderWithProviders(<ConfirmationPage />);
+    expect(screen.getByText(/no order found/i)).toBeInTheDocument();
+  });
+
+  it('displays estimated delivery date', () => {
+    const mockSearchParams = new URLSearchParams('orderId=ORD-12345&total=59.98');
+    vi.spyOn(globalThis, 'window', 'get').mockImplementation(() => ({
+      location: {
+        search: '?orderId=ORD-12345&total=59.98',
+      },
+    } as Window));
+    renderWithProviders(<ConfirmationPage />);
+    expect(screen.getByText(/estimated delivery/i)).toBeInTheDocument();
   });
 });

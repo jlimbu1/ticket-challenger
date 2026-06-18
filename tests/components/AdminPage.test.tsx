@@ -56,63 +56,163 @@ describe('AdminPage', () => {
 
   it('shows stock status for each product', () => {
     renderWithProviders(<AdminPage />);
-    expect(screen.getByText('5')).toBeInTheDocument();
-    expect(screen.getByText('0')).toBeInTheDocument();
+    expect(screen.getByText('5 in stock')).toBeInTheDocument();
+    expect(screen.getByText('Out of stock')).toBeInTheDocument();
   });
 
-  it('allows adding a new product', async () => {
+  it('allows editing a product name', async () => {
     const user = userEvent.setup();
     renderWithProviders(<AdminPage />);
 
-    await user.click(screen.getByText(/add product/i));
+    const editButton = screen.getAllByRole('button', { name: /edit/i })[0];
+    await user.click(editButton);
 
-    await user.type(screen.getByLabelText(/name/i), 'New Product');
-    await user.type(screen.getByLabelText(/price/i), '39.99');
-    await user.type(screen.getByLabelText(/stock/i), '10');
-    await user.type(screen.getByLabelText(/description/i), 'A new product');
-    await user.type(screen.getByLabelText(/image/i), '/new.jpg');
-    await user.selectOptions(screen.getByLabelText(/category/i), 'merch');
-
-    await user.click(screen.getByText(/save/i));
-
-    await waitFor(() => {
-      expect(screen.getByText('New Product')).toBeInTheDocument();
-    });
-  });
-
-  it('allows editing an existing product', async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<AdminPage />);
-
-    const editButtons = screen.getAllByText(/edit/i);
-    await user.click(editButtons[0]);
-
-    const nameInput = screen.getByLabelText(/name/i);
+    const nameInput = screen.getByDisplayValue('Test Product');
     await user.clear(nameInput);
     await user.type(nameInput, 'Updated Product');
 
-    await user.click(screen.getByText(/save/i));
+    const saveButton = screen.getByRole('button', { name: /save/i });
+    await user.click(saveButton);
 
-    await waitFor(() => {
-      expect(screen.getByText('Updated Product')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Updated Product')).toBeInTheDocument();
   });
 
   it('allows deleting a product', async () => {
     const user = userEvent.setup();
     renderWithProviders(<AdminPage />);
 
-    const deleteButtons = screen.getAllByText(/delete/i);
-    await user.click(deleteButtons[0]);
+    const deleteButton = screen.getAllByRole('button', { name: /delete/i })[0];
+    await user.click(deleteButton);
 
-    await waitFor(() => {
-      expect(screen.queryByText('Test Product')).not.toBeInTheDocument();
-    });
+    expect(screen.queryByText('Test Product')).not.toBeInTheDocument();
+  });
+
+  it('allows adding a new product', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<AdminPage />);
+
+    const addButton = screen.getByRole('button', { name: /add product/i });
+    await user.click(addButton);
+
+    const nameInput = screen.getByLabelText(/product name/i);
+    const priceInput = screen.getByLabelText(/price/i);
+    const stockInput = screen.getByLabelText(/stock/i);
+    const descriptionInput = screen.getByLabelText(/description/i);
+    const categoryInput = screen.getByLabelText(/category/i);
+
+    await user.type(nameInput, 'New Product');
+    await user.type(priceInput, '39.99');
+    await user.type(stockInput, '10');
+    await user.type(descriptionInput, 'A brand new product');
+    await user.type(categoryInput, 'merch');
+
+    const submitButton = screen.getByRole('button', { name: /create/i });
+    await user.click(submitButton);
+
+    expect(screen.getByText('New Product')).toBeInTheDocument();
+    expect(screen.getByText('$39.99')).toBeInTheDocument();
+  });
+
+  it('shows error state when products fail to load', () => {
+    vi.mock('@/src/data/products', () => ({
+      get products() {
+        throw new Error('Failed to load products');
+      },
+    }));
+
+    renderWithProviders(<AdminPage />);
+    expect(screen.getByText(/failed to load products/i)).toBeInTheDocument();
   });
 
   it('shows empty state when no products exist', () => {
-    vi.mocked(products).filter.mockReturnValue([]);
+    vi.mock('@/src/data/products', () => ({
+      products: [],
+    }));
+
     renderWithProviders(<AdminPage />);
-    expect(screen.getByText(/no products/i)).toBeInTheDocument();
+    expect(screen.getByText(/no products found/i)).toBeInTheDocument();
+  });
+
+  it('validates required fields when adding a product', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<AdminPage />);
+
+    const addButton = screen.getByRole('button', { name: /add product/i });
+    await user.click(addButton);
+
+    const submitButton = screen.getByRole('button', { name: /create/i });
+    await user.click(submitButton);
+
+    expect(screen.getByText(/product name is required/i)).toBeInTheDocument();
+    expect(screen.getByText(/price is required/i)).toBeInTheDocument();
+  });
+
+  it('validates price is a positive number', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<AdminPage />);
+
+    const addButton = screen.getByRole('button', { name: /add product/i });
+    await user.click(addButton);
+
+    const priceInput = screen.getByLabelText(/price/i);
+    await user.type(priceInput, '-10');
+
+    const submitButton = screen.getByRole('button', { name: /create/i });
+    await user.click(submitButton);
+
+    expect(screen.getByText(/price must be positive/i)).toBeInTheDocument();
+  });
+
+  it('validates stock is a non-negative integer', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<AdminPage />);
+
+    const addButton = screen.getByRole('button', { name: /add product/i });
+    await user.click(addButton);
+
+    const stockInput = screen.getByLabelText(/stock/i);
+    await user.type(stockInput, '-5');
+
+    const submitButton = screen.getByRole('button', { name: /create/i });
+    await user.click(submitButton);
+
+    expect(screen.getByText(/stock must be non-negative/i)).toBeInTheDocument();
+  });
+
+  it('cancels editing when cancel button is clicked', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<AdminPage />);
+
+    const editButton = screen.getAllByRole('button', { name: /edit/i })[0];
+    await user.click(editButton);
+
+    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    await user.click(cancelButton);
+
+    expect(screen.queryByDisplayValue('Test Product')).not.toBeInTheDocument();
+  });
+
+  it('handles concurrent edits without data loss', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<AdminPage />);
+
+    const editButtons = screen.getAllByRole('button', { name: /edit/i });
+    await user.click(editButtons[0]);
+    await user.click(editButtons[1]);
+
+    const firstInput = screen.getAllByDisplayValue('Test Product')[0];
+    const secondInput = screen.getAllByDisplayValue('Out of Stock Item')[0];
+
+    await user.clear(firstInput);
+    await user.type(firstInput, 'Updated First');
+    await user.clear(secondInput);
+    await user.type(secondInput, 'Updated Second');
+
+    const saveButtons = screen.getAllByRole('button', { name: /save/i });
+    await user.click(saveButtons[0]);
+    await user.click(saveButtons[1]);
+
+    expect(screen.getByText('Updated First')).toBeInTheDocument();
+    expect(screen.getByText('Updated Second')).toBeInTheDocument();
   });
 });

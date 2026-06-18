@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
-import { DramaticErrorBoundary } from '@/components/DramaticErrorBoundary';
-import { VinylSpinner } from '@/components/VinylSpinner';
-import { GothicEmptyState } from '@/components/GothicEmptyState';
-import { ProductCard } from '@/components/ProductCard';
-import { products } from '@/src/data/products';
-import { useCart } from '@/src/hooks/useCart';
-import type { Product } from '@/src/types';
+"use client";
+
+import { useEffect, useState } from "react";
+import { DramaticErrorBoundary } from "@/components/DramaticErrorBoundary";
+import { VinylSpinner } from "@/components/VinylSpinner";
+import { GothicEmptyState } from "@/components/GothicEmptyState";
+import { ProductCard } from "@/components/ProductCard";
+import { products } from "@/src/data/products";
+import { useCart } from "@/src/hooks/useCart";
+import type { Product } from "@/src/types";
 
 function ProductGrid() {
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,7 @@ function ProductGrid() {
       } catch (err) {
         if (cancelled) return;
         const message =
-          err instanceof Error ? err.message : 'Failed to load products';
+          err instanceof Error ? err.message : "Failed to load products";
         setError(message);
       } finally {
         if (!cancelled) {
@@ -55,19 +57,16 @@ function ProductGrid() {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <p className="text-crimson-500 text-lg mb-4">{error}</p>
-          <button
-            onClick={() => {
-              setLoading(true);
-              setError(null);
-              setFilteredProducts([]);
-            }}
-            className="px-6 py-2 bg-crimson-600 text-white rounded hover:bg-crimson-700 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
+        <GothicEmptyState
+          title="Failed to Load Products"
+          description={error}
+          actionLabel="Try Again"
+          onAction={() => {
+            setLoading(true);
+            setError(null);
+            setFilteredProducts([]);
+          }}
+        />
       </div>
     );
   }
@@ -77,20 +76,16 @@ function ProductGrid() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <GothicEmptyState
           title="No Products Found"
-          description="The stage is empty. Check back later for new releases."
+          description="There are no products available at this time. Check back later for new arrivals."
         />
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {filteredProducts.map((product) => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          onAddToCart={() => addToCart(product, 1)}
-        />
+        <ProductCard key={product.id} product={product} />
       ))}
     </div>
   );
@@ -99,19 +94,14 @@ function ProductGrid() {
 export default function ProductsPage() {
   return (
     <DramaticErrorBoundary>
-      <div className="min-h-screen bg-gray-900">
-        <header className="text-center py-8">
-          <h1 className="text-4xl font-bold text-crimson-500 tracking-wider uppercase">
-            Merchandise
+      <main className="min-h-screen bg-gray-950 text-white">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold text-crimson-400 mb-8">
+            Merch & Vinyl
           </h1>
-          <p className="text-gray-400 mt-2 text-lg">
-            Exclusive tour merchandise and vinyl
-          </p>
-        </header>
-        <main>
           <ProductGrid />
-        </main>
-      </div>
+        </div>
+      </main>
     </DramaticErrorBoundary>
   );
 }
