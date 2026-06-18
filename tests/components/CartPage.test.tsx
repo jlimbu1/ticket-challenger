@@ -88,13 +88,33 @@ describe('CartPage', () => {
     expect(updateQuantity).toHaveBeenCalledWith('1', 3);
   });
 
-  it('calls removeItem when quantity reaches zero', () => {
+  it('calls updateQuantity when decrement button is clicked', () => {
+    const updateQuantity = jest.fn();
+    (useCart as jest.Mock).mockReturnValue({
+      ...mockUseCart,
+      updateQuantity,
+    });
+
+    render(
+      <CartProvider>
+        <CartPage />
+      </CartProvider>
+    );
+
+    const decrementButton = screen.getByLabelText('Decrease quantity');
+    fireEvent.click(decrementButton);
+
+    expect(updateQuantity).toHaveBeenCalledWith('1', 1);
+  });
+
+  it('calls removeItem when quantity goes to zero', () => {
     const updateQuantity = jest.fn();
     const removeItem = jest.fn();
     (useCart as jest.Mock).mockReturnValue({
       ...mockUseCart,
       updateQuantity,
       removeItem,
+      items: [{ product: mockProduct, quantity: 1 }],
     });
 
     render(
@@ -107,6 +127,7 @@ describe('CartPage', () => {
     fireEvent.click(decrementButton);
 
     expect(removeItem).toHaveBeenCalledWith('1');
+    expect(updateQuantity).not.toHaveBeenCalled();
   });
 
   it('calls removeItem when remove button is clicked', () => {
@@ -128,6 +149,18 @@ describe('CartPage', () => {
     expect(removeItem).toHaveBeenCalledWith('1');
   });
 
+  it('renders total price correctly', () => {
+    (useCart as jest.Mock).mockReturnValue(mockUseCart);
+
+    render(
+      <CartProvider>
+        <CartPage />
+      </CartProvider>
+    );
+
+    expect(screen.getByText('Total: $59.98')).toBeInTheDocument();
+  });
+
   it('renders proceed to checkout button with correct link', () => {
     (useCart as jest.Mock).mockReturnValue(mockUseCart);
 
@@ -140,18 +173,6 @@ describe('CartPage', () => {
     const checkoutButton = screen.getByText('Proceed to Checkout');
     expect(checkoutButton).toBeInTheDocument();
     expect(checkoutButton.closest('a')).toHaveAttribute('href', '/checkout');
-  });
-
-  it('renders total price correctly', () => {
-    (useCart as jest.Mock).mockReturnValue(mockUseCart);
-
-    render(
-      <CartProvider>
-        <CartPage />
-      </CartProvider>
-    );
-
-    expect(screen.getByText('Total: $59.98')).toBeInTheDocument();
   });
 
   it('renders multiple cart items', () => {
@@ -170,6 +191,7 @@ describe('CartPage', () => {
         mockCartItem,
         { product: secondProduct, quantity: 1 },
       ],
+      totalItems: 3,
       totalPrice: 79.97,
     });
 
