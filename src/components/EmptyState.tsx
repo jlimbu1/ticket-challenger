@@ -48,30 +48,18 @@ const EmptyState: React.FC<EmptyStateProps> = ({
           <div
             className="w-full h-full rounded-full opacity-30"
             style={{
-              background: 'radial-gradient(circle, rgba(139,0,0,0.2) 0%, transparent 70%)',
+              background: 'conic-gradient(from 0deg, #8B0000 0deg 45deg, transparent 45deg 90deg, #8B0000 90deg 135deg, transparent 135deg 180deg, #8B0000 180deg 225deg, transparent 225deg 270deg, #8B0000 270deg 315deg, transparent 315deg 360deg)',
             }}
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <svg
-              className="w-12 h-12 text-crimson/40"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-              />
-            </svg>
+            <span className="text-4xl text-crimson opacity-40">&#9835;</span>
           </div>
         </div>
       )}
       <h3 className="font-heading text-2xl text-parchment-white mb-3 tracking-wide">
         {title}
       </h3>
-      <p className="font-body text-lg text-text-muted max-w-md italic leading-relaxed">
+      <p className="font-body text-lg text-text-muted italic max-w-md leading-relaxed">
         {poeticMessage}
       </p>
       {action && (

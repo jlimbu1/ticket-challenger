@@ -59,7 +59,7 @@ const VinylSpinner: React.FC<VinylSpinnerProps> = ({
           style={{
             width: '30%',
             height: '30%',
-            boxShadow: '0 0 5px rgba(139, 0, 0, 0.5), inset 0 0 3px rgba(0, 0, 0, 0.8)',
+            boxShadow: '0 0 5px rgba(139, 0, 0, 0.5), inset 0 0 3px rgba(255, 255, 255, 0.1)',
           }}
         />
         <div
@@ -74,7 +74,7 @@ const VinylSpinner: React.FC<VinylSpinnerProps> = ({
       </div>
       {label && (
         <span
-          className={`font-gothic text-crimson/70 tracking-wider uppercase ${labelSizeMap[size]}`}
+          className={`text-crimson/70 font-heading italic tracking-wider ${labelSizeMap[size]}`}
         >
           {label}
         </span>
