@@ -54,44 +54,76 @@ describe('ConfirmationPage', () => {
 
   it('displays order ID when provided via URL params', () => {
     const mockSearchParams = new URLSearchParams('orderId=ORD-12345&total=59.98');
-    vi.spyOn(globalThis, 'window', 'get').mockImplementation(() => ({
+    vi.stubGlobal('window', {
+      ...window,
       location: {
+        ...window.location,
         search: '?orderId=ORD-12345&total=59.98',
       },
-    } as Window));
+    });
     renderWithProviders(<ConfirmationPage />);
     expect(screen.getByText(/ORD-12345/i)).toBeInTheDocument();
+    vi.unstubAllGlobals();
   });
 
   it('displays total amount when provided via URL params', () => {
-    const mockSearchParams = new URLSearchParams('orderId=ORD-12345&total=59.98');
-    vi.spyOn(globalThis, 'window', 'get').mockImplementation(() => ({
+    const mockSearchParams = new URLSearchParams('orderId=ORD-67890&total=89.97');
+    vi.stubGlobal('window', {
+      ...window,
       location: {
-        search: '?orderId=ORD-12345&total=59.98',
+        ...window.location,
+        search: '?orderId=ORD-67890&total=89.97',
       },
-    } as Window));
+    });
     renderWithProviders(<ConfirmationPage />);
-    expect(screen.getByText(/\$59\.98/i)).toBeInTheDocument();
+    expect(screen.getByText(/\$89\.97/i)).toBeInTheDocument();
+    vi.unstubAllGlobals();
   });
 
-  it('renders without crashing when URL params are missing', () => {
-    vi.spyOn(globalThis, 'window', 'get').mockImplementation(() => ({
-      location: {
-        search: '',
-      },
-    } as Window));
+  it('renders with dramatic error boundary wrapper', () => {
     renderWithProviders(<ConfirmationPage />);
-    expect(screen.getByText(/no order found/i)).toBeInTheDocument();
+    const main = document.querySelector('main');
+    expect(main).toBeInTheDocument();
   });
 
   it('displays estimated delivery date', () => {
-    const mockSearchParams = new URLSearchParams('orderId=ORD-12345&total=59.98');
-    vi.spyOn(globalThis, 'window', 'get').mockImplementation(() => ({
-      location: {
-        search: '?orderId=ORD-12345&total=59.98',
-      },
-    } as Window));
     renderWithProviders(<ConfirmationPage />);
     expect(screen.getByText(/estimated delivery/i)).toBeInTheDocument();
+  });
+
+  it('shows items purchased section', () => {
+    renderWithProviders(<ConfirmationPage />);
+    expect(screen.getByText(/items purchased/i)).toBeInTheDocument();
+  });
+
+  it('displays shipping information heading', () => {
+    renderWithProviders(<ConfirmationPage />);
+    expect(screen.getByText(/shipping information/i)).toBeInTheDocument();
+  });
+
+  it('renders without crashing when URL params are empty', () => {
+    vi.stubGlobal('window', {
+      ...window,
+      location: {
+        ...window.location,
+        search: '',
+      },
+    });
+    renderWithProviders(<ConfirmationPage />);
+    expect(screen.getByText(/no order found/i)).toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
+
+  it('handles malformed URL params gracefully', () => {
+    vi.stubGlobal('window', {
+      ...window,
+      location: {
+        ...window.location,
+        search: '?orderId=&total=',
+      },
+    });
+    renderWithProviders(<ConfirmationPage />);
+    expect(screen.getByText(/no order found/i)).toBeInTheDocument();
+    vi.unstubAllGlobals();
   });
 });

@@ -60,7 +60,7 @@ function ProductGrid() {
         <GothicEmptyState
           title="Failed to Load Products"
           description={error}
-          actionLabel="Try Again"
+          actionLabel="Retry"
           onAction={() => {
             setLoading(true);
             setError(null);
@@ -75,15 +75,15 @@ function ProductGrid() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <GothicEmptyState
-          title="No Products Found"
-          description="There are no products available at this time. Check back later for new arrivals."
+          title="No Products Available"
+          description="Check back later for new arrivals."
         />
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
       {filteredProducts.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}
@@ -96,7 +96,7 @@ export default function ProductsPage() {
     <DramaticErrorBoundary>
       <main className="min-h-screen bg-gray-950 text-white">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold text-crimson-400 mb-8">
+          <h1 className="text-3xl font-bold text-crimson-400 mb-8 text-center">
             Merch & Vinyl
           </h1>
           <ProductGrid />
