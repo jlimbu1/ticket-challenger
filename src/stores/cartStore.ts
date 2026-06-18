@@ -67,15 +67,12 @@ export const useCartStore = defineStore('cart', {
 
       const item = this.items.find((item) => item.id === productId);
 
-      if (item) {
-        item.quantity = safeQuantity;
-      } else {
+      if (!item) {
         console.error('cartStore.updateQuantity: item not found for productId', productId);
+        return;
       }
-    },
 
-    clearCart(): void {
-      this.items = [];
+      item.quantity = safeQuantity;
     },
   },
 });
