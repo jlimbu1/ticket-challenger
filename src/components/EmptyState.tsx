@@ -48,18 +48,37 @@ const EmptyState: React.FC<EmptyStateProps> = ({
           <div
             className="w-full h-full rounded-full opacity-30"
             style={{
-              background: 'conic-gradient(from 0deg, #8B0000 0deg 45deg, transparent 45deg 90deg, #8B0000 90deg 135deg, transparent 135deg 180deg, #8B0000 180deg 225deg, transparent 225deg 270deg, #8B0000 270deg 315deg, transparent 315deg 360deg)',
+              background: `conic-gradient(
+                from 0deg,
+                #1a1a1a 0deg 30deg,
+                #2a2a2a 30deg 60deg,
+                #1a1a1a 60deg 90deg,
+                #2a2a2a 90deg 120deg,
+                #1a1a1a 120deg 150deg,
+                #2a2a2a 150deg 180deg,
+                #1a1a1a 180deg 210deg,
+                #2a2a2a 210deg 240deg,
+                #1a1a1a 240deg 270deg,
+                #2a2a2a 270deg 300deg,
+                #1a1a1a 300deg 330deg,
+                #2a2a2a 330deg 360deg
+              )`,
+              boxShadow: '0 0 15px rgba(139, 0, 0, 0.2)',
             }}
           />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-4xl text-crimson opacity-40">&#9835;</span>
-          </div>
+          <div
+            className="absolute top-1/2 left-1/2 w-8 h-8 bg-black rounded-full"
+            style={{
+              transform: 'translate(-50%, -50%)',
+              boxShadow: 'inset 0 0 5px rgba(0, 0, 0, 0.8)',
+            }}
+          />
         </div>
       )}
-      <h3 className="font-heading text-2xl text-parchment-white mb-3 tracking-wide">
+      <h3 className="font-heading text-2xl text-white mb-3 tracking-wide">
         {title}
       </h3>
-      <p className="font-body text-lg text-text-muted italic max-w-md leading-relaxed">
+      <p className="font-body text-text-muted text-lg italic max-w-md leading-relaxed">
         {poeticMessage}
       </p>
       {action && (

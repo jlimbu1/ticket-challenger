@@ -1,6 +1,7 @@
 import { Playfair_Display, Cormorant_Garamond } from "next/font/google";
 import type { Metadata } from "next";
 import React from "react";
+import { CartProvider } from "@/context/CartContext";
 import "./globals.css";
 
 const playfairDisplay = Playfair_Display({
@@ -34,7 +35,9 @@ export default function RootLayout({
       className={`${playfairDisplay.variable} ${cormorantGaramond.variable}`}
     >
       <body className="bg-[#0D0D0D] text-[#F5F0E8] font-body antialiased min-h-screen">
-        {children}
+        <CartProvider>
+          {children}
+        </CartProvider>
       </body>
     </html>
   );

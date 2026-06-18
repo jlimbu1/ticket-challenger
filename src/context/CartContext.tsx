@@ -84,34 +84,30 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 function loadCartFromStorage(): CartItem[] {
   try {
     const stored = localStorage.getItem(CART_STORAGE_KEY);
-    if (!stored) return [];
-    const parsed = JSON.parse(stored);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (item: unknown) =>
-        item !== null &&
-        typeof item === 'object' &&
-        'product' in item &&
-        'quantity' in item &&
-        typeof (item as CartItem).quantity === 'number' &&
-        (item as CartItem).quantity > 0
-    );
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
   } catch {
-    return [];
+    // Invalid stored data, return empty cart
   }
+  return [];
 }
 
 function saveCartToStorage(items: CartItem[]): void {
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   } catch {
-    // Storage full or unavailable - silently fail
+    // Storage full or unavailable, silently fail
   }
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
 
+  // Hydrate from localStorage on mount
   useEffect(() => {
     const storedItems = loadCartFromStorage();
     if (storedItems.length > 0) {
@@ -119,6 +115,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Persist to localStorage on state change
   useEffect(() => {
     saveCartToStorage(state.items);
   }, [state.items]);

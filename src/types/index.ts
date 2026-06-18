@@ -20,3 +20,20 @@ export interface CartState {
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
 }
+
+export interface Order {
+  id: string;
+  items: CartItem[];
+  total: number;
+  status: 'pending' | 'completed' | 'cancelled';
+  createdAt: string;
+  customerName: string;
+  customerEmail: string;
+}
+
+export interface AdminStats {
+  totalOrders: number;
+  totalRevenue: number;
+  totalProducts: number;
+  pendingOrders: number;
+}

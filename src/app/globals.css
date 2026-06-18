@@ -68,6 +68,8 @@ h1, h2, h3, h4, h5, h6 {
 h1 {
   font-size: 2.5rem;
   font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 h2 {
@@ -93,10 +95,12 @@ h5 {
 h6 {
   font-size: 0.875rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 a {
-  color: var(--color-primary);
+  color: var(--color-primary-light);
   text-decoration: none;
   transition: color 0.2s ease;
 }
@@ -126,11 +130,6 @@ input, textarea, select {
   font-size: inherit;
 }
 
-::selection {
-  background-color: var(--color-primary);
-  color: var(--color-text-heading);
-}
-
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -150,94 +149,170 @@ input, textarea, select {
 }
 
 @keyframes vinyl-spin {
-  0% {
+  from {
     transform: rotate(0deg);
   }
-  100% {
+  to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes spin-slow {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes hover-glow {
-  0%, 100% {
-    box-shadow: 0 0 5px rgba(139, 0, 0, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(139, 0, 0, 0.6);
   }
 }
 
 @keyframes fade-in {
-  0% {
+  from {
     opacity: 0;
     transform: translateY(10px);
   }
-  100% {
+  to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-@keyframes slide-up {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse-crimson {
+@keyframes glow-pulse {
   0%, 100% {
-    opacity: 0.6;
+    box-shadow: 0 0 5px rgba(139, 0, 0, 0.3), 0 0 10px rgba(139, 0, 0, 0.1);
   }
   50% {
-    opacity: 1;
+    box-shadow: 0 0 15px rgba(139, 0, 0, 0.5), 0 0 30px rgba(139, 0, 0, 0.2);
   }
 }
 
-@keyframes distressed-flicker {
+@keyframes noise-grain {
   0%, 100% {
-    opacity: 0.03;
+    transform: translate(0, 0);
+  }
+  10% {
+    transform: translate(-5%, -5%);
+  }
+  20% {
+    transform: translate(-10%, 5%);
+  }
+  30% {
+    transform: translate(5%, -10%);
+  }
+  40% {
+    transform: translate(-5%, 15%);
   }
   50% {
-    opacity: 0.06;
+    transform: translate(-10%, 5%);
+  }
+  60% {
+    transform: translate(15%, 0);
+  }
+  70% {
+    transform: translate(0, 10%);
+  }
+  80% {
+    transform: translate(-15%, 0);
+  }
+  90% {
+    transform: translate(10%, 5%);
   }
 }
 
-.animate-vinyl-spin {
-  animation: vinyl-spin 2s linear infinite;
+.dramatic-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
 }
 
-.animate-spin-slow {
-  animation: spin-slow 4s linear infinite;
+.dramatic-hover:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(139, 0, 0, 0.4), 0 0 40px rgba(74, 0, 130, 0.2);
+  filter: brightness(1.1);
 }
 
-.animate-hover-glow {
-  animation: hover-glow 2s ease-in-out infinite;
+.distressed-bg {
+  position: relative;
 }
 
-.animate-fade-in {
-  animation: fade-in 0.5s ease-out;
+.distressed-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: repeating-conic-gradient(
+    rgba(255, 255, 255, 0.03) 0% 25%,
+    transparent 0% 50%
+  );
+  background-size: 2px 2px;
+  pointer-events: none;
 }
 
-.animate-slide-up {
-  animation: slide-up 0.6s ease-out;
+.neon-text-crimson {
+  color: var(--color-neon-crimson);
+  text-shadow: 0 0 7px var(--color-neon-crimson), 0 0 10px var(--color-neon-crimson), 0 0 21px var(--color-neon-crimson), 0 0 42px var(--color-primary);
 }
 
-.animate-pulse-crimson {
-  animation: pulse-crimson 2s ease-in-out infinite;
+.neon-text-purple {
+  color: var(--color-neon-purple);
+  text-shadow: 0 0 7px var(--color-neon-purple), 0 0 10px var(--color-neon-purple), 0 0 21px var(--color-neon-purple), 0 0 42px var(--color-secondary);
+}
+
+.neon-border-crimson {
+  box-shadow: 0 0 5px var(--color-neon-crimson), 0 0 10px var(--color-neon-crimson), inset 0 0 5px var(--color-neon-crimson);
+}
+
+.neon-border-purple {
+  box-shadow: 0 0 5px var(--color-neon-purple), 0 0 10px var(--color-neon-purple), inset 0 0 5px var(--color-neon-purple);
+}
+
+.gothic-card {
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.gothic-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 15px rgba(139, 0, 0, 0.2);
+}
+
+.vinyl-record {
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #1a1a1a 0deg 30deg,
+    #2a2a2a 30deg 60deg,
+    #1a1a1a 60deg 90deg,
+    #2a2a2a 90deg 120deg,
+    #1a1a1a 120deg 150deg,
+    #2a2a2a 150deg 180deg,
+    #1a1a1a 180deg 210deg,
+    #2a2a2a 210deg 240deg,
+    #1a1a1a 240deg 270deg,
+    #2a2a2a 270deg 300deg,
+    #1a1a1a 300deg 330deg,
+    #2a2a2a 330deg 360deg
+  );
+  box-shadow: 0 0 20px rgba(139, 0, 0, 0.3), inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.vinyl-record::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #333 0%, #1a1a1a 50%, transparent 70%);
+  border: 2px solid #444;
+}
+
+.vinyl-record-sm {
+  width: 3rem;
+  height: 3rem;
+}
+
+.vinyl-record-md {
+  width: 5rem;
+  height: 5rem;
+}
+
+.vinyl-record-lg {
+  width: 8rem;
+  height: 8rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -261,28 +336,10 @@ input, textarea, select {
   }
 
   h2 {
-    font-size: 1.75rem;
-  }
-
-  h3 {
-    font-size: 1.25rem;
-  }
-}
-
-@media (max-width: 480px) {
-  html {
-    font-size: 13px;
-  }
-
-  h1 {
-    font-size: 1.75rem;
-  }
-
-  h2 {
     font-size: 1.5rem;
   }
 
   h3 {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
   }
 }
