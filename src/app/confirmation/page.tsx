@@ -1,3 +1,5 @@
+'use client';
+
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -65,6 +67,11 @@ function maskCardNumber(lastFour: string): string {
   return `**** **** **** ${lastFour}`;
 }
 
+function isValidUUID(value: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(value);
+}
+
 export default function ConfirmationPage() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
@@ -73,8 +80,8 @@ export default function ConfirmationPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!orderId) {
-      setError('No order ID provided');
+    if (!orderId || !isValidUUID(orderId)) {
+      setError('Invalid order ID. Please check your order confirmation link.');
       setLoading(false);
       return;
     }
@@ -90,7 +97,8 @@ export default function ConfirmationPage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load order');
+          const message = err instanceof Error ? err.message : 'Failed to load order';
+          setError(message);
           setLoading(false);
         }
       }
@@ -117,17 +125,20 @@ export default function ConfirmationPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-red-800 mb-2">Error</h2>
-            <p className="text-red-600 mb-4">{error}</p>
-            <Link
-              href="/"
-              className="inline-block bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-            >
-              Continue Shopping
-            </Link>
+        <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full mx-4 text-center">
+          <div className="text-red-500 mb-4">
+            <svg className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
           </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Order Not Found</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <Link
+            href="/"
+            className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+          >
+            Continue Shopping
+          </Link>
         </div>
       </div>
     );
@@ -141,43 +152,53 @@ export default function ConfirmationPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+            <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Order Confirmed!</h1>
-          <p className="text-gray-600">Thank you for your purchase</p>
+          <p className="text-gray-600">Thank you for your purchase. Your order has been placed successfully.</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
           <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Order #{order.id}</h2>
-                <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
+                <p className="text-sm text-gray-500">Order Number</p>
+                <p className="text-lg font-semibold text-gray-900">{order.id}</p>
               </div>
+              <div className="text-right">
+                <p className="text-sm text-gray-500">Order Date</p>
+                <p className="text-sm font-medium text-gray-900">{formatDate(order.createdAt)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">Status</span>
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeClass(order.status)}`}>
                 {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
               </span>
             </div>
           </div>
 
-          <div className="px-6 py-4">
-            <h3 className="text-sm font-medium text-gray-900 uppercase tracking-wider mb-3">Items</h3>
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Items Ordered</h2>
             <div className="space-y-4">
               {order.items.map((item) => (
-                <div key={item.id} className="flex items-center space-x-4">
-                  <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
+                <div key={item.id} className="flex items-center gap-4">
+                  <div className="h-16 w-16 flex-shrink-0 rounded-md overflow-hidden bg-gray-100">
                     {item.imageUrl ? (
                       <img
                         src={item.imageUrl}
                         alt={item.name}
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="h-full w-full flex items-center justify-center text-gray-400">
+                        <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                       </div>
@@ -187,47 +208,47 @@ export default function ConfirmationPage() {
                     <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
                     <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                   </div>
-                  <p className="text-sm font-medium text-gray-900">{formatPrice(item.price * item.quantity)}</p>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">{formatPrice(item.price * item.quantity)}</p>
+                    <p className="text-xs text-gray-500">{formatPrice(item.price)} each</p>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="px-6 py-4 border-t border-gray-200">
-            <div className="flex justify-between items-center">
-              <span className="text-base font-semibold text-gray-900">Total</span>
-              <span className="text-lg font-bold text-gray-900">{formatPrice(order.total)}</span>
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Shipping Address</h2>
+            <div className="text-sm text-gray-600 space-y-1">
+              <p className="font-medium text-gray-900">{order.shippingAddress.fullName}</p>
+              <p>{order.shippingAddress.street}</p>
+              <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}</p>
+              <p>{order.shippingAddress.country}</p>
             </div>
           </div>
-        </div>
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-sm font-medium text-gray-900 uppercase tracking-wider">Shipping Address</h3>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment</h2>
+            <div className="flex items-center gap-2">
+              <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              <span className="text-sm text-gray-600">Card ending in {maskCardNumber(order.cardLastFour)}</span>
+            </div>
           </div>
-          <div className="px-6 py-4">
-            <p className="text-sm text-gray-900">{order.shippingAddress.fullName}</p>
-            <p className="text-sm text-gray-600">{order.shippingAddress.street}</p>
-            <p className="text-sm text-gray-600">
-              {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}
-            </p>
-            <p className="text-sm text-gray-600">{order.shippingAddress.country}</p>
-          </div>
-        </div>
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-sm font-medium text-gray-900 uppercase tracking-wider">Payment</h3>
-          </div>
-          <div className="px-6 py-4">
-            <p className="text-sm text-gray-600">Card ending in {maskCardNumber(order.cardLastFour)}</p>
+          <div className="px-6 py-4 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-semibold text-gray-900">Total</span>
+              <span className="text-2xl font-bold text-gray-900">{formatPrice(order.total)}</span>
+            </div>
           </div>
         </div>
 
         <div className="text-center">
           <Link
             href="/"
-            className="inline-block bg-indigo-600 text-white px-8 py-3 rounded-md hover:bg-indigo-700 transition-colors font-medium"
+            className="inline-block bg-indigo-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
           >
             Continue Shopping
           </Link>

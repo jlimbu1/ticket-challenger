@@ -18,7 +18,7 @@ export async function getOrder(orderId: string): Promise<Order> {
     if (response.status === 404) {
       throw new Error('Order not found');
     }
-    throw new Error('Failed to fetch order');
+    throw new Error('Failed to fetch order: ' + response.status);
   }
 
   const data = await response.json();
