@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { products as initialProducts, Product } from '@/src/data/products';
-import GothicButton from '@/components/GothicButton';
-import GothicEmptyState from '@/components/GothicEmptyState';
-import DramaticErrorBoundary from '@/components/DramaticErrorBoundary';
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { products as initialProducts } from "@/src/data/products";
+import type { Product } from "@/src/types";
+import GothicButton from "@/components/GothicButton";
+import GothicEmptyState from "@/components/GothicEmptyState";
+import DramaticErrorBoundary from "@/components/DramaticErrorBoundary";
 
 interface ProductForm {
   name: string;
@@ -13,11 +16,11 @@ interface ProductForm {
 }
 
 const emptyForm: ProductForm = {
-  name: '',
-  price: '',
-  stock: '',
-  description: '',
-  image: '',
+  name: "",
+  price: "",
+  stock: "",
+  description: "",
+  image: "",
 };
 
 const AdminDashboardPage: React.FC = () => {
@@ -37,15 +40,14 @@ const AdminDashboardPage: React.FC = () => {
 
   const validateForm = (): boolean => {
     const errors: Partial<ProductForm> = {};
-    if (!form.name.trim()) errors.name = 'Product name is required';
+    if (!form.name.trim()) errors.name = "Product name is required";
     if (!form.price.trim() || isNaN(Number(form.price)) || Number(form.price) <= 0) {
-      errors.price = 'Valid price is required';
+      errors.price = "Valid price is required";
     }
     if (!form.stock.trim() || isNaN(Number(form.stock)) || Number(form.stock) < 0) {
-      errors.stock = 'Valid stock count is required';
+      errors.stock = "Valid stock quantity is required";
     }
-    if (!form.description.trim()) errors.description = 'Description is required';
-    if (!form.image.trim()) errors.image = 'Image URL is required';
+    if (!form.description.trim()) errors.description = "Description is required";
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -54,14 +56,12 @@ const AdminDashboardPage: React.FC = () => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     if (formErrors[name as keyof ProductForm]) {
-      setFormErrors((prev) => ({ ...prev, [name]: undefined }));
+      setFormErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[name as keyof ProductForm];
+        return updated;
+      });
     }
-  };
-
-  const resetForm = () => {
-    setForm(emptyForm);
-    setFormErrors({});
-    setEditingId(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -69,20 +69,26 @@ const AdminDashboardPage: React.FC = () => {
     if (!validateForm()) return;
 
     const newProduct: Product = {
-      id: editingId || `prod-${Date.now()}`,
+      id: editingId || `product-${Date.now()}`,
       name: form.name.trim(),
       price: Number(form.price),
       stock: Number(form.stock),
       description: form.description.trim(),
-      image: form.image.trim(),
+      image: form.image.trim() || "",
+      category: "vinyl",
     };
 
     if (editingId) {
-      setProducts((prev) => prev.map((p) => (p.id === editingId ? newProduct : p)));
+      setProducts((prev) =>
+        prev.map((p) => (p.id === editingId ? newProduct : p))
+      );
     } else {
       setProducts((prev) => [...prev, newProduct]);
     }
-    resetForm();
+
+    setForm(emptyForm);
+    setEditingId(null);
+    setFormErrors({});
   };
 
   const handleEdit = (product: Product) => {
@@ -97,19 +103,27 @@ const AdminDashboardPage: React.FC = () => {
     setFormErrors({});
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
-      setProducts((prev) => prev.filter((p) => p.id !== id));
-      if (editingId === id) resetForm();
+  const handleDelete = (productId: string) => {
+    setProducts((prev) => prev.filter((p) => p.id !== productId));
+    if (editingId === productId) {
+      setEditingId(null);
+      setForm(emptyForm);
+      setFormErrors({});
     }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setFormErrors({});
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mx-auto mb-4" />
-          <p className="text-gray-400 font-mono text-sm">Loading backstage pass...</p>
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-crimson border-t-transparent" />
+          <p className="text-crimson text-lg">Loading the backstage...</p>
         </div>
       </div>
     );
@@ -117,232 +131,213 @@ const AdminDashboardPage: React.FC = () => {
 
   return (
     <DramaticErrorBoundary>
-      <div className="min-h-screen bg-black text-gray-100">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-purple-400 font-mono mb-2">
-              BACKSTAGE PASS
-            </h1>
-            <p className="text-gray-500 font-mono text-sm">
-              Admin Dashboard - Product Management
-            </p>
-          </div>
+      <div className="min-h-screen bg-black text-white">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <header className="mb-8">
+            <h1 className="text-4xl font-bold text-crimson mb-2">Backstage Pass</h1>
+            <p className="text-gray-400">Manage your product lineup</p>
+          </header>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
-                <div className="p-4 border-b border-gray-800">
-                  <h2 className="text-lg font-mono text-purple-300">
-                    PRODUCT CATALOG
-                  </h2>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {products.length} product{products.length !== 1 ? 's' : ''} in inventory
-                  </p>
-                </div>
-
-                {products.length === 0 ? (
-                  <GothicEmptyState
-                    title="No Products Found"
-                    description="The stage is empty. Add your first product to get started."
-                  />
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-gray-800 text-gray-500 font-mono text-xs uppercase">
-                          <th className="text-left p-3">Product</th>
-                          <th className="text-left p-3">Price</th>
-                          <th className="text-left p-3">Stock</th>
-                          <th className="text-right p-3">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {products.map((product) => (
-                          <tr
-                            key={product.id}
-                            className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors"
+              <h2 className="text-2xl font-semibold text-crimson mb-4">
+                Current Lineup ({products.length})
+              </h2>
+              {products.length === 0 ? (
+                <GothicEmptyState
+                  title="No Products"
+                  message="The stage is empty. Add your first product to start the show."
+                />
+              ) : (
+                <div className="space-y-4">
+                  {products.map((product) => (
+                    <div
+                      key={product.id}
+                      className="bg-gothic-900 border border-gothic-700 rounded-lg p-4 flex items-center gap-4"
+                    >
+                      <div className="w-16 h-16 bg-gothic-800 rounded flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {product.image ? (
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-2xl text-crimson/60">&#9835;</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-white truncate">
+                          {product.name}
+                        </h3>
+                        <p className="text-sm text-gray-400 truncate">
+                          {product.description}
+                        </p>
+                        <div className="flex gap-4 mt-1 text-sm">
+                          <span className="text-crimson">
+                            ${product.price.toFixed(2)}
+                          </span>
+                          <span
+                            className={
+                              product.stock > 0 ? "text-green-400" : "text-red-400"
+                            }
                           >
-                            <td className="p-3">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gray-800 rounded overflow-hidden flex-shrink-0">
-                                  <img
-                                    src={product.image}
-                                    alt={product.name}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).src = 'https://placehold.co/40x40/1a1a2e/9b59b6?text=?';
-                                    }}
-                                  />
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-200">{product.name}</p>
-                                  <p className="text-xs text-gray-500 truncate max-w-[200px]">
-                                    {product.description}
-                                  </p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="p-3 text-purple-400 font-mono">
-                              ${product.price.toFixed(2)}
-                            </td>
-                            <td className="p-3">
-                              <span
-                                className={`font-mono text-xs ${
-                                  product.stock > 10
-                                    ? 'text-green-400'
-                                    : product.stock > 0
-                                    ? 'text-yellow-400'
-                                    : 'text-red-400'
-                                }`}
-                              >
-                                {product.stock > 0 ? `${product.stock} units` : 'Out of stock'}
-                              </span>
-                            </td>
-                            <td className="p-3 text-right">
-                              <div className="flex justify-end gap-2">
-                                <GothicButton
-                                  variant="secondary"
-                                  size="sm"
-                                  onClick={() => handleEdit(product)}
-                                >
-                                  Edit
-                                </GothicButton>
-                                <GothicButton
-                                  variant="danger"
-                                  size="sm"
-                                  onClick={() => handleDelete(product.id)}
-                                >
-                                  Delete
-                                </GothicButton>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
+                            {product.stock > 0
+                              ? `${product.stock} in stock`
+                              : "Sold Out"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <GothicButton
+                          onClick={() => handleEdit(product)}
+                          className="px-3 py-1 text-sm"
+                        >
+                          Edit
+                        </GothicButton>
+                        <GothicButton
+                          onClick={() => handleDelete(product.id)}
+                          className="px-3 py-1 text-sm bg-red-900 hover:bg-red-800 border-red-700"
+                        >
+                          Delete
+                        </GothicButton>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
-              <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-                <h2 className="text-lg font-mono text-purple-300 mb-4">
-                  {editingId ? 'EDIT PRODUCT' : 'ADD PRODUCT'}
-                </h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-mono text-gray-400 mb-1">
-                      Product Name
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={form.name}
-                      onChange={handleInputChange}
-                      className={`w-full bg-gray-800 border ${
-                        formErrors.name ? 'border-red-500' : 'border-gray-700'
-                      } rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-purple-500 transition-colors`}
-                      placeholder="Enter product name"
-                    />
-                    {formErrors.name && (
-                      <p className="text-red-400 text-xs mt-1">{formErrors.name}</p>
-                    )}
-                  </div>
+              <h2 className="text-2xl font-semibold text-crimson mb-4">
+                {editingId ? "Edit Product" : "Add Product"}
+              </h2>
+              <form
+                onSubmit={handleSubmit}
+                className="bg-gothic-900 border border-gothic-700 rounded-lg p-6 space-y-4"
+              >
+                <div>
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-300 mb-1"
+                  >
+                    Product Name
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={form.name}
+                    onChange={handleInputChange}
+                    className={`w-full bg-gothic-800 border ${
+                      formErrors.name ? "border-red-500" : "border-gothic-600"
+                    } rounded px-3 py-2 text-white focus:outline-none focus:border-crimson`}
+                  />
+                  {formErrors.name && (
+                    <p className="text-red-400 text-xs mt-1">{formErrors.name}</p>
+                  )}
+                </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-mono text-gray-400 mb-1">
-                        Price ($)
-                      </label>
-                      <input
-                        type="text"
-                        name="price"
-                        value={form.price}
-                        onChange={handleInputChange}
-                        className={`w-full bg-gray-800 border ${
-                          formErrors.price ? 'border-red-500' : 'border-gray-700'
-                        } rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-purple-500 transition-colors`}
-                        placeholder="0.00"
-                      />
-                      {formErrors.price && (
-                        <p className="text-red-400 text-xs mt-1">{formErrors.price}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-xs font-mono text-gray-400 mb-1">
-                        Stock
-                      </label>
-                      <input
-                        type="text"
-                        name="stock"
-                        value={form.stock}
-                        onChange={handleInputChange}
-                        className={`w-full bg-gray-800 border ${
-                          formErrors.stock ? 'border-red-500' : 'border-gray-700'
-                        } rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-purple-500 transition-colors`}
-                        placeholder="0"
-                      />
-                      {formErrors.stock && (
-                        <p className="text-red-400 text-xs mt-1">{formErrors.stock}</p>
-                      )}
-                    </div>
-                  </div>
+                <div>
+                  <label
+                    htmlFor="price"
+                    className="block text-sm font-medium text-gray-300 mb-1"
+                  >
+                    Price
+                  </label>
+                  <input
+                    type="text"
+                    id="price"
+                    name="price"
+                    value={form.price}
+                    onChange={handleInputChange}
+                    className={`w-full bg-gothic-800 border ${
+                      formErrors.price ? "border-red-500" : "border-gothic-600"
+                    } rounded px-3 py-2 text-white focus:outline-none focus:border-crimson`}
+                  />
+                  {formErrors.price && (
+                    <p className="text-red-400 text-xs mt-1">{formErrors.price}</p>
+                  )}
+                </div>
 
-                  <div>
-                    <label className="block text-xs font-mono text-gray-400 mb-1">
-                      Description
-                    </label>
-                    <textarea
-                      name="description"
-                      value={form.description}
-                      onChange={handleInputChange}
-                      rows={3}
-                      className={`w-full bg-gray-800 border ${
-                        formErrors.description ? 'border-red-500' : 'border-gray-700'
-                      } rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-purple-500 transition-colors resize-none`}
-                      placeholder="Describe the product..."
-                    />
-                    {formErrors.description && (
-                      <p className="text-red-400 text-xs mt-1">{formErrors.description}</p>
-                    )}
-                  </div>
+                <div>
+                  <label
+                    htmlFor="stock"
+                    className="block text-sm font-medium text-gray-300 mb-1"
+                  >
+                    Stock Quantity
+                  </label>
+                  <input
+                    type="text"
+                    id="stock"
+                    name="stock"
+                    value={form.stock}
+                    onChange={handleInputChange}
+                    className={`w-full bg-gothic-800 border ${
+                      formErrors.stock ? "border-red-500" : "border-gothic-600"
+                    } rounded px-3 py-2 text-white focus:outline-none focus:border-crimson`}
+                  />
+                  {formErrors.stock && (
+                    <p className="text-red-400 text-xs mt-1">{formErrors.stock}</p>
+                  )}
+                </div>
 
-                  <div>
-                    <label className="block text-xs font-mono text-gray-400 mb-1">
-                      Image URL
-                    </label>
-                    <input
-                      type="text"
-                      name="image"
-                      value={form.image}
-                      onChange={handleInputChange}
-                      className={`w-full bg-gray-800 border ${
-                        formErrors.image ? 'border-red-500' : 'border-gray-700'
-                      } rounded px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-purple-500 transition-colors`}
-                      placeholder="https://example.com/image.jpg"
-                    />
-                    {formErrors.image && (
-                      <p className="text-red-400 text-xs mt-1">{formErrors.image}</p>
-                    )}
-                  </div>
+                <div>
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-300 mb-1"
+                  >
+                    Description
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={form.description}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className={`w-full bg-gothic-800 border ${
+                      formErrors.description ? "border-red-500" : "border-gothic-600"
+                    } rounded px-3 py-2 text-white focus:outline-none focus:border-crimson`}
+                  />
+                  {formErrors.description && (
+                    <p className="text-red-400 text-xs mt-1">
+                      {formErrors.description}
+                    </p>
+                  )}
+                </div>
 
-                  <div className="flex gap-2 pt-2">
-                    <GothicButton type="submit" variant="primary" className="flex-1">
-                      {editingId ? 'Update Product' : 'Add Product'}
+                <div>
+                  <label
+                    htmlFor="image"
+                    className="block text-sm font-medium text-gray-300 mb-1"
+                  >
+                    Image URL (optional)
+                  </label>
+                  <input
+                    type="text"
+                    id="image"
+                    name="image"
+                    value={form.image}
+                    onChange={handleInputChange}
+                    className="w-full bg-gothic-800 border border-gothic-600 rounded px-3 py-2 text-white focus:outline-none focus:border-crimson"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <GothicButton type="submit" className="flex-1">
+                    {editingId ? "Update Product" : "Add Product"}
+                  </GothicButton>
+                  {editingId && (
+                    <GothicButton
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="px-4 bg-gray-700 hover:bg-gray-600 border-gray-600"
+                    >
+                      Cancel
                     </GothicButton>
-                    {editingId && (
-                      <GothicButton
-                        type="button"
-                        variant="secondary"
-                        onClick={resetForm}
-                      >
-                        Cancel
-                      </GothicButton>
-                    )}
-                  </div>
-                </form>
-              </div>
+                  )}
+                </div>
+              </form>
             </div>
           </div>
         </div>

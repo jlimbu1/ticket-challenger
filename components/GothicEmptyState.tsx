@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 
 interface GothicEmptyStateProps {
@@ -44,21 +46,21 @@ export default function GothicEmptyState({
           <span className="text-2xl text-crimson/60">&#9760;</span>
         </div>
         <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-rose/30">
-          <span className="text-xs text-rose-light">&#10047;</span>
+          <span className="text-xs text-rose/80">&#10022;</span>
         </div>
       </div>
 
       {/* Title */}
-      <h3 className="font-serif text-xl font-bold text-gothic-200">
+      <h3 className="font-gothic text-2xl font-bold tracking-wider text-gothic-200">
         {title}
       </h3>
 
       {/* Message */}
-      <p className="max-w-md font-serif text-sm italic text-gothic-400">
+      <p className="max-w-md font-serif text-lg italic leading-relaxed text-gothic-400">
         {displayMessage}
       </p>
 
-      {/* Optional children (e.g., action button) */}
+      {/* Optional children (e.g., a CTA button) */}
       {children && (
         <div className="mt-2">
           {children}

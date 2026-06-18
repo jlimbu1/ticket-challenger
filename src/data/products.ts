@@ -1,103 +1,84 @@
-import { Product } from '@/types';
+"use client";
 
-export const products: Product[] = [
-  {
-    id: 'vinyl-001',
-    name: 'The Black Parade Vinyl',
-    price: 34.99,
-    image: '/images/black-parade-vinyl.jpg',
-    description: 'Limited edition pressing of the iconic album. Black wax with crimson splatter. Gatefold sleeve featuring the Patient artwork.',
-    category: 'vinyl',
-    stock: 15,
-  },
-  {
-    id: 'vinyl-002',
-    name: 'Three Cheers for Sweet Revenge Vinyl',
-    price: 29.99,
-    image: '/images/three-cheers-vinyl.jpg',
-    description: 'Reissue on deep purple vinyl. Demolition lovers artwork embossed on the cover. Includes lyric insert.',
-    category: 'vinyl',
-    stock: 10,
-  },
-  {
-    id: 'vinyl-003',
-    name: 'I Brought You My Bullets Vinyl',
-    price: 27.99,
-    image: '/images/bullets-vinyl.jpg',
-    description: 'Original pressing replica on blood red vinyl. Skeleton motif cover with vintage medical diagram insert.',
-    category: 'vinyl',
-    stock: 8,
-  },
-  {
-    id: 'vinyl-004',
-    name: 'Danger Days Vinyl',
-    price: 31.99,
-    image: '/images/danger-days-vinyl.jpg',
-    description: 'Electric blue vinyl with neon pink splatter. Artwork by the Killjoys. Includes poster and sticker sheet.',
-    category: 'vinyl',
-    stock: 12,
-  },
-  {
-    id: 'vinyl-005',
-    name: 'Conventional Weapons Vinyl',
-    price: 25.99,
-    image: '/images/conventional-weapons-vinyl.jpg',
-    description: 'Compilation of unreleased tracks on clear vinyl. Numbered edition with embossed cover.',
-    category: 'vinyl',
-    stock: 0,
-  },
-  {
-    id: 'apparel-001',
-    name: 'Revenge Tour T-Shirt',
-    price: 24.99,
-    image: '/images/revenge-tour-tshirt.jpg',
-    description: 'Black cotton tee with the Revenge Tour skeleton artwork on front. Tour dates printed on back.',
-    category: 'apparel',
-    stock: 25,
-  },
-  {
-    id: 'apparel-002',
-    name: 'Black Parade Hoodie',
-    price: 49.99,
-    image: '/images/black-parade-hoodie.jpg',
-    description: 'Heavyweight black hoodie with The Black Parade logo embroidered on chest. Oversized fit.',
-    category: 'apparel',
-    stock: 18,
-  },
-  {
-    id: 'apparel-003',
-    name: 'Danger Days Jacket',
-    price: 69.99,
-    image: '/images/danger-days-jacket.jpg',
-    description: 'Limited edition bomber jacket with Killjoy patches. Red lining with custom embroidery.',
-    category: 'apparel',
-    stock: 0,
-  },
-  {
-    id: 'collectible-001',
-    name: 'Fun Ghoul Action Figure',
-    price: 19.99,
-    image: '/images/fun-ghoul-figure.jpg',
-    description: 'Articulated action figure of Fun Ghoul from the Danger Days universe. Includes laser gun accessory.',
-    category: 'collectible',
-    stock: 30,
-  },
-  {
-    id: 'collectible-002',
-    name: 'The Patient Poster',
-    price: 14.99,
-    image: '/images/patient-poster.jpg',
-    description: 'High-quality print of The Patient artwork from The Black Parade. 24x36 inches on premium paper.',
-    category: 'collectible',
-    stock: 22,
-  },
-  {
-    id: 'collectible-003',
-    name: 'Demolition Lovers Keychain',
-    price: 9.99,
-    image: '/images/demolition-lovers-keychain.jpg',
-    description: 'Die-cast metal keychain featuring the Demolition Lovers silhouette. Double-sided design.',
-    category: 'collectible',
-    stock: 45,
-  },
-];
+import { useState, useEffect } from "react";
+import { products } from "@/src/data/products";
+import ProductCard from "@/components/ProductCard";
+import DramaticErrorBoundary from "@/components/DramaticErrorBoundary";
+import GothicEmptyState from "@/components/GothicEmptyState";
+import VinylSpinner from "@/components/VinylSpinner";
+import type { Product } from "@/src/types";
+
+export default function ProductsPage() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [productList, setProductList] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setProductList(products);
+      setIsLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <VinylSpinner />
+      </div>
+    );
+  }
+
+  if (productList.length === 0) {
+    return (
+      <DramaticErrorBoundary>
+        <div className="min-h-screen bg-black text-white p-8">
+          <GothicEmptyState
+            title="No Products Found"
+            message="The stage is empty. Check back later for new releases."
+          />
+        </div>
+      </DramaticErrorBoundary>
+    );
+  }
+
+  const inStockProducts = productList.filter((product: Product) => product.stock > 0);
+  const outOfStockProducts = productList.filter((product: Product) => product.stock <= 0);
+
+  return (
+    <DramaticErrorBoundary>
+      <div className="min-h-screen bg-black text-white">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold mb-8 text-center tracking-wider uppercase">
+            The Collection
+          </h1>
+          
+          {inStockProducts.length > 0 && (
+            <section className="mb-12">
+              <h2 className="text-xl font-semibold mb-4 text-gray-300 tracking-wide">
+                Available Relics
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {inStockProducts.map((product: Product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {outOfStockProducts.length > 0 && (
+            <section>
+              <h2 className="text-xl font-semibold mb-4 text-gray-500 tracking-wide">
+                Lost to the Void
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 opacity-60">
+                {outOfStockProducts.map((product: Product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      </div>
+    </DramaticErrorBoundary>
+  );
+}

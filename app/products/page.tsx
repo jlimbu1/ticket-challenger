@@ -1,22 +1,34 @@
-import { products } from '@/src/data/products';
-import ProductCard from '@/components/ProductCard';
-import DramaticErrorBoundary from '@/components/DramaticErrorBoundary';
-import GothicEmptyState from '@/components/GothicEmptyState';
-import VinylSpinner from '@/components/VinylSpinner';
-import { useCart } from '@/src/context/CartContext';
-import type { Product } from '@/src/types';
+"use client";
+
+import { useState, useEffect } from "react";
+import { products } from "@/src/data/products";
+import ProductCard from "@/components/ProductCard";
+import DramaticErrorBoundary from "@/components/DramaticErrorBoundary";
+import GothicEmptyState from "@/components/GothicEmptyState";
+import VinylSpinner from "@/components/VinylSpinner";
+import type { Product } from "@/src/types";
 
 export default function ProductsPage() {
-  const { addToCart } = useCart();
+  const [isLoading, setIsLoading] = useState(true);
+  const [productList, setProductList] = useState<Product[]>([]);
 
-  const inStockProducts = products.filter((product: Product) => product.stock > 0);
-  const outOfStockProducts = products.filter((product: Product) => product.stock <= 0);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setProductList(products);
+      setIsLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const handleAddToCart = (product: Product) => {
-    addToCart(product, 1);
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <VinylSpinner />
+      </div>
+    );
+  }
 
-  if (products.length === 0) {
+  if (productList.length === 0) {
     return (
       <DramaticErrorBoundary>
         <div className="min-h-screen bg-black text-white p-8">
@@ -29,39 +41,44 @@ export default function ProductsPage() {
     );
   }
 
+  const inStockProducts = productList.filter((product: Product) => product.stock > 0);
+  const outOfStockProducts = productList.filter((product: Product) => product.stock <= 0);
+
   return (
     <DramaticErrorBoundary>
       <div className="min-h-screen bg-black text-white">
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <h1 className="text-4xl font-bold mb-8 tracking-wider uppercase">
-            Merchandise
-          </h1>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <header className="mb-8">
+            <h1 className="text-4xl font-bold text-white mb-2">The Collection</h1>
+            <p className="text-gray-400">
+              Browse our curated selection of vinyl, apparel, and accessories.
+            </p>
+          </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {inStockProducts.map((product: Product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={handleAddToCart}
-              />
-            ))}
-          </div>
-
-          {outOfStockProducts.length > 0 && (
-            <div className="mt-12">
-              <h2 className="text-2xl font-bold mb-6 tracking-wider uppercase text-gray-500">
-                Sold Out
+          {inStockProducts.length > 0 && (
+            <section className="mb-12">
+              <h2 className="text-2xl font-semibold text-gray-300 mb-6">
+                Available Now
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60">
-                {outOfStockProducts.map((product: Product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onAddToCart={handleAddToCart}
-                  />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {inStockProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
-            </div>
+            </section>
+          )}
+
+          {outOfStockProducts.length > 0 && (
+            <section>
+              <h2 className="text-2xl font-semibold text-gray-500 mb-6">
+                Sold Out
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {outOfStockProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </section>
           )}
         </div>
       </div>

@@ -1,3 +1,5 @@
+"use client";
+
 import { useCart } from '@/src/context/CartContext';
 import type { Product } from '@/src/types';
 
@@ -38,17 +40,14 @@ export default function ProductCard({ product }: ProductCardProps) {
         <h3 className="text-lg font-semibold text-white mb-1">{product.name}</h3>
         <p className="text-gray-400 text-sm mb-3 line-clamp-2">{product.description}</p>
         <div className="flex items-center justify-between">
-          <span className="text-purple-400 font-bold text-lg">
-            ${product.price.toFixed(2)}
-          </span>
-          {product.stock > 0 && (
-            <button
-              onClick={handleAddToCart}
-              className="bg-purple-900 hover:bg-purple-800 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-            >
-              Add to Cart
-            </button>
-          )}
+          <span className="text-purple-400 font-bold">${product.price.toFixed(2)}</span>
+          <button
+            onClick={handleAddToCart}
+            disabled={product.stock <= 0}
+            className="px-4 py-2 bg-purple-900 hover:bg-purple-800 disabled:bg-gray-700 disabled:text-gray-500 text-white text-sm rounded transition-colors duration-200"
+          >
+            {product.stock <= 0 ? 'Sold Out' : 'Add to Cart'}
+          </button>
         </div>
       </div>
     </div>
