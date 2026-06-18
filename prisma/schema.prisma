@@ -10,6 +10,7 @@ datasource db {
 model Product {
   id          Int      @id @default(autoincrement())
   name        String
+  slug        String   @unique
   description String
   price       Float
   imageUrl    String
@@ -17,7 +18,7 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  cartItems CartItem[]
+  cartItems  CartItem[]
   orderItems OrderItem[]
 }
 
@@ -37,21 +38,45 @@ model CartItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cart     Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product  Product @relation(fields: [productId], references: [id])
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
 }
 
 model Order {
-  id              Int      @id @default(autoincrement())
-  shippingAddress String
-  paymentInfo     String
-  items           String
-  total           Float
-  status          String   @default("pending")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  total     Float
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  orderItems OrderItem[]
+  shippingAddress ShippingAddress?
+  paymentInfo     PaymentInfo?
+  orderItems      OrderItem[]
+}
+
+model ShippingAddress {
+  id        Int      @id @default(autoincrement())
+  street    String
+  city      String
+  state     String
+  zip       String
+  country   String
+  orderId   Int      @unique
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model PaymentInfo {
+  id             Int      @id @default(autoincrement())
+  cardLastFour   String
+  cardholderName String
+  expiryMonth    Int
+  expiryYear     Int
+  orderId        Int      @unique
+  createdAt      DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 model OrderItem {
