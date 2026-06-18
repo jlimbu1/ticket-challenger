@@ -1,57 +1,50 @@
-import { useCart } from '@/src/context/CartContext';
+import { products } from '@/src/data/products';
+import ProductCard from '@/components/ProductCard';
 import DramaticErrorBoundary from '@/components/DramaticErrorBoundary';
 import GothicEmptyState from '@/components/GothicEmptyState';
+import VinylSpinner from '@/components/VinylSpinner';
+import { useCart } from '@/src/context/CartContext';
 import type { Product } from '@/lib/types';
 
-interface ProductCardProps {
-  product: Product;
-}
-
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductsPage() {
   const { addToCart } = useCart();
 
-  const handleAddToCart = () => {
-    if (product.stock <= 0) return;
+  const inStockProducts = products.filter((product: Product) => product.stock > 0);
+  const outOfStockProducts = products.filter((product: Product) => product.stock <= 0);
+
+  const handleAddToCart = (product: Product) => {
     addToCart(product, 1);
   };
 
+  if (products.length === 0) {
+    return (
+      <DramaticErrorBoundary>
+        <div className="min-h-screen bg-black text-white p-8">
+          <GothicEmptyState
+            title="No Products Found"
+            message="The stage is empty. Check back later for new releases."
+          />
+        </div>
+      </DramaticErrorBoundary>
+    );
+  }
+
   return (
     <DramaticErrorBoundary>
-      <div className="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden hover:border-purple-900 transition-colors duration-300">
-        <div className="aspect-square bg-gray-800 relative overflow-hidden">
-          {product.image ? (
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-600">
-              <span className="text-4xl">&#9835;</span>
-            </div>
-          )}
-          {product.stock <= 0 && (
-            <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-              <span className="text-red-500 font-bold text-lg uppercase tracking-wider">
-                Sold Out
-              </span>
-            </div>
-          )}
-        </div>
-        <div className="p-4">
-          <h3 className="text-lg font-semibold text-white mb-2">{product.name}</h3>
-          <p className="text-gray-400 text-sm mb-4">{product.description}</p>
-          <div className="flex items-center justify-between">
-            <span className="text-purple-400 font-bold text-xl">
-              ${product.price.toFixed(2)}
-            </span>
-            <button
-              onClick={handleAddToCart}
-              disabled={product.stock <= 0}
-              className="px-4 py-2 bg-purple-900 hover:bg-purple-800 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded transition-colors duration-200 uppercase text-sm tracking-wider"
-            >
-              {product.stock <= 0 ? 'Sold Out' : 'Add to Cart'}
-            </button>
+      <div className="min-h-screen bg-black text-white">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <h1 className="text-4xl font-bold mb-8 tracking-wider uppercase">
+            Merchandise
+          </h1>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {inStockProducts.map((product: Product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAddToCart={handleAddToCart}
+              />
+            ))}
           </div>
         </div>
       </div>

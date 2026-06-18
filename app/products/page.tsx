@@ -2,6 +2,7 @@ import { products } from '@/src/data/products';
 import ProductCard from '@/components/ProductCard';
 import DramaticErrorBoundary from '@/components/DramaticErrorBoundary';
 import GothicEmptyState from '@/components/GothicEmptyState';
+import VinylSpinner from '@/components/VinylSpinner';
 import { useCart } from '@/src/context/CartContext';
 import type { Product } from '@/lib/types';
 
@@ -51,7 +52,7 @@ export default function ProductsPage() {
               <h2 className="text-2xl font-bold mb-6 tracking-wider uppercase text-gray-400">
                 Sold Out
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-50">
                 {outOfStockProducts.map((product: Product) => (
                   <ProductCard
                     key={product.id}
