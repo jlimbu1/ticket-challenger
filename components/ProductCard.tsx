@@ -1,78 +1,71 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { products } from "@/src/data/products";
-import ProductCard from "@/components/ProductCard";
-import DramaticErrorBoundary from "@/components/DramaticErrorBoundary";
-import GothicEmptyState from "@/components/GothicEmptyState";
+import { cn } from "@/lib/utils";
+import { ButtonHTMLAttributes, forwardRef } from "react";
 import VinylSpinner from "@/components/VinylSpinner";
-import type { Product } from "@/src/types";
 
-export default function ProductsPage() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [productList, setProductList] = useState<Product[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        if (!products || !Array.isArray(products)) {
-          throw new Error("Product data is unavailable");
-        }
-        setProductList(products);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load products");
-      } finally {
-        setIsLoading(false);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <VinylSpinner />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <DramaticErrorBoundary>
-        <div className="min-h-screen bg-black text-white p-8">
-          <GothicEmptyState
-            title="Something went wrong"
-            message={error}
-          />
-        </div>
-      </DramaticErrorBoundary>
-    );
-  }
-
-  if (!productList || productList.length === 0) {
-    return (
-      <div className="min-h-screen bg-black text-white p-8">
-        <GothicEmptyState
-          title="No products found"
-          message="The collection is empty. Check back later for new arrivals."
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <h1 className="mb-8 text-center font-mcr text-4xl tracking-wider text-crimson md:text-5xl">
-          The Collection
-        </h1>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {productList.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+interface ThemedButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: "primary" | "secondary" | "danger";
+  size?: "sm" | "md" | "lg";
+  loading?: boolean;
 }
+
+const variantClasses = {
+  primary:
+    "bg-crimson text-gothic-50 hover:bg-crimson-light active:bg-crimson-dark border-crimson shadow-crimson",
+  secondary:
+    "bg-transparent text-gothic-200 hover:bg-gothic-700 active:bg-gothic-600 border-gothic-600 hover:border-gothic-500",
+  danger:
+    "bg-rose-dark text-gothic-50 hover:bg-rose active:bg-rose-dark border-rose-dark shadow-crimson",
+};
+
+const sizeClasses = {
+  sm: "px-3 py-1.5 text-sm",
+  md: "px-5 py-2.5 text-base",
+  lg: "px-8 py-3.5 text-lg",
+};
+
+const ThemedButton = forwardRef<HTMLButtonElement, ThemedButtonProps>(
+  (
+    {
+      variant = "primary",
+      size = "md",
+      loading = false,
+      disabled,
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const isDisabled = disabled || loading;
+
+    return (
+      <button
+        ref={ref}
+        disabled={isDisabled}
+        className={cn(
+          "relative inline-flex items-center justify-center gap-2 rounded-md border font-serif font-semibold",
+          "transition-all duration-300 ease-in-out",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson focus-visible:ring-offset-2 focus-visible:ring-offset-gothic-900",
+          isDisabled && "cursor-not-allowed opacity-50",
+          variantClasses[variant],
+          sizeClasses[size],
+          className
+        )}
+        {...props}
+      >
+        {loading && (
+          <VinylSpinner size="sm" className="absolute" />
+        )}
+        <span className={cn(loading && "invisible")}>
+          {children}
+        </span>
+      </button>
+    );
+  }
+);
+
+ThemedButton.displayName = "ThemedButton";
+
+export default ThemedButton;

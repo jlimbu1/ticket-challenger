@@ -1,12 +1,15 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import ThemedButton from "@/components/ThemedButton";
 
 interface GothicEmptyStateProps {
   title?: string;
   message?: string;
   className?: string;
   children?: React.ReactNode;
+  onAction?: () => void;
+  actionLabel?: string;
 }
 
 const defaultMessages = [
@@ -26,6 +29,8 @@ export default function GothicEmptyState({
   message,
   className,
   children,
+  onAction,
+  actionLabel = "Return",
 }: GothicEmptyStateProps) {
   const displayMessage = message ?? getRandomDefaultMessage();
 
@@ -44,22 +49,23 @@ export default function GothicEmptyState({
         <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-crimson/40 bg-gothic-800">
           <span className="text-2xl text-crimson/60">&#9760;</span>
         </div>
-        <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-rose/30">
-          <span className="text-xs text-rose/60">&#10007;</span>
-        </div>
       </div>
-      <div className="space-y-2">
-        <h3 className="font-gothic text-xl font-bold tracking-wider text-crimson">
-          {title}
-        </h3>
-        <p className="max-w-md text-sm italic text-gothic-300">
+      <div className="flex flex-col gap-2">
+        <h3 className="font-serif text-xl font-bold text-gothic-200">{title}</h3>
+        <p className="max-w-md font-sans text-sm italic text-gothic-400">
           {displayMessage}
         </p>
       </div>
-      {children && (
-        <div className="mt-2">
-          {children}
-        </div>
+      {children}
+      {onAction && (
+        <ThemedButton
+          variant="secondary"
+          size="md"
+          onClick={onAction}
+          aria-label={actionLabel}
+        >
+          {actionLabel}
+        </ThemedButton>
       )}
     </div>
   );

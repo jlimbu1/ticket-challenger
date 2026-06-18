@@ -2,11 +2,13 @@
 
 import { Component, ReactNode, ErrorInfo } from "react";
 import { cn } from "@/lib/utils";
+import ThemedButton from "@/components/ThemedButton";
 
 interface DramaticErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
   className?: string;
+  onRetry?: () => void;
 }
 
 interface DramaticErrorBoundaryState {
@@ -49,11 +51,11 @@ function reportError(error: Error, errorInfo: ErrorInfo): void {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       }).catch(() => {
-        console.warn("Failed to report error to server");
+        // Silently fail — logging is best-effort
       });
     }
   } catch {
-    console.warn("Failed to report error to server");
+    // Silently fail — logging is best-effort
   }
 }
 
@@ -63,28 +65,22 @@ export default class DramaticErrorBoundary extends Component<
 > {
   constructor(props: DramaticErrorBoundaryProps) {
     super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-    };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error): DramaticErrorBoundaryState {
-    return {
-      hasError: true,
-      error,
-    };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     reportError(error, errorInfo);
   }
 
-  handleRetry = (): void => {
-    this.setState({
-      hasError: false,
-      error: null,
-    });
+  private handleRetry = (): void => {
+    this.setState({ hasError: false, error: null });
+    if (this.props.onRetry) {
+      this.props.onRetry();
+    }
   };
 
   render(): ReactNode {
@@ -102,41 +98,35 @@ export default class DramaticErrorBoundary extends Component<
           role="alert"
           className={cn(
             "flex flex-col items-center justify-center gap-6 p-8 text-center",
-            "border border-crimson/30 bg-gothic-900/80 shadow-gothic",
-            "rounded-lg min-h-[300px]",
+            "border border-crimson/40 bg-gothic-900/50 shadow-gothic",
+            "rounded-lg",
             this.props.className
           )}
         >
           <div className="relative flex items-center justify-center" aria-hidden="true">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-crimson/50 bg-gothic-800">
-              <span className="text-4xl text-crimson">&#9760;</span>
-            </div>
-            <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-full bg-rose/40">
-              <span className="text-lg text-white">!</span>
+            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-crimson bg-gothic-800">
+              <span className="text-4xl text-crimson">&#9762;</span>
             </div>
           </div>
 
           <div className="space-y-2">
-            <h2 className="font-creepster text-2xl text-crimson tracking-wider">
-              Ritual Interrupted
+            <h2 className="font-serif text-2xl font-bold text-crimson">
+              A Dark Omen
             </h2>
-            <p className="font-gothic text-lg text-gothic-300 max-w-md">
+            <p className="max-w-md font-mono text-sm text-gothic-300">
               {errorMessage}
             </p>
           </div>
 
-          <button
-            onClick={this.handleRetry}
-            className={cn(
-              "px-6 py-3 rounded-md font-semibold text-lg",
-              "bg-crimson text-white hover:bg-crimson/80",
-              "transition-colors duration-200",
-              "focus:outline-none focus:ring-2 focus:ring-crimson/50 focus:ring-offset-2 focus:ring-offset-gothic-900"
-            )}
-            aria-label="Retry loading the page"
-          >
-            Attempt the Ritual Again
-          </button>
+          <div className="flex gap-4">
+            <ThemedButton
+              variant="primary"
+              size="md"
+              onClick={this.handleRetry}
+            >
+              Attempt the Ritual Again
+            </ThemedButton>
+          </div>
         </div>
       );
     }

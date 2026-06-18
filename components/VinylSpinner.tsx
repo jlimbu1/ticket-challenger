@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 
 interface VinylSpinnerProps {
@@ -10,6 +12,12 @@ const sizeClasses = {
   sm: "h-12 w-12",
   md: "h-20 w-20",
   lg: "h-32 w-32",
+};
+
+const innerSizeClasses = {
+  sm: "h-6 w-6",
+  md: "h-10 w-10",
+  lg: "h-16 w-16",
 };
 
 export default function VinylSpinner({
@@ -39,23 +47,23 @@ export default function VinylSpinner({
           {/* Label */}
           <div className="absolute inset-[30%] rounded-full bg-crimson shadow-inner">
             <div className="flex h-full items-center justify-center">
-              <div className="h-2 w-2 rounded-full bg-gothic-900" />
+              <div className={cn("rounded-full bg-gothic-900", innerSizeClasses[size])} />
             </div>
           </div>
         </div>
         {/* Spinning animation overlay */}
         <div
           className={cn(
-            "absolute inset-0 rounded-full",
-            "animate-[spin_var(--vinyl-spin-duration)_linear_infinite]",
-            "motion-reduce:animate-none"
+            "absolute inset-0 rounded-full border-2 border-transparent border-t-crimson",
+            "animate-spin"
           )}
-        >
-          <div className="absolute left-1/2 top-0 h-1/2 w-0.5 -translate-x-1/2 bg-gothic-600/30" />
-        </div>
+          style={{ animationDuration: "3s" }}
+        />
       </div>
       {label && (
-        <p className="font-serif text-sm text-gothic-400">{label}</p>
+        <span className="text-sm font-serif text-gothic-400 animate-pulse">
+          {label}
+        </span>
       )}
     </div>
   );

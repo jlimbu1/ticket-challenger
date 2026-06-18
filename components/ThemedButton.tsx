@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { ButtonHTMLAttributes, forwardRef } from "react";
+import VinylSpinner from "@/components/VinylSpinner";
 
 interface ThemedButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "danger";
@@ -47,7 +48,7 @@ const ThemedButton = forwardRef<HTMLButtonElement, ThemedButtonProps>(
           "relative inline-flex items-center justify-center gap-2 rounded-md border font-serif font-semibold",
           "transition-all duration-300 ease-in-out",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson focus-visible:ring-offset-2 focus-visible:ring-offset-gothic-900",
-          "disabled:cursor-not-allowed disabled:opacity-50",
+          isDisabled && "cursor-not-allowed opacity-50",
           variantClasses[variant],
           sizeClasses[size],
           className
@@ -55,12 +56,9 @@ const ThemedButton = forwardRef<HTMLButtonElement, ThemedButtonProps>(
         {...props}
       >
         {loading && (
-          <span
-            className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-            aria-hidden="true"
-          />
+          <VinylSpinner size="sm" className="absolute inset-0" />
         )}
-        {children}
+        <span className={cn(loading && "invisible")}>{children}</span>
       </button>
     );
   }
