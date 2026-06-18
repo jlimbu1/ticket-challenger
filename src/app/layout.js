@@ -4,12 +4,12 @@ const unifrakturCook = UnifrakturCook({
     weight: "700",
     subsets: ["latin"],
     display: "swap",
-    variable: "--font-heading",
+    variable: "--font-gothic",
 });
 const playfairDisplay = Playfair_Display({
     subsets: ["latin"],
     display: "swap",
-    variable: "--font-accent",
+    variable: "--font-heading",
 });
 const crimsonText = Crimson_Text({
     weight: ["400", "600", "700"],
