@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Product } from '../types';
 import { useCart } from '../hooks/useCart';
 import { GothicButton } from './GothicButton';
 import { VinylSpinner } from './VinylSpinner';
+import { EmptyState } from './EmptyState';
 
-interface ProductCardProps {
-  product: Product;
+interface ProductGridProps {
+  products: Product[];
+  isLoading?: boolean;
+  error?: string | null;
 }
 
 const NOISE_PATTERN = `data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E`;
@@ -16,17 +19,17 @@ const SKULL_ROSE_OVERLAY = `data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmln
 
 const ADD_TO_CART_TIMEOUT = 10000;
 
-export function ProductCard({ product }: ProductCardProps) {
+function ProductCard({ product }: { product: Product }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
   const { addItem } = useCart();
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = useCallback(async () => {
     if (isAdding) return;
-
+    
     setIsAdding(true);
-    setError(null);
+    setAddError(null);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), ADD_TO_CART_TIMEOUT);
@@ -34,77 +37,99 @@ export function ProductCard({ product }: ProductCardProps) {
     try {
       await addItem(product);
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        setError('The ritual took too long. Please try again.');
-      } else {
-        const message = err instanceof Error ? err.message : 'Failed to add to cart';
-        setError(message);
-      }
+      const message = err instanceof Error ? err.message : 'Failed to add item to cart';
+      setAddError(message);
     } finally {
       clearTimeout(timeoutId);
       setIsAdding(false);
     }
-  };
+  }, [product, addItem, isAdding]);
 
   return (
     <div
-      className="relative group overflow-hidden rounded-lg bg-gray-900 border border-gray-800 transition-all duration-500 hover:border-crimson-600 hover:shadow-[0_0_30px_rgba(139,0,0,0.3)]"
+      className="relative group overflow-hidden rounded-lg border border-crimson/20 bg-black/80 transition-all duration-500"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
         setIsHovered(false);
-        setError(null);
+        setAddError(null);
       }}
+      role="article"
+      aria-label={`${product.title} by ${product.artist}`}
     >
+      {/* Image container */}
       <div className="relative aspect-square overflow-hidden">
         <img
           src={product.imageUrl}
-          alt={`${product.title} by ${product.artist}`}
+          alt={`${product.title} album artwork`}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           loading="lazy"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = NOISE_PATTERN;
+            target.alt = 'Album artwork unavailable';
+          }}
         />
 
+        {/* Hover overlay with skull/rose pattern */}
         <div
           className={`absolute inset-0 transition-opacity duration-500 ${
             isHovered ? 'opacity-100' : 'opacity-0'
           }`}
-          style={{
-            backgroundImage: `url('${SKULL_ROSE_OVERLAY}'), url('${NOISE_PATTERN}')`,
-            backgroundBlendMode: 'overlay, normal',
-          }}
-        />
+          aria-hidden="true"
+        >
+          <div
+            className="absolute inset-0 bg-gradient-to-t from-crimson/30 to-transparent"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${SKULL_ROSE_OVERLAY})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${NOISE_PATTERN})`,
+              backgroundSize: 'cover',
+              mixBlendMode: 'overlay',
+            }}
+          />
+        </div>
 
+        {/* Crimson glow on hover */}
         <div
-          className={`absolute inset-0 transition-opacity duration-500 ${
-            isHovered ? 'opacity-100' : 'opacity-0'
+          className={`absolute inset-0 transition-shadow duration-500 ${
+            isHovered ? 'shadow-[inset_0_0_30px_rgba(139,0,0,0.5)]' : ''
           }`}
-          style={{
-            background: 'radial-gradient(circle at center, rgba(139,0,0,0.2) 0%, transparent 70%)',
-          }}
+          aria-hidden="true"
         />
       </div>
 
+      {/* Product info */}
       <div className="p-4 space-y-2">
-        <h3 className="font-serif text-lg font-bold text-white truncate">
+        <h3 className="font-serif text-lg text-white truncate">
           {product.title}
         </h3>
-        <p className="text-sm text-gray-400">{product.artist}</p>
-        <div className="flex items-center justify-between">
-          <span className="text-crimson-400 font-bold text-xl">
-            ${product.price.toFixed(2)}
-          </span>
-          <span className="text-xs text-gray-500">{product.year}</span>
-        </div>
+        <p className="text-sm text-gray-400">
+          {product.artist} &middot; {product.year}
+        </p>
+        <p className="text-xl font-bold text-crimson">
+          ${product.price.toFixed(2)}
+        </p>
 
-        {error && (
-          <p className="text-red-400 text-xs mt-1" role="alert">
-            {error}
-          </p>
-        )}
+        {/* Stock status */}
+        <p className={`text-xs ${product.inStock ? 'text-green-500' : 'text-red-500'}`}>
+          {product.inStock ? 'In Stock' : 'Out of Stock'}
+        </p>
 
+        {/* Add to cart button */}
         <GothicButton
           onClick={handleAddToCart}
           disabled={!product.inStock || isAdding}
-          className="w-full mt-2"
+          className="w-full"
+          aria-label={`Add ${product.title} to cart`}
         >
           {isAdding ? (
             <span className="flex items-center justify-center gap-2">
@@ -114,9 +139,71 @@ export function ProductCard({ product }: ProductCardProps) {
           ) : product.inStock ? (
             'Add to Cart'
           ) : (
-            'Out of Stock'
+            'Sold Out'
           )}
         </GothicButton>
+
+        {/* Error message */}
+        {addError && (
+          <p className="text-xs text-red-500 mt-1" role="alert">
+            {addError}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function ProductGrid({ products, isLoading = false, error = null }: ProductGridProps) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]" role="status">
+        <VinylSpinner />
+        <span className="sr-only">Loading products...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <EmptyState
+          title="The Record Player is Broken"
+          message="A ghost in the machine has scattered our collection. The vinyls are silent, the needles are still. Perhaps refresh and try again?"
+        />
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <EmptyState
+          title="The Shelves are Empty"
+          message="Like a forgotten jukebox in an abandoned diner, our collection has vanished into the void. Check back when the stars align."
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="font-serif text-4xl text-white mb-8 text-center">
+        The Collection
+      </h1>
+      <div
+        className="grid gap-6"
+        style={{
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+        }}
+        role="list"
+        aria-label="Product grid"
+      >
+        {products.map((product) => (
+          <div key={product.id} role="listitem">
+            <ProductCard product={product} />
+          </div>
+        ))}
       </div>
     </div>
   );

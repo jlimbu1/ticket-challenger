@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Product } from '../types';
 import { useCart } from '../hooks/useCart';
 import { GothicButton } from './GothicButton';
@@ -19,82 +19,109 @@ const ADD_TO_CART_TIMEOUT = 10000;
 export function ProductCard({ product }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { addToCart } = useCart();
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = useCallback(async () => {
     if (isAdding) return;
 
     setIsAdding(true);
-    setError(null);
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), ADD_TO_CART_TIMEOUT);
+    setAddError(null);
 
     try {
-      await addToCart(product);
+      const addPromise = new Promise<void>((resolve, reject) => {
+        timeoutRef.current = setTimeout(() => {
+          reject(new Error('Add to cart timed out'));
+        }, ADD_TO_CART_TIMEOUT);
+
+        try {
+          addToCart(product);
+          clearTimeout(timeoutRef.current!);
+          timeoutRef.current = null;
+          resolve();
+        } catch (err) {
+          clearTimeout(timeoutRef.current!);
+          timeoutRef.current = null;
+          reject(err);
+        }
+      });
+
+      await addPromise;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to add item to cart';
-      setError(message);
+      setAddError(message);
     } finally {
-      clearTimeout(timeoutId);
       setIsAdding(false);
     }
-  };
+  }, [isAdding, addToCart, product]);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+  }, []);
 
   return (
     <div
-      className="relative group overflow-hidden rounded-lg bg-gray-900 border border-gray-800 transition-all duration-300 hover:shadow-[0_0_30px_rgba(139,0,0,0.5)] hover:border-red-900"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className="relative group overflow-hidden rounded-lg bg-gray-900 border border-gray-800 transition-all duration-500 hover:border-crimson-700 hover:shadow-[0_0_30px_rgba(139,0,0,0.3)]"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      data-testid="product-card"
     >
       <div className="relative aspect-square overflow-hidden">
         <img
           src={product.imageUrl}
           alt={`${product.title} by ${product.artist}`}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           loading="lazy"
         />
 
         {isHovered && (
           <div
-            className="absolute inset-0 z-10 transition-opacity duration-300"
+            className="absolute inset-0 z-10 transition-opacity duration-500"
             style={{
-              backgroundImage: `url(${SKULL_ROSE_OVERLAY}), url(${NOISE_PATTERN})`,
-              backgroundSize: 'cover, 256px 256px',
-              backgroundBlendMode: 'overlay, normal',
+              backgroundImage: `url('${SKULL_ROSE_OVERLAY}'), url('${NOISE_PATTERN}')`,
+              backgroundBlendMode: 'overlay, multiply',
+              backgroundColor: 'rgba(139, 0, 0, 0.15)',
+              boxShadow: 'inset 0 0 60px rgba(139, 0, 0, 0.4)',
             }}
+            data-testid="hover-overlay"
           />
         )}
 
-        <div
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          style={{
-            backgroundImage: `url(${NOISE_PATTERN})`,
-            backgroundSize: '256px 256px',
-            mixBlendMode: 'overlay',
-          }}
-        />
+        {!product.inStock && (
+          <div className="absolute top-2 right-2 z-20 bg-gray-900/90 text-gray-400 text-xs px-2 py-1 rounded border border-gray-700">
+            Out of Stock
+          </div>
+        )}
       </div>
 
       <div className="p-4 space-y-2">
-        <h3 className="text-lg font-serif text-white truncate">{product.title}</h3>
-        <p className="text-sm text-gray-400">{product.artist}</p>
+        <h3 className="font-serif text-lg font-bold text-gray-100 truncate">
+          {product.title}
+        </h3>
+        <p className="text-sm text-gray-400 truncate">{product.artist}</p>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">{product.year}</span>
-          <span className="text-lg font-bold text-red-800">${product.price.toFixed(2)}</span>
+          <span className="text-crimson-400 font-semibold">
+            ${product.price.toFixed(2)}
+          </span>
+          <span className="text-xs text-gray-500">{product.year}</span>
         </div>
 
-        {error && (
-          <p className="text-sm text-red-500 mt-2" role="alert">
-            {error}
+        {addError && (
+          <p className="text-xs text-red-400 mt-1" role="alert">
+            {addError}
           </p>
         )}
 
         <GothicButton
           onClick={handleAddToCart}
-          disabled={!product.inStock || isAdding}
+          disabled={isAdding || !product.inStock}
           className="w-full mt-2"
+          data-testid="add-to-cart-button"
         >
           {isAdding ? (
             <span className="flex items-center justify-center gap-2">
@@ -104,7 +131,7 @@ export function ProductCard({ product }: ProductCardProps) {
           ) : product.inStock ? (
             'Add to Cart'
           ) : (
-            'Out of Stock'
+            'Unavailable'
           )}
         </GothicButton>
       </div>
