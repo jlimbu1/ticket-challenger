@@ -4,7 +4,7 @@ import DramaticErrorBoundary from '@/components/DramaticErrorBoundary';
 import GothicEmptyState from '@/components/GothicEmptyState';
 import VinylSpinner from '@/components/VinylSpinner';
 import { useCart } from '@/src/context/CartContext';
-import type { Product } from '@/lib/types';
+import type { Product } from '@/src/types';
 
 export default function ProductsPage() {
   const { addToCart } = useCart();
@@ -49,10 +49,10 @@ export default function ProductsPage() {
 
           {outOfStockProducts.length > 0 && (
             <div className="mt-12">
-              <h2 className="text-2xl font-bold mb-6 tracking-wider uppercase text-gray-400">
+              <h2 className="text-2xl font-bold mb-6 tracking-wider uppercase text-gray-500">
                 Sold Out
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-50">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60">
                 {outOfStockProducts.map((product: Product) => (
                   <ProductCard
                     key={product.id}
