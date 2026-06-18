@@ -128,12 +128,8 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
   }, [state.items]);
 
   const addToCart = useCallback((product: Product, quantity: number = 1): void => {
-    if (!product || !product.id) {
-      console.error('[CartContext] Invalid product provided to addToCart');
-      return;
-    }
     if (quantity <= 0) {
-      console.error('[CartContext] Invalid quantity provided to addToCart:', quantity);
+      console.warn('[CartContext] Attempted to add item with invalid quantity:', quantity);
       return;
     }
     dispatch({ type: 'ADD_ITEM', payload: { product, quantity } });
@@ -141,7 +137,7 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
 
   const removeFromCart = useCallback((productId: string): void => {
     if (!productId) {
-      console.error('[CartContext] Invalid productId provided to removeFromCart');
+      console.warn('[CartContext] Attempted to remove item with empty productId');
       return;
     }
     dispatch({ type: 'REMOVE_ITEM', payload: productId });
@@ -149,11 +145,11 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
 
   const updateQuantity = useCallback((productId: string, quantity: number): void => {
     if (!productId) {
-      console.error('[CartContext] Invalid productId provided to updateQuantity');
+      console.warn('[CartContext] Attempted to update quantity with empty productId');
       return;
     }
     if (quantity < 0) {
-      console.error('[CartContext] Invalid quantity provided to updateQuantity:', quantity);
+      console.warn('[CartContext] Attempted to set negative quantity:', quantity);
       return;
     }
     dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity } });
@@ -163,28 +159,26 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
     dispatch({ type: 'CLEAR_CART' });
   }, []);
 
-  const itemCount = useMemo((): number => {
-    return state.items.reduce((total, item) => total + item.quantity, 0);
+  const itemCount = useMemo(() => {
+    return state.items.reduce((count, item) => count + item.quantity, 0);
   }, [state.items]);
 
-  const totalPrice = useMemo((): number => {
+  const totalPrice = useMemo(() => {
     return state.items.reduce(
       (total, item) => total + item.product.price * item.quantity,
       0
     );
   }, [state.items]);
 
-  const contextValue = useMemo((): CartContextValue => {
-    return {
-      items: state.items,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart,
-      itemCount,
-      totalPrice,
-    };
-  }, [state.items, addToCart, removeFromCart, updateQuantity, clearCart, itemCount, totalPrice]);
+  const contextValue = useMemo<CartContextValue>(() => ({
+    items: state.items,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    itemCount,
+    totalPrice,
+  }), [state.items, addToCart, removeFromCart, updateQuantity, clearCart, itemCount, totalPrice]);
 
   return (
     <CartContext.Provider value={contextValue}>
@@ -196,7 +190,10 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
 export function useCart(): CartContextValue {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
+    throw new Error(
+      'useCart must be used within a CartProvider. ' +
+      'Wrap your component tree with <CartProvider> to use cart functionality.'
+    );
   }
   return context;
 }
