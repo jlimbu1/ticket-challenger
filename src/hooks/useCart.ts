@@ -53,12 +53,14 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         lastAddedItemId: action.payload.id,
       };
     }
+
     case 'REMOVE_ITEM': {
       return {
         ...state,
         items: state.items.filter((item) => item.id !== action.payload),
       };
     }
+
     case 'UPDATE_QUANTITY': {
       const { id, quantity } = action.payload;
       if (quantity <= 0) {
@@ -74,6 +76,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         ),
       };
     }
+
     case 'CLEAR_CART': {
       return {
         items: [],
@@ -81,6 +84,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         lastAddedItemId: null,
       };
     }
+
     case 'SET_ANIMATION_IDLE': {
       return {
         ...state,
@@ -88,6 +92,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         lastAddedItemId: null,
       };
     }
+
     case 'LOAD_CART': {
       return {
         items: action.payload,
@@ -95,9 +100,9 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         lastAddedItemId: null,
       };
     }
-    default: {
+
+    default:
       return state;
-    }
   }
 }
 
@@ -132,9 +137,9 @@ export function useCart() {
   });
 
   useEffect(() => {
-    const items = loadCartFromStorage();
-    if (items.length > 0) {
-      dispatch({ type: 'LOAD_CART', payload: items });
+    const storedItems = loadCartFromStorage();
+    if (storedItems.length > 0) {
+      dispatch({ type: 'LOAD_CART', payload: storedItems });
     }
   }, []);
 

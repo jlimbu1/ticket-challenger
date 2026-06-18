@@ -28,6 +28,10 @@ export default {
         success: "#2d6a4f",
         warning: "#b8860b",
         error: "#8b0000",
+        "mcr-crimson": "#8B0000",
+        "mcr-purple": "#4A0082",
+        "mcr-dark": "#0a0a0a",
+        "mcr-gold": "#b8860b",
       },
       fontFamily: {
         heading: ["Playfair Display", "Georgia", "serif"],
@@ -45,59 +49,44 @@ export default {
         },
         "hover-glow": {
           "0%, 100%": { boxShadow: "0 0 5px rgba(139, 0, 0, 0.3)" },
-          "50%": { boxShadow: "0 0 20px rgba(139, 0, 0, 0.6)" },
+          "50%": { boxShadow: "0 0 20px rgba(139, 0, 0, 0.6), 0 0 40px rgba(74, 0, 130, 0.3)" },
         },
-        "pulse-crimson": {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.5" },
-        },
-        "fade-in-up": {
+        "fade-in": {
           "0%": { opacity: "0", transform: "translateY(10px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
-        "skull-float": {
-          "0%, 100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-6px)" },
+        "slide-in-right": {
+          "0%": { transform: "translateX(100%)" },
+          "100%": { transform: "translateX(0)" },
         },
-        "distressed-flicker": {
-          "0%, 100%": { opacity: "1" },
-          "10%": { opacity: "0.8" },
-          "20%": { opacity: "0.95" },
-          "30%": { opacity: "0.85" },
-          "40%": { opacity: "1" },
-          "50%": { opacity: "0.9" },
-          "60%": { opacity: "0.95" },
-          "70%": { opacity: "0.85" },
-          "80%": { opacity: "1" },
-          "90%": { opacity: "0.9" },
+        "slide-out-right": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "0.5" },
+          "50%": { opacity: "1" },
+        },
+        "distress-fade": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "0.03" },
         },
       },
       animation: {
         "vinyl-spin": "vinyl-spin 2s linear infinite",
         "spin-slow": "spin-slow 3s linear infinite",
         "hover-glow": "hover-glow 2s ease-in-out infinite",
-        "pulse-crimson": "pulse-crimson 2s ease-in-out infinite",
-        "fade-in-up": "fade-in-up 0.5s ease-out",
-        "skull-float": "skull-float 3s ease-in-out infinite",
-        "distressed-flicker": "distressed-flicker 4s ease-in-out infinite",
+        "fade-in": "fade-in 0.5s ease-out",
+        "slide-in-right": "slide-in-right 0.3s ease-out",
+        "slide-out-right": "slide-out-right 0.3s ease-in",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "distress-fade": "distress-fade 1s ease-out",
       },
       backgroundImage: {
-        "gothic-gradient": "linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%)",
-        "crimson-gradient": "linear-gradient(135deg, #8B0000 0%, #4A0082 100%)",
-        "dark-radial": "radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000000 100%)",
-      },
-      boxShadow: {
-        "crimson-glow": "0 0 15px rgba(139, 0, 0, 0.4)",
-        "purple-glow": "0 0 15px rgba(74, 0, 130, 0.4)",
-        "neon-crimson": "0 0 10px rgba(255, 0, 68, 0.5), 0 0 20px rgba(255, 0, 68, 0.3)",
-        "neon-purple": "0 0 10px rgba(176, 0, 255, 0.5), 0 0 20px rgba(176, 0, 255, 0.3)",
-        "inner-dark": "inset 0 2px 4px rgba(0, 0, 0, 0.5)",
-      },
-      letterSpacing: {
-        "gothic-wide": "0.15em",
-        "gothic-wider": "0.25em",
+        "distressed-texture": "url('/images/distressed-texture.png')",
+        "gothic-pattern": "repeating-linear-gradient(45deg, transparent, transparent 1px, rgba(255, 255, 255, 0.03) 1px, rgba(255, 255, 255, 0.03) 2px)",
       },
     },
   },
   plugins: [],
-};
+} satisfies Config;
