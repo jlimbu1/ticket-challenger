@@ -9,9 +9,14 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
   const [isHovered, setIsHovered] = React.useState(false);
+  const [isAddingToCart, setIsAddingToCart] = React.useState(false);
 
   const handleAddToCart = () => {
+    setIsAddingToCart(true);
     onAddToCart(product);
+    setTimeout(() => {
+      setIsAddingToCart(false);
+    }, 800);
   };
 
   return (
@@ -39,42 +44,89 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
           <img
             src={product.imageUrl}
             alt={product.name}
-            className="w-full h-64 object-cover transition-all duration-500 ease-out group-hover:scale-110"
-            loading="lazy"
+            className="w-full h-64 object-cover transition-all duration-500 ease-out"
+            style={{
+              filter: isHovered ? 'brightness(0.6) sepia(0.3)' : 'brightness(1)',
+            }}
           />
-          {isHovered && (
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
-          )}
-          {isHovered && (
-            <div className="absolute top-2 right-2">
-              <span className="text-crimson text-2xl opacity-40">&#9760;</span>
-            </div>
-          )}
+          <div
+            className="absolute inset-0 transition-opacity duration-500 ease-out pointer-events-none"
+            style={{
+              opacity: isHovered ? 0.8 : 0,
+              background: 'radial-gradient(circle at 50% 50%, rgba(139,0,0,0.3) 0%, transparent 60%)',
+            }}
+          />
+          <div
+            className="absolute inset-0 transition-opacity duration-500 ease-out pointer-events-none"
+            style={{
+              opacity: isHovered ? 0.15 : 0,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ctext x='50' y='50' text-anchor='middle' dominant-baseline='central' font-size='40' opacity='0.3'%3E%26%239761%3B%3C/text%3E%3C/svg%3E")`,
+              backgroundSize: '80px 80px',
+              backgroundRepeat: 'repeat',
+            }}
+          />
+          <div
+            className="absolute inset-0 transition-opacity duration-500 ease-out pointer-events-none"
+            style={{
+              opacity: isHovered ? 0.1 : 0,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ctext x='50' y='50' text-anchor='middle' dominant-baseline='central' font-size='30' opacity='0.3'%3E%26%239744%3B%3C/text%3E%3C/svg%3E")`,
+              backgroundSize: '60px 60px',
+              backgroundRepeat: 'repeat',
+            }}
+          />
+          <div
+            className="absolute inset-0 transition-opacity duration-500 ease-out pointer-events-none"
+            style={{
+              opacity: isHovered ? 0.2 : 0,
+              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px), repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px)',
+              backgroundSize: '4px 4px',
+            }}
+          />
+          <div
+            className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-500 ease-out ${
+              isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}
+          >
+            <GothicButton
+              onClick={handleAddToCart}
+              disabled={isAddingToCart}
+              className="w-full"
+              variant="primary"
+            >
+              {isAddingToCart ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span
+                    className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+                  />
+                  Adding...
+                </span>
+              ) : (
+                'Add to Collection'
+              )}
+            </GothicButton>
+          </div>
         </div>
         <div className="p-4">
-          <h3 className="font-gothic text-xl text-white mb-1 truncate">
+          <h3
+            className="text-xl font-gothic text-crimson mb-2 truncate"
+            style={{
+              textShadow: '0 0 10px rgba(139, 0, 0, 0.3)',
+            }}
+          >
             {product.name}
           </h3>
-          <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+          <p className="text-sm text-gray-400 font-serif italic mb-3 line-clamp-2">
             {product.description}
           </p>
           <div className="flex items-center justify-between">
-            <span className="text-crimson font-bold text-lg">
+            <span className="text-2xl font-gothic text-deepPurple">
               ${product.price.toFixed(2)}
             </span>
-            <span className="text-gray-500 text-xs">
-              {product.stockCount > 0 ? `${product.stockCount} in stock` : 'Out of stock'}
-            </span>
-          </div>
-          <div className="mt-4">
-            <GothicButton
-              onClick={handleAddToCart}
-              disabled={product.stockCount <= 0}
-              size="sm"
-              className="w-full"
-            >
-              {product.stockCount > 0 ? 'Add to Collection' : 'Sold Out'}
-            </GothicButton>
+            {product.isNewArrival && (
+              <span className="text-xs font-gothic text-crimson border border-crimson px-2 py-1 rounded">
+                New Arrival
+              </span>
+            )}
           </div>
         </div>
       </div>
