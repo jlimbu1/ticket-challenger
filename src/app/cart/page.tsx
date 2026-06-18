@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -11,6 +11,16 @@ interface CartItem {
   price: number;
   quantity: number;
   imageUrl: string;
+}
+
+function isValidImageUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 function SkeletonCartItem() {
@@ -45,11 +55,11 @@ function EmptyCart() {
           d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"
         />
       </svg>
-      <h2 className="text-xl font-semibold text-gray-900">Your cart is empty</h2>
-      <p className="mt-2 text-gray-500">Add some products to get started!</p>
+      <h3 className="mb-2 text-xl font-semibold text-gray-900">Your cart is empty</h3>
+      <p className="mb-6 text-gray-500">Looks like you have not added any items to your cart yet.</p>
       <Link
         href="/products"
-        className="btn-primary mt-6"
+        className="btn-primary"
       >
         Browse Products
       </Link>
@@ -62,11 +72,13 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadCart = useCallback(() => {
     try {
-      const storedCart = localStorage.getItem('cart');
-      if (storedCart) {
-        const parsed = JSON.parse(storedCart);
+      setLoading(true);
+      setError(null);
+      const stored = localStorage.getItem('cart');
+      if (stored) {
+        const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
           setCartItems(parsed);
         } else {
@@ -76,14 +88,19 @@ export default function CartPage() {
         setCartItems([]);
       }
     } catch (err) {
-      setError('Failed to load cart. Please try again.');
+      const message = err instanceof Error ? err.message : 'Failed to load cart';
+      setError(message);
       setCartItems([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const updateQuantity = (productId: number, newQuantity: number) => {
+  useEffect(() => {
+    loadCart();
+  }, [loadCart]);
+
+  const updateQuantity = useCallback((productId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
     setCartItems((prev) => {
       const updated = prev.map((item) =>
@@ -92,32 +109,44 @@ export default function CartPage() {
       try {
         localStorage.setItem('cart', JSON.stringify(updated));
       } catch (err) {
-        setError('Failed to update cart. Please try again.');
+        const message = err instanceof Error ? err.message : 'Failed to save cart';
+        setError(message);
       }
       return updated;
     });
-  };
+  }, []);
 
-  const removeItem = (productId: number) => {
+  const removeItem = useCallback((productId: number) => {
     setCartItems((prev) => {
       const updated = prev.filter((item) => item.productId !== productId);
       try {
         localStorage.setItem('cart', JSON.stringify(updated));
       } catch (err) {
-        setError('Failed to remove item. Please try again.');
+        const message = err instanceof Error ? err.message : 'Failed to save cart';
+        setError(message);
       }
       return updated;
     });
-  };
+  }, []);
 
-  const totalPrice = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  if (loading) {
+    return (
+      <div className="page-container page-section min-h-[60vh]">
+        <div className="mb-8 h-8 w-48 animate-pulse rounded bg-gray-200" />
+        <div className="space-y-4">
+          <SkeletonCartItem />
+          <SkeletonCartItem />
+          <SkeletonCartItem />
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
-      <div className="page-container page-section">
+      <div className="page-container page-section min-h-[60vh]">
         <div className="flex flex-col items-center justify-center py-16 text-center animate-fadeIn">
           <svg
             className="mb-6 h-24 w-24 text-red-300"
@@ -132,11 +161,11 @@ export default function CartPage() {
               d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
             />
           </svg>
-          <h2 className="text-xl font-semibold text-gray-900">Something went wrong</h2>
-          <p className="mt-2 text-gray-500">{error}</p>
+          <h3 className="mb-2 text-xl font-semibold text-gray-900">Something went wrong</h3>
+          <p className="mb-6 text-gray-500">{error}</p>
           <button
-            onClick={() => window.location.reload()}
-            className="btn-primary mt-6"
+            onClick={loadCart}
+            className="btn-primary"
           >
             Try Again
           </button>
@@ -145,115 +174,121 @@ export default function CartPage() {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="page-container page-section">
-        <h1 className="mb-8 text-3xl font-bold text-gray-900">Shopping Cart</h1>
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <SkeletonCartItem key={index} />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   if (cartItems.length === 0) {
     return (
-      <div className="page-container page-section">
+      <div className="page-container page-section min-h-[60vh]">
         <EmptyCart />
       </div>
     );
   }
 
   return (
-    <div className="page-container page-section animate-fadeIn">
-      <h1 className="mb-8 text-3xl font-bold text-gray-900">Shopping Cart</h1>
+    <div className="page-container page-section min-h-[60vh]">
+      <h1 className="mb-8 text-3xl font-bold text-gray-900 animate-fadeIn">Shopping Cart</h1>
+
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
-          {cartItems.map((item) => (
-            <div
-              key={item.productId}
-              className="flex items-center gap-4 rounded-xl bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md"
-            >
-              <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg">
-                <Image
-                  src={item.imageUrl}
-                  alt={item.name}
-                  fill
-                  sizes="96px"
-                  className="object-cover"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <Link
-                  href={`/products/${item.productId}`}
-                  className="text-lg font-semibold text-gray-900 transition-colors hover:text-indigo-600"
-                >
-                  {item.name}
-                </Link>
-                <p className="mt-1 text-sm text-gray-500">
-                  ${item.price.toFixed(2)} each
-                </p>
-                <div className="mt-2 flex items-center gap-2">
-                  <button
-                    onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                    className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-50"
-                    aria-label="Decrease quantity"
+          {cartItems.map((item) => {
+            const imageUrl = isValidImageUrl(item.imageUrl)
+              ? item.imageUrl
+              : '/placeholder.svg';
+
+            return (
+              <div
+                key={item.productId}
+                className="flex items-center gap-4 rounded-xl bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-md animate-fadeIn"
+              >
+                <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg">
+                  <Image
+                    src={imageUrl}
+                    alt={item.name}
+                    fill
+                    sizes="96px"
+                    className="object-cover"
+                  />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <Link
+                    href={`/products/${item.productId}`}
+                    className="text-lg font-semibold text-gray-900 transition-colors duration-200 hover:text-indigo-600 line-clamp-1"
                   >
-                    -
-                  </button>
-                  <span className="w-8 text-center font-medium text-gray-900">
-                    {item.quantity}
-                  </span>
+                    {item.name}
+                  </Link>
+                  <p className="mt-1 text-sm text-gray-500">
+                    ${item.price.toFixed(2)}
+                  </p>
+
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                      disabled={item.quantity <= 1}
+                      className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label="Decrease quantity"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                      </svg>
+                    </button>
+                    <span className="w-8 text-center text-sm font-medium text-gray-900">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                      className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:shadow-sm"
+                      aria-label="Increase quantity"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end gap-2">
+                  <p className="text-lg font-semibold text-gray-900">
+                    ${(item.price * item.quantity).toFixed(2)}
+                  </p>
                   <button
-                    onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                    className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-50"
-                    aria-label="Increase quantity"
+                    onClick={() => removeItem(item.productId)}
+                    className="text-sm text-red-600 transition-colors duration-200 hover:text-red-500"
+                    aria-label={`Remove ${item.name} from cart`}
                   >
-                    +
+                    Remove
                   </button>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-2">
-                <p className="text-lg font-semibold text-gray-900">
-                  ${(item.price * item.quantity).toFixed(2)}
-                </p>
-                <button
-                  onClick={() => removeItem(item.productId)}
-                  className="text-sm font-medium text-red-600 transition-colors hover:text-red-500"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+
         <div className="lg:col-span-1">
-          <div className="sticky top-24 rounded-xl bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-gray-900">Order Summary</h2>
-            <div className="mt-4 space-y-2">
-              <div className="flex justify-between text-sm text-gray-500">
+          <div className="sticky top-24 rounded-xl bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-md animate-fadeIn">
+            <h2 className="mb-4 text-xl font-semibold text-gray-900">Order Summary</h2>
+
+            <div className="space-y-3 border-b border-gray-200 pb-4">
+              <div className="flex justify-between text-sm text-gray-600">
                 <span>Subtotal</span>
-                <span>${totalPrice.toFixed(2)}</span>
+                <span>${subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm text-gray-500">
+              <div className="flex justify-between text-sm text-gray-600">
                 <span>Shipping</span>
-                <span>Free</span>
-              </div>
-              <div className="border-t border-gray-200 pt-2">
-                <div className="flex justify-between text-lg font-semibold text-gray-900">
-                  <span>Total</span>
-                  <span>${totalPrice.toFixed(2)}</span>
-                </div>
+                <span className="text-green-600">Free</span>
               </div>
             </div>
+
+            <div className="mt-4 flex justify-between text-lg font-semibold text-gray-900">
+              <span>Total</span>
+              <span>${subtotal.toFixed(2)}</span>
+            </div>
+
             <Link
               href="/checkout"
               className="btn-primary mt-6 w-full"
             >
               Proceed to Checkout
             </Link>
+
             <Link
               href="/products"
               className="btn-secondary mt-3 w-full"

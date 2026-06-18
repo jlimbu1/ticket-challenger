@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,7 +17,21 @@ interface ProductCardProps {
   product: Product;
 }
 
+function isValidImageUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export default function ProductCard({ product }: ProductCardProps) {
+  const imageUrl = isValidImageUrl(product.imageUrl)
+    ? product.imageUrl
+    : '/placeholder.svg';
+
   return (
     <Link
       href={`/products/${product.id}`}
@@ -23,7 +39,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     >
       <div className="relative aspect-square overflow-hidden rounded-t-xl">
         <Image
-          src={product.imageUrl}
+          src={imageUrl}
           alt={product.name}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -37,12 +53,14 @@ export default function ProductCard({ product }: ProductCardProps) {
         <p className="mt-1 line-clamp-2 text-sm text-gray-500">
           {product.description}
         </p>
-        <p className="mt-2 text-xl font-bold text-indigo-600">
-          ${product.price.toFixed(2)}
-        </p>
-        <span className="mt-2 inline-block rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-800">
-          {product.category}
-        </span>
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-lg font-bold text-indigo-600">
+            ${product.price.toFixed(2)}
+          </span>
+          <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+            {product.category}
+          </span>
+        </div>
       </div>
     </Link>
   );

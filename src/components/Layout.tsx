@@ -46,7 +46,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             Ticket Challenger
           </Link>
 
-          <div className="hidden md:flex md:items-center md:gap-8">
+          <div className="hidden md:flex md:items-center md:space-x-8">
             {navigation.map((item) => {
               const isActive = pathname === item.href || 
                 (item.href !== '/' && pathname.startsWith(item.href));
@@ -74,28 +74,28 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             aria-label="Toggle navigation menu"
           >
             {isMobileMenuOpen ? (
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             ) : (
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
               </svg>
             )}
           </button>
         </nav>
 
         {isMobileMenuOpen && (
-          <div className="border-t border-gray-200 bg-white md:hidden animate-fadeIn">
+          <div className="border-t border-gray-200 md:hidden animate-fadeIn">
             <div className="space-y-1 px-4 pb-4 pt-2">
               {navigation.map((item) => {
-                const isActive = pathname === item.href || 
+                const isActive = pathname === item.href ||
                   (item.href !== '/' && pathname.startsWith(item.href));
                 return (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`block rounded-lg px-3 py-2 text-base font-medium transition-colors duration-200 ${
+                    className={`block rounded-md px-3 py-2 text-base font-medium transition-colors duration-200 ${
                       isActive
                         ? 'bg-indigo-50 text-indigo-600'
                         : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600'
@@ -111,9 +111,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       <main className="flex-1">
-        <div className="animate-fadeIn">
-          {children}
-        </div>
+        {children}
       </main>
 
       <footer className="border-t border-gray-200 bg-white">
@@ -122,17 +120,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <p className="text-sm text-gray-500">
               &copy; {new Date().getFullYear()} Ticket Challenger. All rights reserved.
             </p>
-            <div className="flex gap-6">
-              <Link href="/" className="text-sm text-gray-500 hover:text-indigo-600 transition-colors duration-200">
+            <div className="flex space-x-6">
+              <Link href="/" className="text-sm text-gray-500 hover:text-indigo-600 transition-colors">
                 Home
               </Link>
-              <Link href="/products" className="text-sm text-gray-500 hover:text-indigo-600 transition-colors duration-200">
+              <Link href="/products" className="text-sm text-gray-500 hover:text-indigo-600 transition-colors">
                 Products
               </Link>
-              <Link href="/cart" className="text-sm text-gray-500 hover:text-indigo-600 transition-colors duration-200">
+              <Link href="/cart" className="text-sm text-gray-500 hover:text-indigo-600 transition-colors">
                 Cart
               </Link>
-              <Link href="/admin/products" className="text-sm text-gray-500 hover:text-indigo-600 transition-colors duration-200">
+              <Link href="/admin/products" className="text-sm text-gray-500 hover:text-indigo-600 transition-colors">
                 Admin
               </Link>
             </div>
