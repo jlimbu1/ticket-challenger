@@ -8,8 +8,8 @@ import type { Product } from '@/lib/types';
 export default function ProductsPage() {
   const { addToCart } = useCart();
 
-  const inStockProducts = products.filter((product) => product.stock > 0);
-  const outOfStockProducts = products.filter((product) => product.stock <= 0);
+  const inStockProducts = products.filter((product: Product) => product.stock > 0);
+  const outOfStockProducts = products.filter((product: Product) => product.stock <= 0);
 
   const handleAddToCart = (product: Product) => {
     addToCart(product, 1);
@@ -37,14 +37,7 @@ export default function ProductsPage() {
           </h1>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {inStockProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={handleAddToCart}
-              />
-            ))}
-            {outOfStockProducts.map((product) => (
+            {inStockProducts.map((product: Product) => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -52,6 +45,23 @@ export default function ProductsPage() {
               />
             ))}
           </div>
+
+          {outOfStockProducts.length > 0 && (
+            <div className="mt-12">
+              <h2 className="text-2xl font-bold mb-6 tracking-wider uppercase text-gray-400">
+                Sold Out
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60">
+                {outOfStockProducts.map((product: Product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onAddToCart={handleAddToCart}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </DramaticErrorBoundary>
