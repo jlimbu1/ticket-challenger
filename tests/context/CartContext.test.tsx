@@ -1,5 +1,7 @@
+"use client";
+
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo, type ReactNode } from 'react';
-import type { Product, CartItem } from '@/types';
+import type { Product, CartItem } from '@/src/types';
 
 interface CartContextValue {
   items: CartItem[];
@@ -56,14 +58,17 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
     case 'UPDATE_QUANTITY': {
       const { productId, quantity } = action.payload;
-      if (quantity <= 0) {
-        return {
-          items: state.items.filter((item) => item.product.id !== productId),
-        };
+      if (quantity < 1 || quantity > 99) {
+        console.warn(
+          `updateQuantity: quantity ${quantity} is out of range (1-99). Ignoring.`
+        );
+        return state;
       }
       return {
         items: state.items.map((item) =>
-          item.product.id === productId ? { ...item, quantity } : item
+          item.product.id === productId
+            ? { ...item, quantity }
+            : item
         ),
       };
     }
@@ -81,43 +86,75 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   }
 }
 
-function CartProvider({ children }: { children: ReactNode }) {
+function loadCartFromStorage(): CartItem[] {
+  try {
+    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to load cart from localStorage:', error);
+  }
+  return [];
+}
+
+function saveCartToStorage(items: CartItem[]): void {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  } catch (error) {
+    console.warn('Failed to save cart to localStorage:', error);
+  }
+}
+
+interface CartProviderProps {
+  children: ReactNode;
+}
+
+export function CartProvider({ children }: CartProviderProps) {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(CART_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          dispatch({ type: 'LOAD_CART', payload: parsed });
-        }
-      }
-    } catch {
-      // Ignore invalid stored data
+    const storedItems = loadCartFromStorage();
+    if (storedItems.length > 0) {
+      dispatch({ type: 'LOAD_CART', payload: storedItems });
     }
   }, []);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items));
-    } catch {
-      // Ignore storage errors
-    }
+    saveCartToStorage(state.items);
   }, [state.items]);
 
   const addToCart = useCallback((product: Product, quantity: number = 1) => {
-    if (quantity <= 0) return;
-    dispatch({ type: 'ADD_ITEM', payload: { product, quantity } });
+    if (!product || !product.id) {
+      console.warn('addToCart: invalid product');
+      return;
+    }
+    const safeQuantity = Math.max(1, Math.min(99, quantity));
+    dispatch({ type: 'ADD_ITEM', payload: { product, quantity: safeQuantity } });
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
-    if (!productId) return;
+    if (!productId) {
+      console.warn('removeFromCart: invalid productId');
+      return;
+    }
     dispatch({ type: 'REMOVE_ITEM', payload: productId });
   }, []);
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
-    if (!productId) return;
+    if (!productId) {
+      console.warn('updateQuantity: invalid productId');
+      return;
+    }
+    if (quantity < 1 || quantity > 99) {
+      console.warn(
+        `updateQuantity: quantity ${quantity} is out of range (1-99). Ignoring.`
+      );
+      return;
+    }
     dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity } });
   }, []);
 
@@ -152,13 +189,10 @@ function CartProvider({ children }: { children: ReactNode }) {
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
-function useCart(): CartContextValue {
+export function useCartContext(): CartContextValue {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
+    throw new Error('useCartContext must be used within a CartProvider');
   }
   return context;
 }
-
-export { CartProvider, useCart };
-export type { CartContextValue };

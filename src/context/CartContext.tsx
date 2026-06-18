@@ -45,27 +45,33 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         return { items: updatedItems };
       }
 
-      return {
-        items: [...state.items, { product, quantity }],
+      const newItem: CartItem = {
+        product,
+        quantity,
       };
+      return { items: [...state.items, newItem] };
     }
 
     case 'REMOVE_ITEM': {
+      const productId = action.payload;
       return {
-        items: state.items.filter((item) => item.product.id !== action.payload),
+        items: state.items.filter((item) => item.product.id !== productId),
       };
     }
 
     case 'UPDATE_QUANTITY': {
       const { productId, quantity } = action.payload;
-      if (quantity <= 0) {
-        return {
-          items: state.items.filter((item) => item.product.id !== productId),
-        };
+      if (quantity < 1 || quantity > 99) {
+        console.warn(
+          `updateQuantity: quantity ${quantity} is out of range (1-99). Ignoring.`
+        );
+        return state;
       }
       return {
         items: state.items.map((item) =>
-          item.product.id === productId ? { ...item, quantity } : item
+          item.product.id === productId
+            ? { ...item, quantity }
+            : item
         ),
       };
     }
@@ -93,7 +99,7 @@ function loadCartFromStorage(): CartItem[] {
       }
     }
   } catch (error) {
-    console.error('[CartContext] Failed to load cart from localStorage:', error);
+    console.warn('Failed to load cart from localStorage:', error);
   }
   return [];
 }
@@ -102,7 +108,7 @@ function saveCartToStorage(items: CartItem[]): void {
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   } catch (error) {
-    console.error('[CartContext] Failed to save cart to localStorage:', error);
+    console.warn('Failed to save cart to localStorage:', error);
   }
 }
 
@@ -121,28 +127,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [state.items]);
 
   const addToCart = useCallback((product: Product, quantity: number = 1) => {
-    if (quantity <= 0) {
-      console.warn('[CartContext] addToCart called with invalid quantity:', quantity);
-      return;
+    if (quantity < 1 || quantity > 99) {
+      console.warn(
+        `addToCart: quantity ${quantity} is out of range (1-99). Using 1.`
+      );
+      quantity = 1;
     }
     dispatch({ type: 'ADD_ITEM', payload: { product, quantity } });
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
-    if (!productId) {
-      console.warn('[CartContext] removeFromCart called with empty productId');
-      return;
-    }
     dispatch({ type: 'REMOVE_ITEM', payload: productId });
   }, []);
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
-    if (!productId) {
-      console.warn('[CartContext] updateQuantity called with empty productId');
-      return;
-    }
-    if (quantity < 0) {
-      console.warn('[CartContext] updateQuantity called with negative quantity:', quantity);
+    if (quantity < 1 || quantity > 99) {
+      console.warn(
+        `updateQuantity: quantity ${quantity} is out of range (1-99). Ignoring.`
+      );
       return;
     }
     dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity } });
@@ -153,17 +155,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const itemCount = useMemo(() => {
-    return state.items.reduce((count, item) => count + item.quantity, 0);
+    return state.items.reduce((sum, item) => sum + item.quantity, 0);
   }, [state.items]);
 
   const totalPrice = useMemo(() => {
     return state.items.reduce(
-      (total, item) => total + item.product.price * item.quantity,
+      (sum, item) => sum + item.product.price * item.quantity,
       0
     );
   }, [state.items]);
 
-  const value = useMemo<CartContextValue>(
+  const value = useMemo(
     () => ({
       items: state.items,
       addToCart,
@@ -182,10 +184,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 export function useCart(): CartContextValue {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error(
-      'useCart must be used within a CartProvider. ' +
-      'Wrap your component tree with <CartProvider> to access cart functionality.'
-    );
+    throw new Error('useCart must be used within a CartProvider');
   }
   return context;
 }
