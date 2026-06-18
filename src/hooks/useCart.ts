@@ -67,14 +67,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!isLoaded) return;
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
-    if (isLoaded) {
-      saveCartToStorage(items);
-    }
+    saveCartToStorage(items);
   }, [items, isLoaded]);
+
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEY) {
+        const loaded = loadCartFromStorage();
+        setItems(loaded);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const addItem = useCallback((item: Omit<CartItem, 'quantity'>) => {
     setItems((prev) => {
@@ -91,16 +102,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const updateQuantity = useCallback((productId: number, quantity: number) => {
-    if (quantity < 1) return;
-    setItems((prev) =>
-      prev.map((item) =>
-        item.productId === productId ? { ...item, quantity } : item
-      )
-    );
+    if (quantity < 0) return;
+    setItems((prev) => {
+      if (quantity === 0) {
+        return prev.filter((i) => i.productId !== productId);
+      }
+      return prev.map((i) =>
+        i.productId === productId ? { ...i, quantity } : i
+      );
+    });
   }, []);
 
   const removeItem = useCallback((productId: number) => {
-    setItems((prev) => prev.filter((item) => item.productId !== productId));
+    setItems((prev) => prev.filter((i) => i.productId !== productId));
   }, []);
 
   const clearCart = useCallback(() => {
@@ -108,7 +122,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const totalPrice = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   return (
     <CartContext.Provider
