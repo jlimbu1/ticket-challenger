@@ -17,11 +17,16 @@ export default function CartItem({ productId, name, price, quantity, imageUrl }:
   const subtotal = price * quantity;
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuantity = parseInt(e.target.value, 10);
-    if (isNaN(newQuantity) || newQuantity < 1) {
+    const rawValue = e.target.value;
+    const parsed = parseInt(rawValue, 10);
+
+    if (isNaN(parsed) || parsed < 1) {
+      e.target.value = '1';
+      updateQuantity(productId, 1);
       return;
     }
-    updateQuantity(productId, newQuantity);
+
+    updateQuantity(productId, parsed);
   };
 
   const handleRemove = () => {
@@ -55,7 +60,7 @@ export default function CartItem({ productId, name, price, quantity, imageUrl }:
           min={1}
           value={quantity}
           onChange={handleQuantityChange}
-          className="w-16 text-center border border-gray-300 rounded-md py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          className="w-16 text-center border border-gray-300 rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
         />
       </div>
 

@@ -1,6 +1,8 @@
-import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from 'react';
+'use client';
 
-export interface CartItem {
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+
+interface CartItem {
   productId: number;
   name: string;
   price: number;
@@ -8,7 +10,7 @@ export interface CartItem {
   imageUrl: string;
 }
 
-interface CartContextValue {
+interface CartContextType {
   items: CartItem[];
   addItem: (item: Omit<CartItem, 'quantity'>) => void;
   updateQuantity: (productId: number, quantity: number) => void;
@@ -18,13 +20,16 @@ interface CartContextValue {
   totalPrice: number;
 }
 
+const CartContext = createContext<CartContextType | undefined>(undefined);
+
 const STORAGE_KEY = 'ticket-challenger-cart';
 
 function loadCartFromStorage(): CartItem[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
     if (!Array.isArray(parsed)) return [];
     return parsed.filter(
       (item: unknown): item is CartItem =>
@@ -43,29 +48,30 @@ function loadCartFromStorage(): CartItem[] {
 
 function saveCartToStorage(items: CartItem[]): void {
   try {
+    if (typeof window === 'undefined') return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // localStorage quota exceeded or disabled — silently fail
+  } catch (error) {
+    console.error('Failed to save cart to localStorage:', error);
   }
 }
 
-const CartContext = createContext<CartContextValue | null>(null);
-
-export function CartProvider({ children }: { children: ReactNode }) {
+export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [hydrated, setHydrated] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const initialized = useRef(false);
 
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
     const stored = loadCartFromStorage();
     setItems(stored);
-    setHydrated(true);
+    setIsLoaded(true);
   }, []);
 
   useEffect(() => {
-    if (hydrated) {
-      saveCartToStorage(items);
-    }
-  }, [items, hydrated]);
+    if (!isLoaded) return;
+    saveCartToStorage(items);
+  }, [items, isLoaded]);
 
   const addItem = useCallback((item: Omit<CartItem, 'quantity'>) => {
     setItems((prev) => {
@@ -121,7 +127,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useCart(): CartContextValue {
+export function useCart(): CartContextType {
   const context = useContext(CartContext);
   if (!context) {
     throw new Error('useCart must be used within a CartProvider');
