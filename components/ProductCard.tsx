@@ -11,11 +11,20 @@ import type { Product } from "@/src/types";
 export default function ProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [productList, setProductList] = useState<Product[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setProductList(products);
-      setIsLoading(false);
+      try {
+        if (!products || !Array.isArray(products)) {
+          throw new Error("Product data is unavailable");
+        }
+        setProductList(products);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load products");
+      } finally {
+        setIsLoading(false);
+      }
     }, 500);
     return () => clearTimeout(timer);
   }, []);
@@ -28,53 +37,42 @@ export default function ProductsPage() {
     );
   }
 
-  if (productList.length === 0) {
+  if (error) {
     return (
       <DramaticErrorBoundary>
         <div className="min-h-screen bg-black text-white p-8">
           <GothicEmptyState
-            title="No Products Found"
-            message="The stage is empty. Check back later for new releases."
+            title="Something went wrong"
+            message={error}
           />
         </div>
       </DramaticErrorBoundary>
     );
   }
 
-  const inStockProducts = productList.filter((product: Product) => product.stock > 0);
-  const outOfStockProducts = productList.filter((product: Product) => product.stock <= 0);
+  if (!productList || productList.length === 0) {
+    return (
+      <div className="min-h-screen bg-black text-white p-8">
+        <GothicEmptyState
+          title="No products found"
+          message="The collection is empty. Check back later for new arrivals."
+        />
+      </div>
+    );
+  }
 
   return (
-    <DramaticErrorBoundary>
-      <div className="min-h-screen bg-black text-white p-8">
-        <h1 className="text-4xl font-bold text-center mb-8 text-crimson tracking-wider uppercase">
-          The Black Parade
+    <div className="min-h-screen bg-black text-white">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <h1 className="mb-8 text-center font-mcr text-4xl tracking-wider text-crimson md:text-5xl">
+          The Collection
         </h1>
-        {inStockProducts.length > 0 && (
-          <section className="mb-12">
-            <h2 className="text-2xl font-semibold mb-6 text-gothic-300 border-b border-gothic-700 pb-2">
-              Available Relics
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {inStockProducts.map((product: Product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </section>
-        )}
-        {outOfStockProducts.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-semibold mb-6 text-gothic-500 border-b border-gothic-700 pb-2">
-              Sold Out
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 opacity-60">
-              {outOfStockProducts.map((product: Product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </section>
-        )}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {productList.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
       </div>
-    </DramaticErrorBoundary>
+    </div>
   );
 }

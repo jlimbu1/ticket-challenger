@@ -45,7 +45,7 @@ const AdminDashboardPage: React.FC = () => {
       errors.price = "Valid price is required";
     }
     if (!form.stock.trim() || isNaN(Number(form.stock)) || Number(form.stock) < 0) {
-      errors.stock = "Valid stock count is required";
+      errors.stock = "Valid stock quantity is required";
     }
     if (!form.description.trim()) errors.description = "Description is required";
     if (!form.image.trim()) errors.image = "Image URL is required";
@@ -69,7 +69,7 @@ const AdminDashboardPage: React.FC = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    const product: Product = {
+    const newProduct: Product = {
       id: editingId || `product-${Date.now()}`,
       name: form.name.trim(),
       price: Number(form.price),
@@ -80,12 +80,16 @@ const AdminDashboardPage: React.FC = () => {
     };
 
     if (editingId) {
-      setProducts((prev) => prev.map((p) => (p.id === editingId ? product : p)));
-      setEditingId(null);
+      setProducts((prev) =>
+        prev.map((p) => (p.id === editingId ? newProduct : p))
+      );
     } else {
-      setProducts((prev) => [...prev, product]);
+      setProducts((prev) => [...prev, newProduct]);
     }
+
     setForm(emptyForm);
+    setEditingId(null);
+    setFormErrors({});
   };
 
   const handleEdit = (product: Product) => {
@@ -100,9 +104,9 @@ const AdminDashboardPage: React.FC = () => {
     setFormErrors({});
   };
 
-  const handleDelete = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-    if (editingId === id) {
+  const handleDelete = (productId: string) => {
+    setProducts((prev) => prev.filter((p) => p.id !== productId));
+    if (editingId === productId) {
       setEditingId(null);
       setForm(emptyForm);
       setFormErrors({});
@@ -131,13 +135,11 @@ const AdminDashboardPage: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <h2 className="text-xl font-semibold text-gray-300 mb-4">
-                Product Catalog ({products.length})
-              </h2>
+              <h2 className="text-xl font-semibold text-gothic-300 mb-4">Product Catalog</h2>
               {products.length === 0 ? (
                 <GothicEmptyState
                   title="No Products"
-                  message="The catalog is empty. Add your first product using the form."
+                  message="The catalog is empty. Add your first product to begin."
                 />
               ) : (
                 <div className="space-y-4">
@@ -151,21 +153,27 @@ const AdminDashboardPage: React.FC = () => {
                           src={product.image}
                           alt={product.name}
                           className="w-16 h-16 object-cover rounded"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "https://placehold.co/64x64/1a1a2e/crimson?text=No+Image";
+                          }}
                         />
                         <div>
                           <h3 className="font-medium text-white">{product.name}</h3>
-                          <p className="text-sm text-gray-400">
-                            ${product.price.toFixed(2)} - Stock: {product.stock}
-                          </p>
+                          <p className="text-sm text-gothic-400">${product.price.toFixed(2)}</p>
+                          <p className="text-sm text-gothic-500">Stock: {product.stock}</p>
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <GothicButton onClick={() => handleEdit(product)}>
+                        <GothicButton
+                          onClick={() => handleEdit(product)}
+                          className="px-3 py-1 text-sm"
+                        >
                           Edit
                         </GothicButton>
                         <GothicButton
                           onClick={() => handleDelete(product.id)}
-                          className="bg-rose/80 hover:bg-rose"
+                          className="px-3 py-1 text-sm bg-rose/20 hover:bg-rose/40"
                         >
                           Delete
                         </GothicButton>
@@ -176,13 +184,13 @@ const AdminDashboardPage: React.FC = () => {
               )}
             </div>
 
-            <div>
-              <h2 className="text-xl font-semibold text-gray-300 mb-4">
+            <div className="bg-gothic-900/50 border border-gothic-700 rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-gothic-300 mb-4">
                 {editingId ? "Edit Product" : "Add New Product"}
               </h2>
-              <form onSubmit={handleSubmit} className="space-y-4 bg-gothic-900/50 border border-gothic-700 rounded-lg p-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label htmlFor="name" className="block text-sm text-gray-400 mb-1">
+                  <label htmlFor="name" className="block text-sm text-gothic-400 mb-1">
                     Product Name
                   </label>
                   <input
@@ -199,7 +207,7 @@ const AdminDashboardPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="price" className="block text-sm text-gray-400 mb-1">
+                  <label htmlFor="price" className="block text-sm text-gothic-400 mb-1">
                     Price
                   </label>
                   <input
@@ -216,8 +224,8 @@ const AdminDashboardPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="stock" className="block text-sm text-gray-400 mb-1">
-                    Stock
+                  <label htmlFor="stock" className="block text-sm text-gothic-400 mb-1">
+                    Stock Quantity
                   </label>
                   <input
                     id="stock"
@@ -233,7 +241,7 @@ const AdminDashboardPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="description" className="block text-sm text-gray-400 mb-1">
+                  <label htmlFor="description" className="block text-sm text-gothic-400 mb-1">
                     Description
                   </label>
                   <textarea
@@ -242,7 +250,7 @@ const AdminDashboardPage: React.FC = () => {
                     value={form.description}
                     onChange={handleInputChange}
                     rows={3}
-                    className="w-full px-3 py-2 bg-gothic-800 border border-gothic-600 rounded text-white focus:outline-none focus:border-crimson"
+                    className="w-full px-3 py-2 bg-gothic-800 border border-gothic-600 rounded text-white focus:outline-none focus:border-crimson resize-none"
                   />
                   {formErrors.description && (
                     <p className="text-rose text-xs mt-1">{formErrors.description}</p>
@@ -250,7 +258,7 @@ const AdminDashboardPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="image" className="block text-sm text-gray-400 mb-1">
+                  <label htmlFor="image" className="block text-sm text-gothic-400 mb-1">
                     Image URL
                   </label>
                   <input
@@ -267,11 +275,15 @@ const AdminDashboardPage: React.FC = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <GothicButton type="submit">
+                  <GothicButton type="submit" className="flex-1">
                     {editingId ? "Update Product" : "Add Product"}
                   </GothicButton>
                   {editingId && (
-                    <GothicButton type="button" onClick={handleCancelEdit}>
+                    <GothicButton
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="px-4 bg-gothic-700 hover:bg-gothic-600"
+                    >
                       Cancel
                     </GothicButton>
                   )}

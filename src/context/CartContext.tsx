@@ -45,73 +45,79 @@ function cartReducer(state: CartState, action: CartAction): CartState {
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
-        return { ...state, items: updatedItems };
+        return { items: updatedItems };
       }
 
       return {
-        ...state,
         items: [...state.items, { product, quantity }],
       };
     }
     case 'REMOVE_ITEM': {
-      const productId = action.payload;
       return {
-        ...state,
-        items: state.items.filter((item) => item.product.id !== productId),
+        items: state.items.filter((item) => item.product.id !== action.payload),
       };
     }
     case 'UPDATE_QUANTITY': {
       const { productId, quantity } = action.payload;
       if (quantity <= 0) {
         return {
-          ...state,
           items: state.items.filter((item) => item.product.id !== productId),
         };
       }
       return {
-        ...state,
         items: state.items.map((item) =>
-          item.product.id === productId
-            ? { ...item, quantity }
-            : item
+          item.product.id === productId ? { ...item, quantity } : item
         ),
       };
     }
     case 'CLEAR_CART': {
-      return { ...state, items: [] };
+      return { items: [] };
     }
     case 'LOAD_CART': {
-      return { ...state, items: action.payload };
+      return { items: action.payload };
     }
-    default:
+    default: {
       return state;
+    }
   }
 }
 
 function loadCartFromStorage(): CartItem[] {
   try {
-    const stored = localStorage.getItem(CART_STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        return parsed;
-      }
+    if (typeof window === 'undefined') {
+      return [];
     }
+    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    if (!stored) {
+      return [];
+    }
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed;
   } catch (error) {
-    console.error('[CartContext] Failed to load cart from localStorage:', error);
+    console.error('Failed to load cart from localStorage:', error);
+    return [];
   }
-  return [];
 }
 
 function saveCartToStorage(items: CartItem[]): void {
   try {
+    if (typeof window === 'undefined') {
+      return;
+    }
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   } catch (error) {
-    console.error('[CartContext] Failed to save cart to localStorage:', error);
+    console.error('Failed to save cart to localStorage:', error);
   }
 }
 
-export function CartProvider({ children }: { children: ReactNode }) {
+interface CartProviderProps {
+  children: ReactNode;
+}
+
+export function CartProvider({ children }: CartProviderProps): React.ReactElement {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
 
   useEffect(() => {
@@ -125,43 +131,36 @@ export function CartProvider({ children }: { children: ReactNode }) {
     saveCartToStorage(state.items);
   }, [state.items]);
 
-  const addToCart = useCallback((product: Product, quantity: number = 1) => {
+  const addToCart = useCallback((product: Product, quantity: number = 1): void => {
     if (quantity <= 0) {
-      console.warn('[CartContext] addToCart called with invalid quantity:', quantity);
       return;
     }
     dispatch({ type: 'ADD_ITEM', payload: { product, quantity } });
   }, []);
 
-  const removeFromCart = useCallback((productId: string) => {
+  const removeFromCart = useCallback((productId: string): void => {
     if (!productId) {
-      console.warn('[CartContext] removeFromCart called with empty productId');
       return;
     }
     dispatch({ type: 'REMOVE_ITEM', payload: productId });
   }, []);
 
-  const updateQuantity = useCallback((productId: string, quantity: number) => {
+  const updateQuantity = useCallback((productId: string, quantity: number): void => {
     if (!productId) {
-      console.warn('[CartContext] updateQuantity called with empty productId');
-      return;
-    }
-    if (quantity < 0) {
-      console.warn('[CartContext] updateQuantity called with negative quantity:', quantity);
       return;
     }
     dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity } });
   }, []);
 
-  const clearCart = useCallback(() => {
+  const clearCart = useCallback((): void => {
     dispatch({ type: 'CLEAR_CART' });
   }, []);
 
-  const itemCount = useMemo(() => {
-    return state.items.reduce((count, item) => count + item.quantity, 0);
+  const itemCount = useMemo((): number => {
+    return state.items.reduce((total, item) => total + item.quantity, 0);
   }, [state.items]);
 
-  const totalPrice = useMemo(() => {
+  const totalPrice = useMemo((): number => {
     return state.items.reduce(
       (total, item) => total + item.product.price * item.quantity,
       0
@@ -191,10 +190,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 export function useCart(): CartContextValue {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error(
-      'useCart must be used within a CartProvider. ' +
-      'Wrap your component tree with <CartProvider> to use cart functionality.'
-    );
+    throw new Error('useCart must be used within a CartProvider');
   }
   return context;
 }

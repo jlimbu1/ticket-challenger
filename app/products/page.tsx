@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { products } from "@/src/data/products";
 import ProductCard from "@/components/ProductCard";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import EmptyState from "@/components/EmptyState";
+import DramaticErrorBoundary from "@/components/DramaticErrorBoundary";
+import GothicEmptyState from "@/components/GothicEmptyState";
 import VinylSpinner from "@/components/VinylSpinner";
 import type { Product } from "@/src/types";
 
@@ -39,34 +39,39 @@ export default function ProductsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-black text-white p-8">
-        <ErrorBoundary>
-          <div className="text-crimson text-center">
-            <p className="text-2xl font-bold mb-4">Something went wrong</p>
-            <p>{error}</p>
-          </div>
-        </ErrorBoundary>
-      </div>
+      <DramaticErrorBoundary>
+        <div className="min-h-screen bg-black text-white p-8">
+          <GothicEmptyState
+            title="Something went wrong"
+            message={error}
+          />
+        </div>
+      </DramaticErrorBoundary>
     );
   }
 
-  if (productList.length === 0) {
+  if (!productList || productList.length === 0) {
     return (
       <div className="min-h-screen bg-black text-white p-8">
-        <EmptyState message="No products available. The void is empty." />
+        <GothicEmptyState
+          title="No products found"
+          message="The collection is empty. Check back later for new arrivals."
+        />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <h1 className="text-4xl font-bold text-crimson mb-8 text-center">
-        Merch Collection
-      </h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-        {productList.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <h1 className="text-4xl font-bold text-crimson mb-8 text-center tracking-wider uppercase">
+          The Collection
+        </h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {productList.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
       </div>
     </div>
   );

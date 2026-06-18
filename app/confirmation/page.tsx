@@ -40,6 +40,7 @@ function ConfirmationContent() {
   const [orderItems, setOrderItems] = useState<OrderItemDisplay[]>([]);
   const [orderId] = useState(generateOrderId);
   const [estimatedDelivery] = useState(generateEstimatedDelivery);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -50,21 +51,27 @@ function ConfirmationContent() {
         const emailParam = searchParams.get("email");
 
         if (!itemsParam || !totalParam || !nameParam || !emailParam) {
-          setOrder(null);
+          setError("Missing order information. Please complete checkout first.");
           setIsLoading(false);
           return;
         }
 
-        const parsedItems: CartItem[] = JSON.parse(decodeURIComponent(itemsParam));
-        const total = parseFloat(totalParam);
+        const parsedItems: CartItem[] = JSON.parse(itemsParam);
+        const total: number = parseFloat(totalParam);
 
         if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
-          setOrder(null);
+          setError("No items found in order. Please add items to your cart.");
           setIsLoading(false);
           return;
         }
 
-        const items: OrderItemDisplay[] = parsedItems.map((item) => ({
+        if (isNaN(total) || total <= 0) {
+          setError("Invalid order total. Please try again.");
+          setIsLoading(false);
+          return;
+        }
+
+        const displayItems: OrderItemDisplay[] = parsedItems.map((item) => ({
           product: item.product,
           quantity: item.quantity,
           subtotal: item.product.price * item.quantity,
@@ -81,11 +88,11 @@ function ConfirmationContent() {
         };
 
         setOrder(newOrder);
-        setOrderItems(items);
-      } catch (error) {
-        console.error("[ConfirmationPage] Failed to parse order data:", error);
-        setOrder(null);
-      } finally {
+        setOrderItems(displayItems);
+        setIsLoading(false);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to load order confirmation";
+        setError(message);
         setIsLoading(false);
       }
     }, 500);
@@ -100,106 +107,127 @@ function ConfirmationContent() {
     );
   }
 
-  if (!order || orderItems.length === 0) {
+  if (error) {
     return (
-      <DramaticErrorBoundary>
-        <div className="min-h-screen bg-black p-8">
+      <div className="min-h-screen bg-black p-8">
+        <DramaticErrorBoundary>
           <GothicEmptyState
-            title="No Order Found"
-            message="The ritual was interrupted. No order data was received."
-          />
-        </div>
-      </DramaticErrorBoundary>
+            title="Order Not Found"
+            message={error}
+          >
+            <GothicButton
+              onClick={() => window.location.href = "/products"}
+              className="mt-6"
+            >
+              Return to the Void
+            </GothicButton>
+          </GothicEmptyState>
+        </DramaticErrorBoundary>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="min-h-screen bg-black p-8">
+        <DramaticErrorBoundary>
+          <GothicEmptyState
+            title="Order Not Found"
+            message="No order data available. Please complete checkout first."
+          >
+            <GothicButton
+              onClick={() => window.location.href = "/products"}
+              className="mt-6"
+            >
+              Return to the Void
+            </GothicButton>
+          </GothicEmptyState>
+        </DramaticErrorBoundary>
+      </div>
     );
   }
 
   return (
-    <DramaticErrorBoundary>
-      <div className="min-h-screen bg-black text-white">
-        <div className="mx-auto max-w-4xl px-4 py-12">
-          <div className="mb-8 text-center">
-            <h1 className="font-gothic text-4xl tracking-wider text-crimson md:text-5xl">
-              The Ritual is Complete
-            </h1>
-            <p className="mt-2 text-lg text-gothic-400">
-              Your order has been sealed in the void
+    <div className="min-h-screen bg-black text-white">
+      <div className="mx-auto max-w-4xl px-4 py-12">
+        <div className="mb-12 text-center">
+          <h1 className="font-mcr text-5xl tracking-wider text-crimson">
+            The Ritual is Complete
+          </h1>
+          <p className="mt-4 font-gothic text-lg text-gray-400">
+            Your order has been sealed in the void
+          </p>
+        </div>
+
+        <div className="mb-8 rounded-lg border border-gothic-700 bg-gothic-900/50 p-6 shadow-gothic">
+          <div className="mb-6 border-b border-gothic-700 pb-4">
+            <h2 className="font-mcr text-2xl text-crimson">Tour Diary Entry</h2>
+            <p className="mt-2 font-gothic text-sm text-gray-500">
+              Order #{order.id}
             </p>
           </div>
 
-          <div className="mb-8 rounded-lg border border-gothic-700 bg-gothic-900/50 p-6 shadow-gothic">
-            <div className="mb-4 border-b border-gothic-700 pb-4">
-              <p className="text-sm text-gothic-400">Order ID</p>
-              <p className="font-mono text-lg text-crimson">{order.id}</p>
-            </div>
-
-            <div className="mb-4 border-b border-gothic-700 pb-4">
-              <p className="text-sm text-gothic-400">Estimated Delivery</p>
-              <p className="text-lg text-white">{estimatedDelivery}</p>
-            </div>
-
-            <div className="mb-4 border-b border-gothic-700 pb-4">
-              <p className="text-sm text-gothic-400">Customer</p>
-              <p className="text-lg text-white">{order.customerName}</p>
-              <p className="text-sm text-gothic-400">{order.customerEmail}</p>
-            </div>
-
-            <div className="mb-4 border-b border-gothic-700 pb-4">
-              <p className="text-sm text-gothic-400">Status</p>
-              <p className="text-lg text-emerald-400">Completed</p>
-            </div>
-
+          <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <p className="mb-2 text-sm text-gothic-400">Items</p>
-              <div className="space-y-2">
-                {orderItems.map((item, index) => (
-                  <div
-                    key={`${item.product.id}-${index}`}
-                    className="flex items-center justify-between rounded bg-gothic-800/50 p-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded bg-gothic-700">
-                        <span className="text-xs text-gothic-400">
-                          {item.quantity}x
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-white">
-                          {item.product.name}
-                        </p>
-                        <p className="text-xs text-gothic-400">
-                          ${item.product.price.toFixed(2)} each
-                        </p>
-                      </div>
+              <h3 className="font-mcr text-lg text-crimson">The Traveler</h3>
+              <p className="mt-1 font-gothic text-gray-300">{order.customerName}</p>
+              <p className="font-gothic text-sm text-gray-500">{order.customerEmail}</p>
+            </div>
+            <div>
+              <h3 className="font-mcr text-lg text-crimson">Estimated Arrival</h3>
+              <p className="mt-1 font-gothic text-gray-300">{estimatedDelivery}</p>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h3 className="mb-4 font-mcr text-lg text-crimson">Setlist (Items)</h3>
+            <div className="space-y-3">
+              {orderItems.map((item, index) => (
+                <div
+                  key={`${item.product.id}-${index}`}
+                  className="flex items-center justify-between border-b border-gothic-800 pb-2"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="font-mcr text-sm text-crimson/60">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div>
+                      <p className="font-gothic text-gray-200">{item.product.name}</p>
+                      <p className="font-gothic text-sm text-gray-500">
+                        Qty: {item.quantity}
+                      </p>
                     </div>
-                    <p className="text-sm text-crimson">
-                      ${item.subtotal.toFixed(2)}
-                    </p>
                   </div>
-                ))}
-              </div>
+                  <p className="font-gothic text-gray-300">
+                    ${item.subtotal.toFixed(2)}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="mb-8 rounded-lg border border-gothic-700 bg-gothic-900/50 p-6 shadow-gothic">
-            <div className="flex items-center justify-between">
-              <p className="text-xl font-bold text-white">Total</p>
-              <p className="text-2xl font-bold text-crimson">
+          <div className="border-t border-gothic-700 pt-4">
+            <div className="flex justify-between">
+              <span className="font-mcr text-xl text-crimson">Total Tribute</span>
+              <span className="font-mcr text-xl text-crimson">
                 ${order.total.toFixed(2)}
-              </p>
+              </span>
             </div>
-          </div>
-
-          <div className="text-center">
-            <GothicButton
-              onClick={() => (window.location.href = "/products")}
-              className="px-8 py-3"
-            >
-              Return to the Stage
-            </GothicButton>
           </div>
         </div>
+
+        <div className="text-center">
+          <p className="mb-6 font-gothic text-sm text-gray-500">
+            A confirmation email has been dispatched through the void to {order.customerEmail}
+          </p>
+          <GothicButton
+            onClick={() => window.location.href = "/products"}
+          >
+            Continue the Journey
+          </GothicButton>
+        </div>
       </div>
-    </DramaticErrorBoundary>
+    </div>
   );
 }
 

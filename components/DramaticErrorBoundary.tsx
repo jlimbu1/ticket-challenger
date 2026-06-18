@@ -33,30 +33,58 @@ function getErrorMessage(error: Error): string {
   return getRandomErrorMessage();
 }
 
+function reportError(error: Error, errorInfo: ErrorInfo): void {
+  try {
+    if (typeof window !== "undefined" && window.fetch) {
+      const payload = {
+        error: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack,
+        timestamp: new Date().toISOString(),
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+      };
+      window.fetch("/api/log-error", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }).catch(() => {
+        console.warn("Failed to report error to server");
+      });
+    }
+  } catch {
+    console.warn("Failed to report error to server");
+  }
+}
+
 export default class DramaticErrorBoundary extends Component<
   DramaticErrorBoundaryProps,
   DramaticErrorBoundaryState
 > {
   constructor(props: DramaticErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = {
+      hasError: false,
+      error: null,
+    };
   }
 
   static getDerivedStateFromError(error: Error): DramaticErrorBoundaryState {
-    return { hasError: true, error };
+    return {
+      hasError: true,
+      error,
+    };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error(
-      "[DramaticErrorBoundary] Caught an error:",
-      error.message,
-      error.stack,
-      errorInfo.componentStack
-    );
+    reportError(error, errorInfo);
   }
 
   handleRetry = (): void => {
-    this.setState({ hasError: false, error: null });
+    this.setState({
+      hasError: false,
+      error: null,
+    });
   };
 
   render(): ReactNode {
@@ -74,41 +102,40 @@ export default class DramaticErrorBoundary extends Component<
           role="alert"
           className={cn(
             "flex flex-col items-center justify-center gap-6 p-8 text-center",
-            "border border-crimson/40 bg-gothic-900/80 shadow-gothic",
+            "border border-crimson/30 bg-gothic-900/80 shadow-gothic",
             "rounded-lg min-h-[300px]",
             this.props.className
           )}
         >
           <div className="relative flex items-center justify-center" aria-hidden="true">
             <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-crimson/50 bg-gothic-800">
-              <span className="text-4xl text-crimson/70">&#9760;</span>
+              <span className="text-4xl text-crimson">&#9760;</span>
             </div>
             <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-full bg-rose/40">
-              <span className="text-sm text-rose-200">!</span>
+              <span className="text-lg text-white">!</span>
             </div>
           </div>
 
           <div className="space-y-2">
-            <h2 className="font-gothic text-2xl font-bold tracking-wider text-crimson">
-              A Dark Omen
+            <h2 className="font-creepster text-2xl text-crimson tracking-wider">
+              Ritual Interrupted
             </h2>
-            <p className="max-w-md font-serif text-lg italic text-gothic-300">
-              &ldquo;{errorMessage}&rdquo;
+            <p className="font-gothic text-lg text-gothic-300 max-w-md">
+              {errorMessage}
             </p>
           </div>
 
           <button
             onClick={this.handleRetry}
             className={cn(
-              "px-6 py-3 font-gothic text-sm font-bold uppercase tracking-widest",
-              "border border-crimson/60 bg-crimson/20 text-crimson",
-              "hover:bg-crimson/30 hover:border-crimson/80",
-              "transition-all duration-300 ease-in-out",
+              "px-6 py-3 rounded-md font-semibold text-lg",
+              "bg-crimson text-white hover:bg-crimson/80",
+              "transition-colors duration-200",
               "focus:outline-none focus:ring-2 focus:ring-crimson/50 focus:ring-offset-2 focus:ring-offset-gothic-900"
             )}
-            aria-label="Attempt to recover from error"
+            aria-label="Retry loading the page"
           >
-            Attempt Recovery
+            Attempt the Ritual Again
           </button>
         </div>
       );
