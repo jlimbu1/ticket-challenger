@@ -50,20 +50,13 @@ export default function GothicEmptyState({
           <span className="text-2xl text-crimson/60">&#9760;</span>
         </div>
       </div>
-      <div className="flex flex-col gap-2">
-        <h3 className="font-serif text-xl font-bold text-gothic-200">{title}</h3>
-        <p className="max-w-md font-sans text-sm italic text-gothic-400">
-          {displayMessage}
-        </p>
+      <div className="space-y-2">
+        <h3 className="text-xl font-bold text-gothic-200">{title}</h3>
+        <p className="text-sm text-gothic-400 italic">{displayMessage}</p>
       </div>
-      {children}
+      {children && <div className="w-full">{children}</div>}
       {onAction && (
-        <ThemedButton
-          variant="secondary"
-          size="md"
-          onClick={onAction}
-          aria-label={actionLabel}
-        >
+        <ThemedButton onClick={onAction} variant="primary" size="md">
           {actionLabel}
         </ThemedButton>
       )}

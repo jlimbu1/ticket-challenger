@@ -45,15 +45,17 @@ function cartReducer(state: CartState, action: CartAction): CartState {
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
-        return { items: updatedItems };
+        return { ...state, items: updatedItems };
       }
 
       return {
+        ...state,
         items: [...state.items, { product, quantity }],
       };
     }
     case 'REMOVE_ITEM': {
       return {
+        ...state,
         items: state.items.filter((item) => item.product.id !== action.payload),
       };
     }
@@ -61,20 +63,24 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       const { productId, quantity } = action.payload;
       if (quantity <= 0) {
         return {
+          ...state,
           items: state.items.filter((item) => item.product.id !== productId),
         };
       }
       return {
+        ...state,
         items: state.items.map((item) =>
-          item.product.id === productId ? { ...item, quantity } : item
+          item.product.id === productId
+            ? { ...item, quantity }
+            : item
         ),
       };
     }
     case 'CLEAR_CART': {
-      return { items: [] };
+      return { ...state, items: [] };
     }
     case 'LOAD_CART': {
-      return { items: action.payload };
+      return { ...state, items: action.payload };
     }
     default: {
       return state;
@@ -117,7 +123,7 @@ interface CartProviderProps {
   children: ReactNode;
 }
 
-export function CartProvider({ children }: CartProviderProps): React.ReactElement {
+export function CartProvider({ children }: CartProviderProps) {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
 
   useEffect(() => {
@@ -131,54 +137,53 @@ export function CartProvider({ children }: CartProviderProps): React.ReactElemen
     saveCartToStorage(state.items);
   }, [state.items]);
 
-  const addToCart = useCallback((product: Product, quantity: number = 1): void => {
-    if (quantity <= 0) {
+  const addToCart = useCallback((product: Product, quantity: number = 1) => {
+    if (!product || !product.id) {
+      console.error('Invalid product provided to addToCart');
       return;
     }
-    dispatch({ type: 'ADD_ITEM', payload: { product, quantity } });
+    const safeQuantity = Math.max(1, Math.floor(quantity));
+    dispatch({ type: 'ADD_ITEM', payload: { product, quantity: safeQuantity } });
   }, []);
 
-  const removeFromCart = useCallback((productId: string): void => {
+  const removeFromCart = useCallback((productId: string) => {
     if (!productId) {
+      console.error('Invalid productId provided to removeFromCart');
       return;
     }
     dispatch({ type: 'REMOVE_ITEM', payload: productId });
   }, []);
 
-  const updateQuantity = useCallback((productId: string, quantity: number): void => {
+  const updateQuantity = useCallback((productId: string, quantity: number) => {
     if (!productId) {
+      console.error('Invalid productId provided to updateQuantity');
       return;
     }
-    dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity } });
+    const safeQuantity = Math.max(0, Math.floor(quantity));
+    dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity: safeQuantity } });
   }, []);
 
-  const clearCart = useCallback((): void => {
+  const clearCart = useCallback(() => {
     dispatch({ type: 'CLEAR_CART' });
   }, []);
 
-  const itemCount = useMemo((): number => {
+  const itemCount = useMemo(() => {
     return state.items.reduce((total, item) => total + item.quantity, 0);
   }, [state.items]);
 
-  const totalPrice = useMemo((): number => {
-    return state.items.reduce(
-      (total, item) => total + item.product.price * item.quantity,
-      0
-    );
+  const totalPrice = useMemo(() => {
+    return state.items.reduce((total, item) => total + item.product.price * item.quantity, 0);
   }, [state.items]);
 
-  const contextValue = useMemo<CartContextValue>(
-    () => ({
-      items: state.items,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart,
-      itemCount,
-      totalPrice,
-    }),
-    [state.items, addToCart, removeFromCart, updateQuantity, clearCart, itemCount, totalPrice]
-  );
+  const contextValue = useMemo<CartContextValue>(() => ({
+    items: state.items,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    itemCount,
+    totalPrice,
+  }), [state.items, addToCart, removeFromCart, updateQuantity, clearCart, itemCount, totalPrice]);
 
   return (
     <CartContext.Provider value={contextValue}>

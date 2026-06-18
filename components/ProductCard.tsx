@@ -1,71 +1,83 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ButtonHTMLAttributes, forwardRef } from "react";
-import VinylSpinner from "@/components/VinylSpinner";
+import { useCart } from "@/src/context/CartContext";
+import type { Product } from "@/src/types";
+import GothicButton from "@/components/GothicButton";
+import { useState } from "react";
 
-interface ThemedButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "danger";
-  size?: "sm" | "md" | "lg";
-  loading?: boolean;
+interface ProductCardProps {
+  product: Product;
+  className?: string;
 }
 
-const variantClasses = {
-  primary:
-    "bg-crimson text-gothic-50 hover:bg-crimson-light active:bg-crimson-dark border-crimson shadow-crimson",
-  secondary:
-    "bg-transparent text-gothic-200 hover:bg-gothic-700 active:bg-gothic-600 border-gothic-600 hover:border-gothic-500",
-  danger:
-    "bg-rose-dark text-gothic-50 hover:bg-rose active:bg-rose-dark border-rose-dark shadow-crimson",
-};
+export default function ProductCard({ product, className }: ProductCardProps) {
+  const { addToCart } = useCart();
+  const [imageError, setImageError] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
 
-const sizeClasses = {
-  sm: "px-3 py-1.5 text-sm",
-  md: "px-5 py-2.5 text-base",
-  lg: "px-8 py-3.5 text-lg",
-};
+  const handleAddToCart = () => {
+    setIsAdding(true);
+    try {
+      addToCart(product, 1);
+    } catch (error) {
+      console.error("Failed to add item to cart:", error);
+    } finally {
+      setTimeout(() => setIsAdding(false), 500);
+    }
+  };
 
-const ThemedButton = forwardRef<HTMLButtonElement, ThemedButtonProps>(
-  (
-    {
-      variant = "primary",
-      size = "md",
-      loading = false,
-      disabled,
-      className,
-      children,
-      ...props
-    },
-    ref
-  ) => {
-    const isDisabled = disabled || loading;
+  const handleImageError = () => {
+    setImageError(true);
+  };
 
-    return (
-      <button
-        ref={ref}
-        disabled={isDisabled}
-        className={cn(
-          "relative inline-flex items-center justify-center gap-2 rounded-md border font-serif font-semibold",
-          "transition-all duration-300 ease-in-out",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson focus-visible:ring-offset-2 focus-visible:ring-offset-gothic-900",
-          isDisabled && "cursor-not-allowed opacity-50",
-          variantClasses[variant],
-          sizeClasses[size],
-          className
-        )}
-        {...props}
-      >
-        {loading && (
-          <VinylSpinner size="sm" className="absolute" />
-        )}
-        <span className={cn(loading && "invisible")}>
-          {children}
-        </span>
-      </button>
-    );
-  }
-);
+  const displayImage = imageError || !product.image
+    ? "https://placehold.co/300x300/1a1a2e/ff6b6b?text=No+Image"
+    : product.image;
 
-ThemedButton.displayName = "ThemedButton";
-
-export default ThemedButton;
+  return (
+    <div
+      className={cn(
+        "group relative flex flex-col overflow-hidden rounded-lg border border-gothic-700 bg-gothic-900/80 shadow-gothic transition-all duration-300 hover:border-crimson/50 hover:shadow-crimson/20",
+        className
+      )}
+    >
+      <div className="relative aspect-square overflow-hidden">
+        <img
+          src={displayImage}
+          alt={product.name}
+          onError={handleImageError}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+        {!product.stock || product.stock <= 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+            <span className="text-lg font-bold text-crimson">Sold Out</span>
+          </div>
+        ) : null}
+      </div>
+      <div className="flex flex-1 flex-col gap-2 p-4">
+        <h3 className="font-semibold text-lg text-gothic-200 line-clamp-1">
+          {product.name}
+        </h3>
+        <p className="text-sm text-gothic-400 line-clamp-2">
+          {product.description}
+        </p>
+        <div className="mt-auto flex items-center justify-between pt-2">
+          <span className="text-xl font-bold text-crimson">
+            ${product.price.toFixed(2)}
+          </span>
+          <span className="text-xs text-gothic-500">
+            {product.category}
+          </span>
+        </div>
+        <GothicButton
+          onClick={handleAddToCart}
+          disabled={isAdding || !product.stock || product.stock <= 0}
+          className="mt-2 w-full"
+        >
+          {isAdding ? "Adding..." : "Add to Cart"}
+        </GothicButton>
+      </div>
+    </div>
+  );
+}

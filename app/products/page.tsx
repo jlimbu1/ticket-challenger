@@ -39,18 +39,18 @@ export default function ProductsPage() {
 
   if (error) {
     return (
-      <DramaticErrorBoundary>
-        <div className="min-h-screen bg-black text-white p-8">
+      <div className="min-h-screen bg-black text-white p-8">
+        <DramaticErrorBoundary>
           <GothicEmptyState
             title="Something went wrong"
             message={error}
           />
-        </div>
-      </DramaticErrorBoundary>
+        </DramaticErrorBoundary>
+      </div>
     );
   }
 
-  if (!productList || productList.length === 0) {
+  if (productList.length === 0) {
     return (
       <div className="min-h-screen bg-black text-white p-8">
         <GothicEmptyState
@@ -63,11 +63,16 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-crimson mb-8 text-center tracking-wider uppercase">
-          The Collection
-        </h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight text-crimson md:text-4xl">
+            The Collection
+          </h1>
+          <p className="mt-2 text-sm text-gray-400">
+            Browse our curated selection of dark relics and artifacts
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {productList.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
