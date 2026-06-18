@@ -65,13 +65,17 @@ export const useCartStore = defineStore('cart', {
 
       const safeQuantity = Math.max(1, Math.floor(quantity));
 
-      const existing = this.items.find((item) => item.id === productId);
+      const item = this.items.find((item) => item.id === productId);
 
-      if (existing) {
-        existing.quantity = safeQuantity;
+      if (item) {
+        item.quantity = safeQuantity;
       } else {
-        console.warn('cartStore.updateQuantity: item not found', productId);
+        console.error('cartStore.updateQuantity: item not found for productId', productId);
       }
+    },
+
+    clearCart(): void {
+      this.items = [];
     },
   },
 });
