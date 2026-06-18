@@ -47,20 +47,17 @@ export default function ProductsPage() {
   return (
     <DramaticErrorBoundary>
       <div className="min-h-screen bg-black text-white">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <h1 className="mb-8 text-center text-4xl font-bold tracking-tight text-crimson md:text-5xl">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <h1 className="text-4xl font-bold text-crimson mb-8 text-center">
             The Collection
           </h1>
-          <p className="mb-12 text-center text-lg text-gothic-300">
-            Browse our curated selection of dark relics and artifacts.
-          </p>
 
           {inStockProducts.length > 0 && (
-            <section className="mb-16">
-              <h2 className="mb-6 text-2xl font-semibold text-gothic-200">
+            <section className="mb-12">
+              <h2 className="text-2xl font-semibold text-gothic-300 mb-6">
                 Available Now
               </h2>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {inStockProducts.map((product: Product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
@@ -70,10 +67,10 @@ export default function ProductsPage() {
 
           {outOfStockProducts.length > 0 && (
             <section>
-              <h2 className="mb-6 text-2xl font-semibold text-gothic-400">
+              <h2 className="text-2xl font-semibold text-gothic-500 mb-6">
                 Sold Out
               </h2>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 opacity-60">
                 {outOfStockProducts.map((product: Product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

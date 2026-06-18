@@ -45,7 +45,7 @@ export default function GothicEmptyState({
           <span className="text-2xl text-crimson/60">&#9760;</span>
         </div>
         <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-rose/30">
-          <span className="text-xs text-rose/70">&#10007;</span>
+          <span className="text-xs text-rose">&#10007;</span>
         </div>
       </div>
       <div className="space-y-2">

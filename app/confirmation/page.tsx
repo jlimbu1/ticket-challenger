@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { products } from "@/src/data/products";
 import type { Product, CartItem, Order } from "@/src/types";
 import GothicButton from "@/components/GothicButton";
 import GothicEmptyState from "@/components/GothicEmptyState";
@@ -44,18 +43,64 @@ function ConfirmationContent() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const orderParam = searchParams.get("order");
-      if (orderParam) {
+      const itemsParam = searchParams.get("items");
+      const totalParam = searchParams.get("total");
+      const nameParam = searchParams.get("name");
+      const emailParam = searchParams.get("email");
+
+      if (itemsParam && totalParam && nameParam && emailParam) {
         try {
-          const parsedOrder: Order = JSON.parse(decodeURIComponent(orderParam));
-          setOrder(parsedOrder);
-          const items: OrderItemDisplay[] = parsedOrder.items.map((item) => ({
+          const parsedItems: CartItem[] = JSON.parse(itemsParam);
+          const total = parseFloat(totalParam);
+
+          if (isNaN(total) || total < 0) {
+            throw new Error("Invalid total value");
+          }
+
+          if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
+            throw new Error("Invalid or empty items array");
+          }
+
+          const validItems = parsedItems.filter(
+            (item) =>
+              item &&
+              item.product &&
+              typeof item.product.id === "string" &&
+              typeof item.product.name === "string" &&
+              typeof item.product.price === "number" &&
+              item.product.price >= 0 &&
+              typeof item.quantity === "number" &&
+              item.quantity > 0
+          );
+
+          if (validItems.length === 0) {
+            throw new Error("No valid items found");
+          }
+
+          const displayItems: OrderItemDisplay[] = validItems.map((item) => ({
             product: item.product,
             quantity: item.quantity,
             subtotal: item.product.price * item.quantity,
           }));
-          setOrderItems(items);
-        } catch {
+
+          const newOrder: Order = {
+            id: orderId,
+            items: validItems,
+            total,
+            status: "completed",
+            createdAt: new Date().toISOString(),
+            customerName: decodeURIComponent(nameParam),
+            customerEmail: decodeURIComponent(emailParam),
+          };
+
+          setOrder(newOrder);
+          setOrderItems(displayItems);
+        } catch (error) {
+          console.error(
+            "[ConfirmationPage] Failed to parse order data:",
+            error instanceof Error ? error.message : "Unknown error",
+            error instanceof Error ? error.stack : undefined
+          );
           setOrder(null);
           setOrderItems([]);
         }
@@ -63,10 +108,12 @@ function ConfirmationContent() {
         setOrder(null);
         setOrderItems([]);
       }
+
       setIsLoading(false);
-    }, 800);
+    }, 500);
+
     return () => clearTimeout(timer);
-  }, [searchParams]);
+  }, [searchParams, orderId]);
 
   if (isLoading) {
     return (
@@ -78,103 +125,116 @@ function ConfirmationContent() {
 
   if (!order || orderItems.length === 0) {
     return (
-      <div className="min-h-screen bg-black p-8 text-white">
-        <GothicEmptyState
-          title="No Order Found"
-          message="The void has consumed your order. Perhaps it was never meant to be."
-        />
-      </div>
+      <DramaticErrorBoundary>
+        <div className="min-h-screen bg-black p-8">
+          <GothicEmptyState
+            title="No Order Found"
+            message="The ritual was not completed. No order exists to confirm."
+          />
+        </div>
+      </DramaticErrorBoundary>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black p-4 text-white md:p-8">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-8 border border-gothic-700 bg-gothic-900/50 p-6 shadow-gothic">
-          <h1 className="mb-2 font-serif text-3xl tracking-wider text-crimson md:text-4xl">
-            The Ritual is Complete
-          </h1>
-          <p className="font-mono text-sm text-gothic-400">
-            Order #{orderId}
-          </p>
-        </div>
-
-        <div className="mb-8 border border-gothic-700 bg-gothic-900/30 p-6">
-          <h2 className="mb-4 font-serif text-xl text-rose">Tour Diary Entry</h2>
-          <div className="space-y-2 font-mono text-sm text-gothic-300">
-            <p>Date: {new Date(order.createdAt).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}</p>
-            <p>Location: The Digital Void</p>
-            <p>Attendee: {order.customerName}</p>
-            <p>Contact: {order.customerEmail}</p>
-          </div>
-        </div>
-
-        <div className="mb-8 border border-gothic-700 bg-gothic-900/30 p-6">
-          <h2 className="mb-4 font-serif text-xl text-rose">Setlist</h2>
-          <div className="space-y-4">
-            {orderItems.map((item) => (
-              <div
-                key={item.product.id}
-                className="flex items-center justify-between border-b border-gothic-800 pb-2"
-              >
-                <div>
-                  <p className="font-medium text-white">{item.product.name}</p>
-                  <p className="font-mono text-sm text-gothic-400">
-                    Qty: {item.quantity} x ${item.product.price.toFixed(2)}
-                  </p>
-                </div>
-                <p className="font-mono text-crimson">
-                  ${item.subtotal.toFixed(2)}
-                </p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 flex justify-between border-t border-gothic-700 pt-4">
-            <p className="font-serif text-lg text-white">Total</p>
-            <p className="font-mono text-lg text-crimson">
-              ${order.total.toFixed(2)}
+    <DramaticErrorBoundary>
+      <div className="min-h-screen bg-black text-white">
+        <div className="mx-auto max-w-3xl px-4 py-12">
+          <div className="mb-8 text-center">
+            <h1 className="font-gothic text-4xl tracking-wider text-crimson md:text-5xl">
+              The Ritual is Complete
+            </h1>
+            <p className="mt-2 text-sm text-gray-400">
+              Your order has been sealed in the void
             </p>
           </div>
-        </div>
 
-        <div className="mb-8 border border-gothic-700 bg-gothic-900/30 p-6">
-          <h2 className="mb-4 font-serif text-xl text-rose">Next Show</h2>
-          <p className="font-mono text-sm text-gothic-300">
-            Estimated delivery: {estimatedDelivery}
-          </p>
-          <p className="mt-2 font-mono text-xs text-gothic-500">
-            The relics will arrive when the stars align.
-          </p>
-        </div>
+          <div className="mb-8 rounded-lg border border-gothic-700 bg-gothic-900/50 p-6 shadow-gothic">
+            <div className="mb-4 border-b border-gothic-700 pb-4">
+              <p className="text-sm text-gray-400">Order ID</p>
+              <p className="font-mono text-lg text-crimson">{order.id}</p>
+            </div>
 
-        <div className="text-center">
-          <GothicButton
-            onClick={() => window.location.href = "/products"}
-          >
-            Return to the Stage
-          </GothicButton>
+            <div className="mb-4 border-b border-gothic-700 pb-4">
+              <p className="text-sm text-gray-400">Estimated Delivery</p>
+              <p className="text-lg text-white">{estimatedDelivery}</p>
+            </div>
+
+            <div className="mb-4 border-b border-gothic-700 pb-4">
+              <p className="text-sm text-gray-400">Customer</p>
+              <p className="text-white">{order.customerName}</p>
+              <p className="text-sm text-gray-400">{order.customerEmail}</p>
+            </div>
+
+            <div>
+              <p className="mb-2 text-sm text-gray-400">Items</p>
+              <div className="space-y-3">
+                {orderItems.map((item) => (
+                  <div
+                    key={item.product.id}
+                    className="flex items-center justify-between rounded bg-gothic-800/50 p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded border border-gothic-600 bg-gothic-800">
+                        <span className="text-xs text-gray-400">
+                          {item.product.name.charAt(0)}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-white">
+                          {item.product.name}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Qty: {item.quantity} x ${item.product.price.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-crimson">
+                      ${item.subtotal.toFixed(2)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-8 rounded-lg border border-gothic-700 bg-gothic-900/50 p-6 shadow-gothic">
+            <div className="flex items-center justify-between">
+              <p className="text-lg text-gray-400">Total Charged</p>
+              <p className="text-2xl font-bold text-crimson">
+                ${order.total.toFixed(2)}
+              </p>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <p className="mb-4 text-sm italic text-gray-500">
+              &ldquo;The transaction has been etched into the annals of the
+              underworld.&rdquo;
+            </p>
+            <GothicButton
+              onClick={() => (window.location.href = "/products")}
+              className="mx-auto"
+            >
+              Return to the Stage
+            </GothicButton>
+          </div>
         </div>
       </div>
-    </div>
+    </DramaticErrorBoundary>
   );
 }
 
 export default function ConfirmationPage() {
   return (
-    <DramaticErrorBoundary>
-      <Suspense
-        fallback={
-          <div className="flex min-h-screen items-center justify-center bg-black">
-            <VinylSpinner />
-          </div>
-        }
-      >
-        <ConfirmationContent />
-      </Suspense>
-    </DramaticErrorBoundary>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-black">
+          <VinylSpinner />
+        </div>
+      }
+    >
+      <ConfirmationContent />
+    </Suspense>
   );
 }
