@@ -59,7 +59,7 @@
   }
 
   h3 {
-    @apply text-2xl md:text-3xl font-bold tracking-tight;
+    @apply text-2xl md:text-3xl font-bold;
   }
 
   h4 {
@@ -79,146 +79,253 @@
   }
 
   a {
-    @apply text-crimson hover:text-neonCrimson transition-colors duration-300;
+    @apply text-crimson hover:text-neon-crimson transition-colors duration-300;
   }
 
   ::selection {
-    @apply bg-crimson text-white;
+    @apply bg-deepPurple text-white;
   }
 
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-crimson;
+    @apply outline-2 outline-offset-2 outline-neon-crimson;
   }
 }
 
 @layer components {
-  .gothic-text {
-    font-family: var(--font-gothic);
-    @apply tracking-wider;
+  .vinyl-spin {
+    animation: vinyl-spin 2s linear infinite;
   }
 
-  .crimson-gradient {
-    @apply bg-gradient-to-r from-crimson to-deepPurple;
+  .hover-dramatic {
+    @apply transition-all duration-500 ease-out;
   }
 
-  .crimson-gradient-text {
-    @apply bg-gradient-to-r from-crimson to-deepPurple bg-clip-text text-transparent;
+  .hover-dramatic:hover {
+    @apply scale-105;
+    box-shadow: 0 0 20px rgba(139, 0, 0, 0.6), 0 0 40px rgba(74, 0, 130, 0.3);
   }
 
-  .gothic-border {
-    @apply border border-crimson/30;
+  .hover-glow {
+    animation: hover-glow 1.5s ease-in-out infinite;
   }
 
-  .gothic-card {
-    @apply bg-darkGray border border-crimson/20 rounded-lg shadow-lg;
+  .text-gothic {
+    font-family: var(--font-heading);
   }
 
-  .gothic-input {
-    @apply bg-darkGray border border-crimson/30 rounded-md px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-crimson focus:ring-1 focus:ring-crimson transition-colors duration-300;
+  .text-body {
+    font-family: var(--font-body);
   }
 
-  .gothic-divider {
-    @apply border-t border-crimson/20 my-4;
-  }
-
-  .gothic-overlay {
-    @apply absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent;
-  }
-
-  .gothic-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-crimson) var(--color-dark-gray);
-  }
-
-  .gothic-scrollbar::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .gothic-scrollbar::-webkit-scrollbar-track {
-    background: var(--color-dark-gray);
-  }
-
-  .gothic-scrollbar::-webkit-scrollbar-thumb {
-    background-color: var(--color-crimson);
-    border-radius: 4px;
-    border: 2px solid var(--color-dark-gray);
-  }
-
-  .gothic-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-neon-crimson);
-  }
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  .text-shadow-gothic {
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(139, 0, 0, 0.3);
-  }
-
-  .text-shadow-gothic-lg {
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 0, 0, 0.3);
-  }
-
-  .box-shadow-gothic {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), 0 0 15px rgba(139, 0, 0, 0.1);
-  }
-
-  .box-shadow-gothic-lg {
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3), 0 0 30px rgba(139, 0, 0, 0.15);
-  }
-
-  .glow-crimson {
-    box-shadow: 0 0 10px rgba(139, 0, 0, 0.3), 0 0 20px rgba(139, 0, 0, 0.1);
-  }
-
-  .glow-purple {
-    box-shadow: 0 0 10px rgba(74, 0, 130, 0.3), 0 0 20px rgba(74, 0, 130, 0.1);
-  }
-
-  .glow-neon-crimson {
-    box-shadow: 0 0 10px rgba(255, 0, 68, 0.3), 0 0 20px rgba(255, 0, 68, 0.1);
-  }
-
-  .glow-neon-purple {
-    box-shadow: 0 0 10px rgba(176, 0, 255, 0.3), 0 0 20px rgba(176, 0, 255, 0.1);
-  }
-
-  .distressed-text {
-    position: relative;
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0, 0, 0, 0.1) 2px,
-        rgba(0, 0, 0, 0.1) 4px
-      );
-      pointer-events: none;
-    }
-  }
-
-  .distressed-bg {
+  .bg-distressed {
     background-image: 
       repeating-linear-gradient(
         0deg,
         transparent,
         transparent 2px,
-        rgba(0, 0, 0, 0.05) 2px,
-        rgba(0, 0, 0, 0.05) 4px
+        rgba(255, 255, 255, 0.02) 2px,
+        rgba(255, 255, 255, 0.02) 4px
       ),
       repeating-linear-gradient(
         90deg,
         transparent,
-        transparent 2px,
-        rgba(0, 0, 0, 0.05) 2px,
-        rgba(0, 0, 0, 0.05) 4px
+        transparent 3px,
+        rgba(0, 0, 0, 0.03) 3px,
+        rgba(0, 0, 0, 0.03) 6px
       );
+  }
+
+  .card-vintage {
+    @apply bg-darkGray border border-mediumGray rounded-lg overflow-hidden;
+    @apply transition-all duration-500 ease-out;
+  }
+
+  .card-vintage:hover {
+    @apply border-crimson;
+    box-shadow: 0 0 15px rgba(139, 0, 0, 0.4), 0 0 30px rgba(74, 0, 130, 0.2);
+    transform: translateY(-4px);
+  }
+
+  .btn-ritual {
+    @apply bg-crimson text-white font-heading font-bold py-3 px-8 rounded;
+    @apply transition-all duration-300 ease-out;
+    @apply border border-crimson;
+    text-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
+  }
+
+  .btn-ritual:hover {
+    @apply bg-neon-crimson border-neon-crimson;
+    box-shadow: 0 0 20px rgba(255, 0, 68, 0.4), 0 0 40px rgba(255, 0, 68, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .btn-ritual:active {
+    transform: translateY(0);
+  }
+
+  .btn-ritual:disabled {
+    @apply opacity-50 cursor-not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .input-gothic {
+    @apply bg-darkGray border border-mediumGray text-white rounded px-4 py-2;
+    @apply transition-all duration-300;
+    @apply font-body;
+  }
+
+  .input-gothic:focus {
+    @apply border-crimson outline-none;
+    box-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
+  }
+
+  .input-gothic::placeholder {
+    @apply text-lightGray;
+  }
+
+  .label-gothic {
+    @apply font-heading text-sm uppercase tracking-wider text-crimson;
+  }
+
+  .divider-gothic {
+    @apply border-t border-mediumGray my-6;
+    background: linear-gradient(to right, transparent, var(--color-crimson), transparent);
+    height: 1px;
+    border: none;
+  }
+
+  .badge-gothic {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-heading uppercase tracking-wider;
+    @apply bg-deepPurple bg-opacity-20 text-neon-purple border border-deepPurple border-opacity-30;
+  }
+
+  .badge-gothic-crimson {
+    @apply badge-gothic;
+    @apply bg-crimson bg-opacity-20 text-neon-crimson border-crimson border-opacity-30;
+  }
+
+  .scrollbar-gothic {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-crimson) var(--color-dark-gray);
+  }
+
+  .scrollbar-gothic::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-gothic::-webkit-scrollbar-track {
+    @apply bg-darkGray;
+  }
+
+  .scrollbar-gothic::-webkit-scrollbar-thumb {
+    @apply bg-crimson rounded;
+  }
+
+  .scrollbar-gothic::-webkit-scrollbar-thumb:hover {
+    @apply bg-neon-crimson;
+  }
+}
+
+@layer utilities {
+  .text-shadow-gothic {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 0, 0, 0.3);
+  }
+
+  .text-shadow-neon {
+    text-shadow: 0 0 10px rgba(255, 0, 68, 0.5), 0 0 20px rgba(255, 0, 68, 0.3), 0 0 40px rgba(255, 0, 68, 0.1);
+  }
+
+  .text-shadow-purple {
+    text-shadow: 0 0 10px rgba(176, 0, 255, 0.5), 0 0 20px rgba(176, 0, 255, 0.3), 0 0 40px rgba(176, 0, 255, 0.1);
+  }
+
+  .glow-crimson {
+    box-shadow: 0 0 10px rgba(139, 0, 0, 0.5), 0 0 20px rgba(139, 0, 0, 0.3);
+  }
+
+  .glow-purple {
+    box-shadow: 0 0 10px rgba(74, 0, 130, 0.5), 0 0 20px rgba(74, 0, 130, 0.3);
+  }
+
+  .glow-neon-crimson {
+    box-shadow: 0 0 10px rgba(255, 0, 68, 0.5), 0 0 20px rgba(255, 0, 68, 0.3), 0 0 40px rgba(255, 0, 68, 0.1);
+  }
+
+  .glow-neon-purple {
+    box-shadow: 0 0 10px rgba(176, 0, 255, 0.5), 0 0 20px rgba(176, 0, 255, 0.3), 0 0 40px rgba(176, 0, 255, 0.1);
+  }
+
+  .border-gradient-crimson {
+    border-image: linear-gradient(to right, var(--color-crimson), var(--color-deep-purple)) 1;
+  }
+
+  .bg-gradient-gothic {
+    background: linear-gradient(135deg, var(--color-black) 0%, var(--color-dark-gray) 50%, var(--color-black) 100%);
+  }
+
+  .bg-gradient-crimson {
+    background: linear-gradient(135deg, var(--color-crimson) 0%, var(--color-deep-purple) 100%);
+  }
+
+  .bg-gradient-ritual {
+    background: linear-gradient(135deg, var(--color-crimson) 0%, var(--color-neon-crimson) 50%, var(--color-deep-purple) 100%);
+  }
+}
+
+@keyframes vinyl-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes hover-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(139, 0, 0, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(139, 0, 0, 0.8), 0 0 40px rgba(74, 0, 130, 0.4);
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-crimson {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
   }
 }
 
@@ -231,13 +338,31 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --color-black: #0A0A0A;
-    --color-dark-gray: #1E1E1E;
-    --color-medium-gray: #2E2E2E;
-    --color-light-gray: #3E3E3E;
+  .vinyl-spin {
+    animation: none;
+  }
+
+  .hover-dramatic:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .hover-glow {
+    animation: none;
+  }
+
+  .card-vintage:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-ritual:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  html {
+    scroll-behavior: auto;
   }
 }

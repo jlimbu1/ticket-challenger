@@ -1,33 +1,4 @@
-export default {
-  content: [
-    "./src/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
-  theme: {
-    extend: {
-      colors: {
-        black: "#000000",
-        crimson: "#8B0000",
-        deepPurple: "#4A0082",
-      },
-      fontFamily: {
-        heading: ["Playfair Display", "Georgia", "serif"],
-        body: ["Inter", "system-ui", "sans-serif"],
-      },
-      animation: {
-        "spin-slow": "spin-slow 3s linear infinite",
-        "hover-glow": "hover-glow 1.5s ease-in-out infinite",
-      },
-      keyframes: {
-        "spin-slow": {
-          "0%": { transform: "rotate(0deg)" },
-          "100%": { transform: "rotate(360deg)" },
-        },
-        "hover-glow": {
-          "0%, 100%": { boxShadow: "0 0 5px rgba(139, 0, 0, 0.5)" },
-          "50%": { boxShadow: "0 0 20px rgba(139, 0, 0, 0.8), 0 0 40px rgba(74, 0, 130, 0.4)" },
-        },
-      },
-    },
-  },
-  plugins: [],
-};
+{
+  "file": "tailwind.config.ts",
+  "content": "import type { Config } from 'tailwindcss'\n\nexport default {\n  content: [\n    \"./src/**/*.{js,ts,jsx,tsx,mdx}\",\n  ],\n  theme: {\n    extend: {\n      colors: {\n        black: \"#000000\",\n        crimson: \"#8B0000\",\n        deepPurple: \"#4A0082\",\n        neonCrimson: \"#FF0044\",\n        neonPurple: \"#B000FF\",\n        darkGray: \"#1A1A1A\",\n        mediumGray: \"#2A2A2A\",\n        lightGray: \"#3A3A3A\",\n        offWhite: \"#F5F5F5\",\n      },\n      fontFamily: {\n        heading: [\"Playfair Display\", \"Georgia\", \"serif\"],\n        body: [\"Inter\", \"system-ui\", \"sans-serif\"],\n        gothic: [\"Playfair Display\", \"Georgia\", \"serif\"],\n      },\n      animation: {\n        \"spin-slow\": \"spin-slow 3s linear infinite\",\n        \"hover-glow\": \"hover-glow 1.5s ease-in-out infinite\",\n        \"vinyl-spin\": \"vinyl-spin 2s linear infinite\",\n        \"fade-in\": \"fade-in 0.5s ease-out\",\n        \"slide-up\": \"slide-up 0.3s ease-out\",\n      },\n      keyframes: {\n        \"spin-slow\": {\n          \"0%\": { transform: \"rotate(0deg)\" },\n          \"100%\": { transform: \"rotate(360deg)\" },\n        },\n        \"hover-glow\": {\n          \"0%, 100%\": { boxShadow: \"0 0 5px rgba(139, 0, 0, 0.5)\" },\n          \"50%\": { boxShadow: \"0 0 20px rgba(139, 0, 0, 0.8), 0 0 40px rgba(74, 0, 130, 0.4)\" },\n        },\n        \"vinyl-spin\": {\n          \"0%\": { transform: \"rotate(0deg)\" },\n          \"100%\": { transform: \"rotate(360deg)\" },\n        },\n        \"fade-in\": {\n          \"0%\": { opacity: \"0\" },\n          \"100%\": { opacity: \"1\" },\n        },\n        \"slide-up\": {\n          \"0%\": { transform: \"translateY(10px)\", opacity: \"0\" },\n          \"100%\": { transform: \"translateY(0)\", opacity: \"1\" },\n        },\n      },\n    },\n  },\n  plugins: [],\n} satisfies Config\n"
+}
