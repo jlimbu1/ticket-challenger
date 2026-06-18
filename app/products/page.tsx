@@ -41,7 +41,7 @@ export default function ProductsPage() {
               <ProductCard
                 key={product.id}
                 product={product}
-                onAddToCart={() => handleAddToCart(product)}
+                onAddToCart={handleAddToCart}
               />
             ))}
           </div>
@@ -51,12 +51,12 @@ export default function ProductsPage() {
               <h2 className="text-2xl font-bold mb-6 tracking-wider uppercase text-gray-400">
                 Sold Out
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60">
                 {outOfStockProducts.map((product: Product) => (
                   <ProductCard
                     key={product.id}
                     product={product}
-                    onAddToCart={() => {}}
+                    onAddToCart={handleAddToCart}
                   />
                 ))}
               </div>

@@ -11,6 +11,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
 
   const handleAddToCart = () => {
+    if (product.stock <= 0) return;
     addToCart(product, 1);
   };
 
@@ -38,20 +39,19 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
         <div className="p-4">
-          <h3 className="text-lg font-semibold text-white mb-1">{product.name}</h3>
-          <p className="text-gray-400 text-sm mb-3">{product.description}</p>
+          <h3 className="text-lg font-semibold text-white mb-2">{product.name}</h3>
+          <p className="text-gray-400 text-sm mb-4">{product.description}</p>
           <div className="flex items-center justify-between">
             <span className="text-purple-400 font-bold text-xl">
               ${product.price.toFixed(2)}
             </span>
-            {product.stock > 0 && (
-              <button
-                onClick={handleAddToCart}
-                className="bg-purple-800 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-              >
-                Add to Cart
-              </button>
-            )}
+            <button
+              onClick={handleAddToCart}
+              disabled={product.stock <= 0}
+              className="px-4 py-2 bg-purple-900 hover:bg-purple-800 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded transition-colors duration-200 uppercase text-sm tracking-wider"
+            >
+              {product.stock <= 0 ? 'Sold Out' : 'Add to Cart'}
+            </button>
           </div>
         </div>
       </div>
