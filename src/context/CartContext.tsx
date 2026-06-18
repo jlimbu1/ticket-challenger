@@ -65,9 +65,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       }
       return {
         items: state.items.map((item) =>
-          item.product.id === productId
-            ? { ...item, quantity }
-            : item
+          item.product.id === productId ? { ...item, quantity } : item
         ),
       };
     }
@@ -87,24 +85,32 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
 function loadCartFromStorage(): CartItem[] {
   try {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem(CART_STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        return parsed;
-      }
-    }
-  } catch (error) {
-    console.error('[CartContext] Failed to load cart from localStorage:', error);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item: unknown) =>
+        typeof item === 'object' &&
+        item !== null &&
+        'product' in item &&
+        'quantity' in item &&
+        typeof (item as CartItem).quantity === 'number' &&
+        (item as CartItem).quantity > 0
+    );
+  } catch {
+    console.error('[CartContext] Failed to load cart from localStorage');
+    return [];
   }
-  return [];
 }
 
 function saveCartToStorage(items: CartItem[]): void {
   try {
+    if (typeof window === 'undefined') return;
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-  } catch (error) {
-    console.error('[CartContext] Failed to save cart to localStorage:', error);
+  } catch {
+    console.error('[CartContext] Failed to save cart to localStorage');
   }
 }
 
@@ -153,7 +159,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const itemCount = useMemo(() => {
-    return state.items.reduce((count, item) => count + item.quantity, 0);
+    return state.items.reduce((total, item) => total + item.quantity, 0);
   }, [state.items]);
 
   const totalPrice = useMemo(() => {

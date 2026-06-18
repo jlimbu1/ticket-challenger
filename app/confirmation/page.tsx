@@ -60,31 +60,17 @@ function ConfirmationContent() {
           setOrderItems([]);
         }
       } else {
-        const storedOrder = sessionStorage.getItem("lastOrder");
-        if (storedOrder) {
-          try {
-            const parsedOrder: Order = JSON.parse(storedOrder);
-            setOrder(parsedOrder);
-            const items: OrderItemDisplay[] = parsedOrder.items.map((item) => ({
-              product: item.product,
-              quantity: item.quantity,
-              subtotal: item.product.price * item.quantity,
-            }));
-            setOrderItems(items);
-          } catch {
-            setOrder(null);
-            setOrderItems([]);
-          }
-        }
+        setOrder(null);
+        setOrderItems([]);
       }
       setIsLoading(false);
-    }, 500);
+    }, 800);
     return () => clearTimeout(timer);
   }, [searchParams]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-black">
         <VinylSpinner />
       </div>
     );
@@ -92,140 +78,103 @@ function ConfirmationContent() {
 
   if (!order || orderItems.length === 0) {
     return (
-      <DramaticErrorBoundary>
-        <div className="min-h-screen bg-black text-white p-8">
-          <GothicEmptyState
-            title="No Order Found"
-            message="The tour diary is empty. No order was placed."
-          />
-        </div>
-      </DramaticErrorBoundary>
+      <div className="min-h-screen bg-black p-8 text-white">
+        <GothicEmptyState
+          title="No Order Found"
+          message="The void has consumed your order. Perhaps it was never meant to be."
+        />
+      </div>
     );
   }
 
-  const total = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
-
   return (
-    <DramaticErrorBoundary>
-      <div className="min-h-screen bg-black text-white">
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          <div className="border border-gothic-700 bg-gothic-900/50 shadow-gothic rounded-lg p-8">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-crimson mb-2">
-                The Ritual is Complete
-              </h1>
-              <p className="text-gothic-300 text-lg">
-                Your order has been sealed in the void.
-              </p>
-            </div>
+    <div className="min-h-screen bg-black p-4 text-white md:p-8">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-8 border border-gothic-700 bg-gothic-900/50 p-6 shadow-gothic">
+          <h1 className="mb-2 font-serif text-3xl tracking-wider text-crimson md:text-4xl">
+            The Ritual is Complete
+          </h1>
+          <p className="font-mono text-sm text-gothic-400">
+            Order #{orderId}
+          </p>
+        </div>
 
-            <div className="border-t border-b border-gothic-700 py-6 mb-6">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gothic-400">Order ID:</span>
-                  <span className="text-white ml-2 font-mono">{orderId}</span>
-                </div>
-                <div>
-                  <span className="text-gothic-400">Date:</span>
-                  <span className="text-white ml-2">
-                    {new Date(order.createdAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gothic-400">Name:</span>
-                  <span className="text-white ml-2">{order.customerName}</span>
-                </div>
-                <div>
-                  <span className="text-gothic-400">Email:</span>
-                  <span className="text-white ml-2">{order.customerEmail}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-crimson mb-4">
-                Tour Diary Entry
-              </h2>
-              <div className="space-y-4">
-                {orderItems.map((item) => (
-                  <div
-                    key={item.product.id}
-                    className="flex items-center justify-between border-b border-gothic-700 pb-3"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-gothic-800 rounded overflow-hidden">
-                        <img
-                          src={item.product.image}
-                          alt={item.product.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = "https://placehold.co/64x64/1a1a2e/fff?text=MCR";
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <p className="font-medium text-white">{item.product.name}</p>
-                        <p className="text-sm text-gothic-400">
-                          Qty: {item.quantity} x ${item.product.price.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-white font-medium">
-                      ${item.subtotal.toFixed(2)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t border-gothic-700 pt-4 mb-6">
-              <div className="flex justify-between items-center">
-                <span className="text-lg text-gothic-300">Total</span>
-                <span className="text-2xl font-bold text-crimson">
-                  ${total.toFixed(2)}
-                </span>
-              </div>
-            </div>
-
-            <div className="bg-gothic-800/50 border border-gothic-700 rounded p-4 mb-6">
-              <p className="text-sm text-gothic-300">
-                <span className="text-crimson font-semibold">Estimated Delivery:</span>{" "}
-                {estimatedDelivery}
-              </p>
-              <p className="text-xs text-gothic-400 mt-2">
-                The spirits are preparing your package for its journey through the void.
-              </p>
-            </div>
-
-            <div className="flex justify-center gap-4">
-              <GothicButton
-                onClick={() => window.location.href = "/products"}
-              >
-                Return to the Stage
-              </GothicButton>
-            </div>
+        <div className="mb-8 border border-gothic-700 bg-gothic-900/30 p-6">
+          <h2 className="mb-4 font-serif text-xl text-rose">Tour Diary Entry</h2>
+          <div className="space-y-2 font-mono text-sm text-gothic-300">
+            <p>Date: {new Date(order.createdAt).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}</p>
+            <p>Location: The Digital Void</p>
+            <p>Attendee: {order.customerName}</p>
+            <p>Contact: {order.customerEmail}</p>
           </div>
         </div>
+
+        <div className="mb-8 border border-gothic-700 bg-gothic-900/30 p-6">
+          <h2 className="mb-4 font-serif text-xl text-rose">Setlist</h2>
+          <div className="space-y-4">
+            {orderItems.map((item) => (
+              <div
+                key={item.product.id}
+                className="flex items-center justify-between border-b border-gothic-800 pb-2"
+              >
+                <div>
+                  <p className="font-medium text-white">{item.product.name}</p>
+                  <p className="font-mono text-sm text-gothic-400">
+                    Qty: {item.quantity} x ${item.product.price.toFixed(2)}
+                  </p>
+                </div>
+                <p className="font-mono text-crimson">
+                  ${item.subtotal.toFixed(2)}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex justify-between border-t border-gothic-700 pt-4">
+            <p className="font-serif text-lg text-white">Total</p>
+            <p className="font-mono text-lg text-crimson">
+              ${order.total.toFixed(2)}
+            </p>
+          </div>
+        </div>
+
+        <div className="mb-8 border border-gothic-700 bg-gothic-900/30 p-6">
+          <h2 className="mb-4 font-serif text-xl text-rose">Next Show</h2>
+          <p className="font-mono text-sm text-gothic-300">
+            Estimated delivery: {estimatedDelivery}
+          </p>
+          <p className="mt-2 font-mono text-xs text-gothic-500">
+            The relics will arrive when the stars align.
+          </p>
+        </div>
+
+        <div className="text-center">
+          <GothicButton
+            onClick={() => window.location.href = "/products"}
+          >
+            Return to the Stage
+          </GothicButton>
+        </div>
       </div>
-    </DramaticErrorBoundary>
+    </div>
   );
 }
 
 export default function ConfirmationPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
-          <VinylSpinner />
-        </div>
-      }
-    >
-      <ConfirmationContent />
-    </Suspense>
+    <DramaticErrorBoundary>
+      <Suspense
+        fallback={
+          <div className="flex min-h-screen items-center justify-center bg-black">
+            <VinylSpinner />
+          </div>
+        }
+      >
+        <ConfirmationContent />
+      </Suspense>
+    </DramaticErrorBoundary>
   );
 }

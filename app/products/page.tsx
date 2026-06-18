@@ -47,18 +47,21 @@ export default function ProductsPage() {
   return (
     <DramaticErrorBoundary>
       <div className="min-h-screen bg-black text-white">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <h1 className="text-4xl font-bold text-center mb-8 text-crimson tracking-wider uppercase">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <h1 className="mb-8 text-center text-4xl font-bold tracking-tight text-crimson md:text-5xl">
             The Collection
           </h1>
+          <p className="mb-12 text-center text-lg text-gothic-300">
+            Browse our curated selection of dark relics and artifacts.
+          </p>
 
           {inStockProducts.length > 0 && (
-            <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6 text-gray-300 border-b border-gothic-700 pb-2">
+            <section className="mb-16">
+              <h2 className="mb-6 text-2xl font-semibold text-gothic-200">
                 Available Now
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {inStockProducts.map((product) => (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {inStockProducts.map((product: Product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
@@ -67,11 +70,11 @@ export default function ProductsPage() {
 
           {outOfStockProducts.length > 0 && (
             <section>
-              <h2 className="text-2xl font-semibold mb-6 text-gray-500 border-b border-gothic-700 pb-2">
+              <h2 className="mb-6 text-2xl font-semibold text-gothic-400">
                 Sold Out
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 opacity-60">
-                {outOfStockProducts.map((product) => (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {outOfStockProducts.map((product: Product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>

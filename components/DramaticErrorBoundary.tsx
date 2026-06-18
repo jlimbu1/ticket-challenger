@@ -77,25 +77,25 @@ export default class DramaticErrorBoundary extends Component<
           role="alert"
           className={cn(
             "flex flex-col items-center justify-center gap-6 p-8 text-center",
-            "min-h-[300px] bg-gothic-950 border border-crimson/30",
-            "rounded-lg shadow-gothic",
+            "border border-crimson/40 bg-gothic-900/50 shadow-gothic",
+            "rounded-lg min-h-[300px]",
             this.props.className
           )}
         >
-          <div className="relative" aria-hidden="true">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-crimson/50 bg-gothic-900">
+          <div className="relative flex items-center justify-center" aria-hidden="true">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-crimson/60 bg-gothic-800">
               <span className="text-4xl text-crimson">&#9760;</span>
             </div>
-            <div className="absolute -right-1 -top-1 flex h-8 w-8 items-center justify-center rounded-full bg-crimson/20">
-              <span className="text-lg text-crimson">&#9888;</span>
+            <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-full bg-rose/40">
+              <span className="text-sm text-white">!</span>
             </div>
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold tracking-wider text-crimson">
-              RITUAL INTERRUPTED
+            <h2 className="font-gothic text-2xl font-bold tracking-wider text-crimson">
+              A Dark Omen
             </h2>
-            <p className="max-w-md text-gothic-300 text-sm leading-relaxed">
+            <p className="max-w-md font-serif text-lg italic text-gothic-300">
               {errorMessage}
             </p>
           </div>
@@ -103,13 +103,12 @@ export default class DramaticErrorBoundary extends Component<
           <button
             onClick={this.handleReset}
             className={cn(
-              "px-6 py-2 rounded-md border border-crimson/40",
-              "bg-gothic-900 text-crimson hover:bg-crimson/10",
-              "transition-colors duration-300 focus:outline-none",
-              "focus:ring-2 focus:ring-crimson/50 focus:ring-offset-2",
-              "focus:ring-offset-gothic-950"
+              "px-6 py-3 font-gothic text-sm font-bold uppercase tracking-widest",
+              "border border-crimson/60 bg-gothic-800 text-crimson",
+              "hover:bg-crimson hover:text-white hover:shadow-gothic",
+              "transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-crimson/60"
             )}
-            aria-label="Try again"
+            type="button"
           >
             Attempt the Ritual Again
           </button>
