@@ -72,12 +72,13 @@ const VinylSpinner: React.FC<VinylSpinnerProps> = ({
           }}
         />
       </div>
-      <span
-        className={`text-crimson font-heading tracking-wider uppercase ${labelSizeMap[size]}`}
-        aria-hidden="true"
-      >
-        {label}
-      </span>
+      {label && (
+        <span
+          className={`font-gothic text-crimson/70 tracking-wider uppercase ${labelSizeMap[size]}`}
+        >
+          {label}
+        </span>
+      )}
     </div>
   );
 };

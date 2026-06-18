@@ -14,6 +14,11 @@ const DEFAULT_POETIC_MESSAGES = [
   'No records spin in this forgotten corner.',
   'The jukebox weeps for songs not yet chosen.',
   'A blank page in the book of melodies.',
+  'The stage is dark, the crowd has gone.',
+  'These halls remember songs that never played.',
+  'A ghost of music lingers in the air.',
+  'The needle waits for a groove to find.',
+  'Every masterpiece begins with an empty canvas.',
 ];
 
 const getRandomPoeticMessage = (): string => {
@@ -57,29 +62,29 @@ const EmptyState: React.FC<EmptyStateProps> = ({
                 #1a1a1a 300deg 330deg,
                 #2a2a2a 330deg 360deg
               )`,
-              boxShadow: '0 0 15px rgba(139, 0, 0, 0.2), inset 0 0 8px rgba(0, 0, 0, 0.4)',
             }}
           >
             <div
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-black"
-              style={{
-                width: '30%',
-                height: '30%',
-                boxShadow: '0 0 5px rgba(0, 0, 0, 0.8), inset 0 0 3px rgba(139, 0, 0, 0.3)',
-              }}
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black"
+              style={{ boxShadow: '0 0 0 2px #333, 0 0 0 4px #1a1a1a' }}
             />
           </div>
           <div
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1 h-8 bg-crimson opacity-40 rounded-full"
-            style={{ transform: 'translate(-50%, -50%) rotate(45deg)' }}
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border-2 border-crimson/20"
           />
         </div>
       )}
-      <h3 className="font-gothic text-2xl text-white mb-3 tracking-wider">{title}</h3>
-      <p className="font-body text-gray-400 italic max-w-md leading-relaxed">
+      <h3 className="font-heading text-2xl text-text-heading mb-3 tracking-wide">
+        {title}
+      </h3>
+      <p className="font-body text-text-muted italic max-w-md leading-relaxed">
         {poeticMessage}
       </p>
-      {action && <div className="mt-8">{action}</div>}
+      {action && (
+        <div className="mt-8">
+          {action}
+        </div>
+      )}
     </div>
   );
 };
