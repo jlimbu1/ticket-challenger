@@ -60,8 +60,10 @@ onMounted(() => {
 
 <template>
   <ErrorBoundary>
-    <div class="products-page min-h-screen bg-gray-900 text-gray-100 p-6">
-      <h1 class="text-3xl font-bold mb-6 text-purple-400">Merchandise</h1>
+    <div class="products-page min-h-screen bg-gray-900 text-white p-6">
+      <h1 class="text-3xl font-bold mb-8 text-center md:text-left">
+        Merchandise
+      </h1>
 
       <div v-if="isLoading" class="flex justify-center items-center py-20">
         <VinylSpinner />
@@ -71,7 +73,7 @@ onMounted(() => {
         <p class="text-red-400 text-lg mb-4">{{ errorMessage }}</p>
         <button
           @click="fetchProducts"
-          class="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded text-white transition-colors"
+          class="px-6 py-2 bg-purple-700 hover:bg-purple-600 rounded text-white transition-colors"
         >
           Retry
         </button>
