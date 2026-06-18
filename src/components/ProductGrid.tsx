@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Product } from '@/lib/types';
 import ProductCard from './ProductCard';
 
@@ -24,10 +24,18 @@ export default function ProductGrid({
   categories,
 }: ProductGridProps) {
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      onSearchChange(debouncedSearch);
+      try {
+        onSearchChange(debouncedSearch);
+        setLocalError(null);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Failed to update search';
+        setLocalError(message);
+      }
     }, 300);
 
     return () => {
@@ -35,116 +43,178 @@ export default function ProductGrid({
     };
   }, [debouncedSearch, onSearchChange]);
 
+  const handleSearchInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setDebouncedSearch(e.target.value);
+    },
+    []
+  );
+
+  const handleCategoryChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      try {
+        onCategoryChange(e.target.value);
+        setLocalError(null);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Failed to update category';
+        setLocalError(message);
+      }
+    },
+    [onCategoryChange]
+  );
+
+  const displayError = error || localError;
+
   const filteredProducts = useMemo(() => {
-    let result = products;
+    try {
+      let result = products;
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (product) =>
-          product.name.toLowerCase().includes(query) ||
-          product.description.toLowerCase().includes(query)
-      );
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        result = result.filter((product) =>
+          product.name.toLowerCase().includes(query)
+        );
+      }
+
+      if (selectedCategory) {
+        result = result.filter(
+          (product) => product.category === selectedCategory
+        );
+      }
+
+      return result;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to filter products';
+      setLocalError(message);
+      return products;
     }
-
-    if (selectedCategory) {
-      result = result.filter(
-        (product) => product.category === selectedCategory
-      );
-    }
-
-    return result;
   }, [products, searchQuery, selectedCategory]);
 
-  if (error) {
+  if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <div className="rounded-full bg-red-100 p-4 mb-4">
-          <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
+      <div className="w-full" role="status" aria-label="Loading products">
+        <div className="flex items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+          <span className="ml-3 text-gray-600">Loading products...</span>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load products</h3>
-        <p className="text-gray-500 mb-6">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Try again
-        </button>
       </div>
     );
   }
 
-  if (isLoading) {
+  if (displayError) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <div
-            key={index}
-            className="animate-pulse rounded-lg border border-gray-200 bg-white overflow-hidden"
+      <div className="w-full" role="alert">
+        <div className="rounded-lg bg-red-50 p-6 text-center">
+          <p className="text-red-800 font-medium">Error loading products</p>
+          <p className="mt-2 text-red-600 text-sm">{displayError}</p>
+          <button
+            onClick={() => {
+              setLocalError(null);
+              onSearchChange('');
+              onCategoryChange('');
+              setDebouncedSearch('');
+            }}
+            className="mt-4 rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 transition-colors"
           >
-            <div className="aspect-square bg-gray-200" />
-            <div className="p-4 space-y-3">
-              <div className="h-4 bg-gray-200 rounded w-3/4" />
-              <div className="h-3 bg-gray-200 rounded w-1/2" />
-              <div className="h-4 bg-gray-200 rounded w-1/4" />
-            </div>
-          </div>
-        ))}
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!products || products.length === 0) {
+    return (
+      <div className="w-full" role="status">
+        <div className="rounded-lg bg-gray-50 p-12 text-center">
+          <p className="text-gray-500 text-lg">No products available</p>
+          <p className="mt-2 text-gray-400 text-sm">
+            Check back later for new products
+          </p>
+        </div>
       </div>
     );
   }
 
   if (filteredProducts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <div className="rounded-full bg-gray-100 p-4 mb-4">
-          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-          </svg>
+      <div className="w-full" role="status">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <p className="text-gray-500 text-lg">No products match your search</p>
+            <p className="mt-2 text-gray-400 text-sm">
+              Try adjusting your search or filter criteria
+            </p>
+            <button
+              onClick={() => {
+                onSearchChange('');
+                onCategoryChange('');
+                setDebouncedSearch('');
+              }}
+              className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 transition-colors"
+            >
+              Clear Filters
+            </button>
+          </div>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">No products found</h3>
-        <p className="text-gray-500">
-          {searchQuery || selectedCategory
-            ? 'Try adjusting your search or filter criteria'
-            : 'No products are available at the moment'}
-        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
+    <div className="w-full">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-md">
           <input
             type="text"
-            placeholder="Search products..."
             value={debouncedSearch}
-            onChange={(e) => setDebouncedSearch(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            onChange={handleSearchInputChange}
+            placeholder="Search products..."
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 pl-10 text-sm text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Search products"
           />
-        </div>
-        <div className="sm:w-48">
-          <select
-            value={selectedCategory}
-            onChange={(e) => onCategoryChange(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+          <svg
+            className="absolute left-3 top-2.5 h-4 w-4 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
           >
-            <option value="">All Categories</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
         </div>
+
+        <select
+          value={selectedCategory}
+          onChange={handleCategoryChange}
+          className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Filter by category"
+        >
+          <option value="">All Categories</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div
+        className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4"
+        role="list"
+        aria-label="Product grid"
+      >
         {filteredProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <div key={product.id} role="listitem">
+            <ProductCard product={product} />
+          </div>
         ))}
       </div>
     </div>

@@ -11,9 +11,6 @@ export interface Product {
 
 export interface CartItem {
   id: string;
-  name: string;
-  price: number;
-  imageUrl: string;
   quantity: number;
 }
 
@@ -72,7 +69,7 @@ export const DEFAULT_FILTERS: ProductFilters = {
   maxPrice: Infinity,
 };
 
-export const CATEGORIES = [
+export const CATEGORIES: string[] = [
   'Electronics',
   'Clothing',
   'Home & Garden',
@@ -82,10 +79,4 @@ export const CATEGORIES = [
   'Food & Beverages',
   'Health & Beauty',
   'Automotive',
-  'Music',
-  'Office Supplies',
-  'Pet Supplies',
-  'Baby Products',
-  'Art & Crafts',
-  'Jewelry',
 ];

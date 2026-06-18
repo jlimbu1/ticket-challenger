@@ -1,9 +1,39 @@
-import { useState, useEffect } from 'react';
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Product } from '@/lib/types';
 import { fetchProductById } from '@/lib/api';
+
+function formatPrice(price: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(price);
+}
+
+function addToCart(productId: string, quantity: number): void {
+  try {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const existingIndex = cart.findIndex(
+      (item: { id: string }) => item.id === productId
+    );
+
+    if (existingIndex >= 0) {
+      cart[existingIndex].quantity += quantity;
+    } else {
+      cart.push({ id: productId, quantity });
+    }
+
+    localStorage.setItem('cart', JSON.stringify(cart));
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : 'Failed to update cart';
+    console.error('Cart update failed:', message);
+  }
+}
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -16,6 +46,12 @@ export default function ProductDetailPage() {
   const [isAdded, setIsAdded] = useState(false);
 
   useEffect(() => {
+    if (!id) {
+      setIsLoading(false);
+      setError('Product ID is missing');
+      return;
+    }
+
     let cancelled = false;
 
     async function loadProduct() {
@@ -40,59 +76,49 @@ export default function ProductDetailPage() {
       }
     }
 
-    if (id) {
-      loadProduct();
-    }
+    loadProduct();
 
     return () => {
       cancelled = true;
     };
   }, [id]);
 
-  const handleAddToCart = () => {
+  const handleQuantityChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = parseInt(e.target.value, 10);
+      if (!isNaN(value) && value >= 1 && value <= 99) {
+        setQuantity(value);
+      }
+    },
+    []
+  );
+
+  const handleAddToCart = useCallback(() => {
     if (!product || isAdded) return;
 
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const existingIndex = cart.findIndex(
-      (item: { id: string }) => item.id === product.id
-    );
-
-    if (existingIndex >= 0) {
-      cart[existingIndex].quantity += quantity;
-    } else {
-      cart.push({ ...product, quantity });
-    }
-
-    localStorage.setItem('cart', JSON.stringify(cart));
+    addToCart(product.id, quantity);
     setIsAdded(true);
 
     setTimeout(() => {
       setIsAdded(false);
     }, 2000);
-  };
-
-  const formatPrice = (price: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(price);
-  };
+  }, [product, quantity, isAdded]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="animate-pulse">
-            <div className="mb-8 h-6 w-32 rounded bg-gray-200" />
-            <div className="grid gap-8 lg:grid-cols-2">
-              <div className="aspect-square rounded-lg bg-gray-200" />
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="aspect-square bg-gray-200 rounded-lg"></div>
               <div className="space-y-4">
-                <div className="h-8 w-3/4 rounded bg-gray-200" />
-                <div className="h-6 w-1/4 rounded bg-gray-200" />
-                <div className="h-4 w-full rounded bg-gray-200" />
-                <div className="h-4 w-5/6 rounded bg-gray-200" />
-                <div className="h-4 w-4/6 rounded bg-gray-200" />
-                <div className="h-12 w-48 rounded bg-gray-200" />
+                <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                <div className="h-12 bg-gray-200 rounded w-1/3 mt-8"></div>
               </div>
             </div>
           </div>
@@ -103,21 +129,18 @@ export default function ProductDetailPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="mb-4 text-red-500">
-              <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-            </div>
-            <h2 className="mb-2 text-xl font-semibold text-gray-900">Failed to load product</h2>
-            <p className="mb-6 text-gray-600">{error}</p>
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Error Loading Product
+            </h2>
+            <p className="text-gray-600 mb-8">{error}</p>
             <Link
               href="/"
-              className="rounded-lg bg-blue-600 px-6 py-3 text-white transition-colors hover:bg-blue-700"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              Back to products
+              Back to Products
             </Link>
           </div>
         </div>
@@ -127,16 +150,20 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-center py-16">
-            <h2 className="mb-2 text-xl font-semibold text-gray-900">Product not found</h2>
-            <p className="mb-6 text-gray-600">The product you are looking for does not exist or has been removed.</p>
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Product Not Found
+            </h2>
+            <p className="text-gray-600 mb-8">
+              The product you are looking for does not exist or has been removed.
+            </p>
             <Link
               href="/"
-              className="rounded-lg bg-blue-600 px-6 py-3 text-white transition-colors hover:bg-blue-700"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              Back to products
+              Back to Products
             </Link>
           </div>
         </div>
@@ -145,109 +172,73 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="mb-8">
           <Link
             href="/"
-            className="inline-flex items-center text-sm text-gray-600 transition-colors hover:text-gray-900"
+            className="text-sm text-indigo-600 hover:text-indigo-500"
           >
-            <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to products
+            &larr; Back to Products
           </Link>
         </nav>
 
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="relative aspect-square overflow-hidden rounded-lg bg-white">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="relative aspect-square rounded-lg overflow-hidden bg-white shadow-md">
             <Image
               src={product.imageUrl}
               alt={product.name}
               fill
               className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
+              sizes="(max-width: 768px) 100vw, 50vw"
               priority
             />
           </div>
 
-          <div className="flex flex-col justify-center">
-            <div className="mb-2">
-              <span className="inline-block rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
+          <div className="flex flex-col">
+            <div className="mb-4">
+              <span className="inline-block px-3 py-1 text-xs font-medium text-indigo-600 bg-indigo-100 rounded-full">
                 {product.category}
               </span>
             </div>
 
-            <h1 className="mb-4 text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
               {product.name}
             </h1>
 
-            <p className="mb-6 text-3xl font-bold text-blue-600">
+            <p className="text-2xl font-semibold text-indigo-600 mb-6">
               {formatPrice(product.price)}
             </p>
 
-            <div className="mb-8">
-              <h2 className="mb-2 text-lg font-semibold text-gray-900">Description</h2>
-              <p className="text-gray-600 leading-relaxed">
-                {product.description}
-              </p>
-            </div>
+            <p className="text-gray-600 mb-8 leading-relaxed">
+              {product.description}
+            </p>
 
-            <div className="mb-8">
-              <label htmlFor="quantity" className="mb-2 block text-sm font-medium text-gray-900">
-                Quantity
+            <div className="flex items-center gap-4 mb-8">
+              <label htmlFor="quantity" className="text-sm font-medium text-gray-700">
+                Quantity:
               </label>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={quantity <= 1}
-                  aria-label="Decrease quantity"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                  </svg>
-                </button>
-                <span className="w-12 text-center text-lg font-medium text-gray-900">
-                  {quantity}
-                </span>
-                <button
-                  onClick={() => setQuantity(Math.min(99, quantity + 1))}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={quantity >= 99}
-                  aria-label="Increase quantity"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                </button>
-              </div>
+              <input
+                id="quantity"
+                type="number"
+                min="1"
+                max="99"
+                value={quantity}
+                onChange={handleQuantityChange}
+                className="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-center"
+              />
             </div>
 
             <button
               onClick={handleAddToCart}
               disabled={isAdded}
-              className={`inline-flex items-center justify-center rounded-lg px-8 py-4 text-lg font-semibold text-white transition-all duration-300 ${
+              className={`w-full md:w-auto px-8 py-3 rounded-md text-white font-medium transition-colors duration-200 ${
                 isAdded
-                  ? 'bg-green-600 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 active:scale-95'
+                  ? 'bg-green-500 cursor-not-allowed'
+                  : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
               }`}
             >
-              {isAdded ? (
-                <>
-                  <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Added to cart!
-                </>
-              ) : (
-                <>
-                  <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
-                  </svg>
-                  Add to cart
-                </>
-              )}
+              {isAdded ? 'Added to Cart!' : 'Add to Cart'}
             </button>
           </div>
         </div>

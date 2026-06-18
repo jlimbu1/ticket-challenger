@@ -66,11 +66,11 @@ export async function fetchProducts(
       },
     });
     return handleResponse<Product[]>(response);
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new Error('Request timed out');
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Request timed out after 10 seconds');
     }
-    throw error;
+    throw err;
   } finally {
     clearTimeout(timeoutId);
   }
@@ -94,11 +94,11 @@ export async function fetchProductById(id: string): Promise<Product> {
       },
     });
     return handleResponse<Product>(response);
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new Error('Request timed out');
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Request timed out after 10 seconds');
     }
-    throw error;
+    throw err;
   } finally {
     clearTimeout(timeoutId);
   }
