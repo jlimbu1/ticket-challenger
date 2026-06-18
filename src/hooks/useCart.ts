@@ -60,12 +60,17 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       };
     }
     case 'UPDATE_QUANTITY': {
+      const { id, quantity } = action.payload;
+      if (quantity <= 0) {
+        return {
+          ...state,
+          items: state.items.filter((item) => item.id !== id),
+        };
+      }
       return {
         ...state,
         items: state.items.map((item) =>
-          item.id === action.payload.id
-            ? { ...item, quantity: action.payload.quantity }
-            : item
+          item.id === id ? { ...item, quantity } : item
         ),
       };
     }
@@ -105,8 +110,8 @@ function loadCartFromStorage(): CartItem[] {
         return parsed;
       }
     }
-  } catch {
-    // Invalid stored data, return empty array
+  } catch (error) {
+    console.error('Failed to load cart from localStorage:', error);
   }
   return [];
 }
@@ -114,54 +119,38 @@ function loadCartFromStorage(): CartItem[] {
 function saveCartToStorage(items: CartItem[]): void {
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // Storage full or unavailable, silently fail
+  } catch (error) {
+    console.error('Failed to save cart to localStorage:', error);
   }
 }
 
 export function useCart() {
   const [state, dispatch] = useReducer(cartReducer, {
     items: [],
-    animationState: 'idle' as AnimationState,
+    animationState: 'idle',
     lastAddedItemId: null,
   });
 
-  // Load cart from localStorage on mount
   useEffect(() => {
-    const storedItems = loadCartFromStorage();
-    if (storedItems.length > 0) {
-      dispatch({ type: 'LOAD_CART', payload: storedItems });
+    const items = loadCartFromStorage();
+    if (items.length > 0) {
+      dispatch({ type: 'LOAD_CART', payload: items });
     }
   }, []);
 
-  // Save cart to localStorage on change
   useEffect(() => {
     saveCartToStorage(state.items);
   }, [state.items]);
 
-  // Reset animation state after 1 second
-  useEffect(() => {
-    if (state.animationState === 'spinning') {
-      const timer = setTimeout(() => {
-        dispatch({ type: 'SET_ANIMATION_IDLE' });
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [state.animationState]);
-
-  const addItem = useCallback((item: CartItem) => {
+  const addToCart = useCallback((item: CartItem) => {
     dispatch({ type: 'ADD_ITEM', payload: item });
   }, []);
 
-  const removeItem = useCallback((id: string) => {
+  const removeFromCart = useCallback((id: string) => {
     dispatch({ type: 'REMOVE_ITEM', payload: id });
   }, []);
 
   const updateQuantity = useCallback((id: string, quantity: number) => {
-    if (quantity < 1) {
-      dispatch({ type: 'REMOVE_ITEM', payload: id });
-      return;
-    }
     dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
   }, []);
 
@@ -169,25 +158,26 @@ export function useCart() {
     dispatch({ type: 'CLEAR_CART' });
   }, []);
 
-  const total = state.items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const setAnimationIdle = useCallback(() => {
+    dispatch({ type: 'SET_ANIMATION_IDLE' });
+  }, []);
 
-  const itemCount = state.items.reduce(
-    (count, item) => count + item.quantity,
+  const itemCount = state.items.reduce((total, item) => total + item.quantity, 0);
+  const totalPrice = state.items.reduce(
+    (total, item) => total + item.price * item.quantity,
     0
   );
 
   return {
     items: state.items,
-    total,
-    itemCount,
     animationState: state.animationState,
     lastAddedItemId: state.lastAddedItemId,
-    addItem,
-    removeItem,
+    addToCart,
+    removeFromCart,
     updateQuantity,
     clearCart,
+    setAnimationIdle,
+    itemCount,
+    totalPrice,
   };
 }

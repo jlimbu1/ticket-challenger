@@ -4,6 +4,7 @@ export interface Product {
   price: number;
   image: string;
   description: string;
+  category: 'vinyl' | 'apparel' | 'poster' | 'accessory';
   stock: number;
 }
 
