@@ -45,75 +45,73 @@ function cartReducer(state: CartState, action: CartAction): CartState {
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
-        return { items: updatedItems };
+        return { ...state, items: updatedItems };
       }
 
       return {
+        ...state,
         items: [...state.items, { product, quantity }],
       };
     }
     case 'REMOVE_ITEM': {
+      const productId = action.payload;
       return {
-        items: state.items.filter((item) => item.product.id !== action.payload),
+        ...state,
+        items: state.items.filter((item) => item.product.id !== productId),
       };
     }
     case 'UPDATE_QUANTITY': {
       const { productId, quantity } = action.payload;
       if (quantity <= 0) {
         return {
+          ...state,
           items: state.items.filter((item) => item.product.id !== productId),
         };
       }
       return {
+        ...state,
         items: state.items.map((item) =>
-          item.product.id === productId ? { ...item, quantity } : item
+          item.product.id === productId
+            ? { ...item, quantity }
+            : item
         ),
       };
     }
     case 'CLEAR_CART': {
-      return { items: [] };
+      return { ...state, items: [] };
     }
     case 'LOAD_CART': {
-      return { items: action.payload };
+      return { ...state, items: action.payload };
     }
-    default: {
+    default:
       return state;
-    }
   }
 }
 
 function loadCartFromStorage(): CartItem[] {
   try {
-    if (typeof window === 'undefined') {
-      return [];
-    }
     const stored = localStorage.getItem(CART_STORAGE_KEY);
-    if (!stored) {
-      return [];
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
     }
-    const parsed = JSON.parse(stored);
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-    return parsed;
   } catch (error) {
     console.error('[CartContext] Failed to load cart from localStorage:', error);
-    return [];
   }
+  return [];
 }
 
 function saveCartToStorage(items: CartItem[]): void {
   try {
-    if (typeof window === 'undefined') {
-      return;
-    }
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   } catch (error) {
     console.error('[CartContext] Failed to save cart to localStorage:', error);
   }
 }
 
-export function CartProvider({ children }: { children: ReactNode }): React.ReactElement {
+export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
 
   useEffect(() => {
@@ -127,35 +125,35 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
     saveCartToStorage(state.items);
   }, [state.items]);
 
-  const addToCart = useCallback((product: Product, quantity: number = 1): void => {
+  const addToCart = useCallback((product: Product, quantity: number = 1) => {
     if (quantity <= 0) {
-      console.warn('[CartContext] Attempted to add item with invalid quantity:', quantity);
+      console.warn('[CartContext] addToCart called with invalid quantity:', quantity);
       return;
     }
     dispatch({ type: 'ADD_ITEM', payload: { product, quantity } });
   }, []);
 
-  const removeFromCart = useCallback((productId: string): void => {
+  const removeFromCart = useCallback((productId: string) => {
     if (!productId) {
-      console.warn('[CartContext] Attempted to remove item with empty productId');
+      console.warn('[CartContext] removeFromCart called with empty productId');
       return;
     }
     dispatch({ type: 'REMOVE_ITEM', payload: productId });
   }, []);
 
-  const updateQuantity = useCallback((productId: string, quantity: number): void => {
+  const updateQuantity = useCallback((productId: string, quantity: number) => {
     if (!productId) {
-      console.warn('[CartContext] Attempted to update quantity with empty productId');
+      console.warn('[CartContext] updateQuantity called with empty productId');
       return;
     }
     if (quantity < 0) {
-      console.warn('[CartContext] Attempted to set negative quantity:', quantity);
+      console.warn('[CartContext] updateQuantity called with negative quantity:', quantity);
       return;
     }
     dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity } });
   }, []);
 
-  const clearCart = useCallback((): void => {
+  const clearCart = useCallback(() => {
     dispatch({ type: 'CLEAR_CART' });
   }, []);
 
@@ -170,15 +168,18 @@ export function CartProvider({ children }: { children: ReactNode }): React.React
     );
   }, [state.items]);
 
-  const contextValue = useMemo<CartContextValue>(() => ({
-    items: state.items,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-    itemCount,
-    totalPrice,
-  }), [state.items, addToCart, removeFromCart, updateQuantity, clearCart, itemCount, totalPrice]);
+  const contextValue = useMemo<CartContextValue>(
+    () => ({
+      items: state.items,
+      addToCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+      itemCount,
+      totalPrice,
+    }),
+    [state.items, addToCart, removeFromCart, updateQuantity, clearCart, itemCount, totalPrice]
+  );
 
   return (
     <CartContext.Provider value={contextValue}>

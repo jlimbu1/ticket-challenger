@@ -54,11 +54,11 @@ export default function ProductsPage() {
 
           {inStockProducts.length > 0 && (
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold text-gothic-300 mb-6 border-b border-gothic-700 pb-2">
+              <h2 className="text-2xl font-semibold text-gray-300 mb-6 border-b border-gothic-700 pb-2">
                 Available Now
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {inStockProducts.map((product) => (
+                {inStockProducts.map((product: Product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
@@ -67,11 +67,11 @@ export default function ProductsPage() {
 
           {outOfStockProducts.length > 0 && (
             <section>
-              <h2 className="text-2xl font-semibold text-gothic-500 mb-6 border-b border-gothic-800 pb-2">
+              <h2 className="text-2xl font-semibold text-gray-500 mb-6 border-b border-gothic-700 pb-2">
                 Sold Out
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 opacity-60">
-                {outOfStockProducts.map((product) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {outOfStockProducts.map((product: Product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
