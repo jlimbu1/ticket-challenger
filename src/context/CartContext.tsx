@@ -63,9 +63,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       }
       return {
         items: state.items.map((item) =>
-          item.product.id === productId
-            ? { ...item, quantity }
-            : item
+          item.product.id === productId ? { ...item, quantity } : item
         ),
       };
     }
@@ -92,8 +90,8 @@ function loadCartFromStorage(): CartItem[] {
         return parsed;
       }
     }
-  } catch (error) {
-    console.error('Failed to load cart from localStorage:', error);
+  } catch {
+    // Invalid stored data, start fresh
   }
   return [];
 }
@@ -101,12 +99,12 @@ function loadCartFromStorage(): CartItem[] {
 function saveCartToStorage(items: CartItem[]): void {
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-  } catch (error) {
-    console.error('Failed to save cart to localStorage:', error);
+  } catch {
+    // Storage full or unavailable, silently fail
   }
 }
 
-export function CartProvider({ children }: { children: ReactNode }): JSX.Element {
+export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
 
   useEffect(() => {
@@ -120,33 +118,29 @@ export function CartProvider({ children }: { children: ReactNode }): JSX.Element
     saveCartToStorage(state.items);
   }, [state.items]);
 
-  const addToCart = useCallback((product: Product, quantity: number = 1): void => {
+  const addToCart = useCallback((product: Product, quantity: number = 1) => {
     if (quantity <= 0) {
-      console.warn('addToCart called with invalid quantity:', quantity);
       return;
     }
     dispatch({ type: 'ADD_ITEM', payload: { product, quantity } });
   }, []);
 
-  const removeFromCart = useCallback((productId: string): void => {
+  const removeFromCart = useCallback((productId: string) => {
     dispatch({ type: 'REMOVE_ITEM', payload: productId });
   }, []);
 
-  const updateQuantity = useCallback((productId: string, quantity: number): void => {
-    if (quantity < 0) {
-      console.warn('updateQuantity called with negative quantity:', quantity);
-      return;
-    }
+  const updateQuantity = useCallback((productId: string, quantity: number) => {
     dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity } });
   }, []);
 
-  const clearCart = useCallback((): void => {
+  const clearCart = useCallback(() => {
     dispatch({ type: 'CLEAR_CART' });
   }, []);
 
-  const itemCount = state.items.reduce((total, item) => total + item.quantity, 0);
+  const itemCount = state.items.reduce((sum, item) => sum + item.quantity, 0);
+
   const totalPrice = state.items.reduce(
-    (total, item) => total + item.product.price * item.quantity,
+    (sum, item) => sum + item.product.price * item.quantity,
     0
   );
 
@@ -160,11 +154,7 @@ export function CartProvider({ children }: { children: ReactNode }): JSX.Element
     totalPrice,
   };
 
-  return (
-    <CartContext.Provider value={value}>
-      {children}
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export function useCart(): CartContextValue {
