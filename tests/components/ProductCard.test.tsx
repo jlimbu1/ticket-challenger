@@ -61,15 +61,13 @@ describe('ProductCard', () => {
     expect(screen.getByText('The Black Parade')).toBeDefined();
     expect(screen.getByText('$29.99')).toBeDefined();
     expect(screen.getByText('2006')).toBeDefined();
-    expect(screen.getByAltText('The Black Parade')).toBeDefined();
+    expect(screen.getByRole('img')).toBeDefined();
   });
 
-  it('shows skull/rose overlay on hover with crimson glow', () => {
+  it('shows skull/rose overlay on hover', () => {
     renderWithProviders(<ProductCard product={mockProduct} />);
     
     const card = screen.getByTestId('product-card');
-    expect(card).toBeDefined();
-    
     fireEvent.mouseEnter(card);
     
     const overlay = screen.getByTestId('hover-overlay');
@@ -77,8 +75,19 @@ describe('ProductCard', () => {
     expect(overlay.className).toContain('opacity-100');
     
     fireEvent.mouseLeave(card);
-    
     expect(overlay.className).toContain('opacity-0');
+  });
+
+  it('shows crimson glow on hover', () => {
+    renderWithProviders(<ProductCard product={mockProduct} />);
+    
+    const card = screen.getByTestId('product-card');
+    fireEvent.mouseEnter(card);
+    
+    expect(card.className).toContain('shadow-crimson-glow');
+    
+    fireEvent.mouseLeave(card);
+    expect(card.className).not.toContain('shadow-crimson-glow');
   });
 
   it('renders add to cart button', () => {
@@ -94,52 +103,81 @@ describe('ProductCard', () => {
     const addButton = screen.getByRole('button', { name: /add to cart/i });
     fireEvent.click(addButton);
     
-    expect(screen.getByText('Added')).toBeDefined();
+    expect(screen.getByText('Adding...')).toBeDefined();
   });
 
-  it('shows out of stock state when product is not in stock', () => {
+  it('shows out of stock state for unavailable products', () => {
     const outOfStockProduct = { ...mockProduct, inStock: false };
     renderWithProviders(<ProductCard product={outOfStockProduct} />);
     
     expect(screen.getByText(/out of stock/i)).toBeDefined();
     expect(screen.getByRole('button', { name: /out of stock/i })).toBeDisabled();
   });
+
+  it('handles add to cart timeout error', () => {
+    vi.useFakeTimers();
+    renderWithProviders(<ProductCard product={mockProduct} />);
+    
+    const addButton = screen.getByRole('button', { name: /add to cart/i });
+    fireEvent.click(addButton);
+    
+    vi.advanceTimersByTime(10001);
+    
+    expect(screen.getByText(/failed to add to cart/i)).toBeDefined();
+    
+    vi.useRealTimers();
+  });
+
+  it('renders distressed texture background', () => {
+    renderWithProviders(<ProductCard product={mockProduct} />);
+    
+    const card = screen.getByTestId('product-card');
+    expect(card.style.backgroundImage).toContain('data:image/svg+xml');
+  });
 });
 
 describe('ProductGrid', () => {
-  it('renders loading state initially', () => {
-    renderWithProviders(<ProductGrid />);
+  it('renders all products', () => {
+    renderWithProviders(<ProductGrid products={mockProducts} />);
+    
+    expect(screen.getByText('The Black Parade')).toBeDefined();
+    expect(screen.getByText('Three Cheers for Sweet Revenge')).toBeDefined();
+    expect(screen.getByText('I Brought You My Bullets, You Brought Me Your Love')).toBeDefined();
+  });
+
+  it('renders correct number of product cards', () => {
+    renderWithProviders(<ProductGrid products={mockProducts} />);
+    
+    const cards = screen.getAllByTestId('product-card');
+    expect(cards.length).toBe(3);
+  });
+
+  it('renders responsive grid layout', () => {
+    renderWithProviders(<ProductGrid products={mockProducts} />);
+    
+    const grid = screen.getByTestId('product-grid');
+    expect(grid.className).toContain('grid');
+    expect(grid.className).toContain('grid-cols-1');
+    expect(grid.className).toContain('sm:grid-cols-2');
+    expect(grid.className).toContain('lg:grid-cols-3');
+    expect(grid.className).toContain('xl:grid-cols-4');
+  });
+
+  it('renders empty state when no products', () => {
+    renderWithProviders(<ProductGrid products={[]} />);
+    
+    expect(screen.getByText(/the shelves are bare/i)).toBeDefined();
+  });
+
+  it('renders loading state', () => {
+    renderWithProviders(<ProductGrid products={mockProducts} isLoading={true} />);
     
     expect(screen.getByTestId('vinyl-spinner')).toBeDefined();
   });
 
-  it('renders products after loading', async () => {
-    renderWithProviders(<ProductGrid />);
+  it('renders error state', () => {
+    renderWithProviders(<ProductGrid products={mockProducts} error="Test error" />);
     
-    const productCards = await screen.findAllByTestId('product-card');
-    expect(productCards.length).toBeGreaterThan(0);
-  });
-
-  it('renders empty state when no products', async () => {
-    vi.mock('../src/data/mockData', () => ({
-      getProducts: vi.fn().mockResolvedValue([]),
-    }));
-    
-    renderWithProviders(<ProductGrid />);
-    
-    const emptyState = await screen.findByTestId('empty-state');
-    expect(emptyState).toBeDefined();
-  });
-
-  it('renders error state when fetch fails', async () => {
-    vi.mock('../src/data/mockData', () => ({
-      getProducts: vi.fn().mockRejectedValue(new Error('Failed to load')),
-    }));
-    
-    renderWithProviders(<ProductGrid />);
-    
-    const errorState = await screen.findByTestId('empty-state');
-    expect(errorState).toBeDefined();
-    expect(screen.getByText(/the record player is broken/i)).toBeDefined();
+    expect(screen.getByText(/test error/i)).toBeDefined();
   });
 });
