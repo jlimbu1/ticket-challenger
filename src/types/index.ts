@@ -19,3 +19,17 @@ export interface CartState {
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
 }
+
+export interface Order {
+  id: string;
+  items: Array<{ productId: string; name: string; price: number; quantity: number }>;
+  total: number;
+  shipping: {
+    name: string;
+    email: string;
+    address: string;
+    city: string;
+    zip: string;
+  };
+  createdAt: string;
+}
