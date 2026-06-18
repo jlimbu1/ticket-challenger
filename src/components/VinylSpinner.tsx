@@ -57,24 +57,22 @@ const VinylSpinner: React.FC<VinylSpinnerProps> = ({
         <div
           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-black"
           style={{
-            width: '40%',
-            height: '40%',
-            boxShadow: '0 0 5px rgba(139, 0, 0, 0.5), inset 0 0 3px rgba(139, 0, 0, 0.3)',
+            width: '30%',
+            height: '30%',
+            boxShadow: '0 0 5px rgba(139, 0, 0, 0.5), inset 0 0 3px rgba(255, 255, 255, 0.1)',
           }}
-        >
-          <div
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full"
-            style={{
-              width: '30%',
-              height: '30%',
-              background: 'radial-gradient(circle, #8B0000 0%, #4A0082 100%)',
-              boxShadow: '0 0 8px rgba(139, 0, 0, 0.6)',
-            }}
-          />
-        </div>
+        />
+        <div
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{
+            width: '8%',
+            height: '8%',
+            background: 'radial-gradient(circle, rgba(139, 0, 0, 0.8) 0%, rgba(139, 0, 0, 0) 70%)',
+          }}
+        />
       </div>
       <span
-        className={`text-crimson font-gothic tracking-wider animate-pulse ${labelSizeMap[size]}`}
+        className={`font-gothic text-crimson tracking-wider animate-pulse ${labelSizeMap[size]}`}
       >
         {label}
       </span>
