@@ -39,39 +39,49 @@ const ErrorState: React.FC<ErrorStateProps> = ({
 
   return (
     <div
+      data-testid="error-state"
       className={`relative overflow-hidden bg-gradient-to-br from-black via-[#0a0a0a] to-[#111111] border border-crimson/30 rounded-lg ${className}`}
       role="alert"
       aria-label="Error state"
     >
       {/* Dramatic gradient overlay */}
       <div
-        className="absolute inset-0 opacity-20"
+        className="absolute inset-0 opacity-10"
         style={{
-          background: 'linear-gradient(135deg, rgba(139,0,0,0.3) 0%, transparent 50%, rgba(74,0,130,0.2) 100%)',
+          background: 'radial-gradient(ellipse at center, rgba(139, 0, 0, 0.4) 0%, transparent 70%)',
         }}
       />
 
-      {/* Content */}
+      {/* Skull decorative element - top left */}
+      <div className="absolute top-2 left-2 text-crimson/20 text-4xl select-none" aria-hidden="true">
+        &#9760;
+      </div>
+
+      {/* Rose decorative element - bottom right */}
+      <div className="absolute bottom-2 right-2 text-crimson/20 text-3xl select-none" aria-hidden="true">
+        &#127801;
+      </div>
+
       <div className="relative z-10 flex flex-col items-center justify-center text-center px-8 py-16">
         {/* Error code badge */}
-        <div className="mb-6 inline-flex items-center justify-center w-20 h-20 rounded-full bg-crimson/10 border-2 border-crimson/40">
-          <span className="text-3xl font-heading font-black text-crimson tracking-wider">
-            {errorCode === 'DEFAULT' ? '!' : errorCode}
-          </span>
-        </div>
+        {errorCode !== 'DEFAULT' && (
+          <div className="mb-4 inline-block px-4 py-1 text-xs font-heading tracking-widest uppercase border border-crimson/50 text-crimson bg-crimson/10 rounded-full">
+            {errorCode}
+          </div>
+        )}
 
-        {/* Title */}
-        <h2 className="text-2xl font-heading font-bold text-white mb-2 tracking-wide">
+        {/* Dramatic title */}
+        <h2 className="text-3xl md:text-4xl font-heading font-bold text-white mb-2 tracking-wide">
           {title}
         </h2>
 
-        {/* Dramatic subtitle */}
-        <p className="text-lg font-heading italic text-crimson/80 mb-4">
+        {/* Subtitle */}
+        <p className="text-lg md:text-xl font-heading text-crimson mb-4 italic">
           {errorInfo.subtitle}
         </p>
 
         {/* Description */}
-        <p className="text-gray-400 max-w-md mb-8 leading-relaxed">
+        <p className="text-gray-400 font-body text-lg max-w-md mb-8 leading-relaxed">
           {displayMessage}
         </p>
 
@@ -79,20 +89,13 @@ const ErrorState: React.FC<ErrorStateProps> = ({
         {onRetry && (
           <button
             onClick={onRetry}
-            className="px-6 py-3 bg-gradient-to-r from-crimson to-deepPurple text-white font-heading tracking-wider uppercase rounded-md transition-all duration-300 hover:brightness-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-crimson focus:ring-offset-2 focus:ring-offset-black"
+            className="px-8 py-3 bg-crimson hover:bg-crimson-hover text-white font-heading tracking-wider uppercase text-sm transition-all duration-300 border border-crimson/50 hover:border-crimson shadow-lg hover:shadow-crimson/30"
+            aria-label="Try again"
           >
             Try Again
           </button>
         )}
       </div>
-
-      {/* Decorative bottom accent line */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-1"
-        style={{
-          background: 'linear-gradient(90deg, transparent, var(--color-crimson), var(--color-secondary), transparent)',
-        }}
-      />
     </div>
   );
 };

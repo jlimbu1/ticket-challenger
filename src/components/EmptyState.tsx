@@ -36,6 +36,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div
+      data-testid="empty-state"
       className={`flex flex-col items-center justify-center text-center px-6 py-16 ${className}`}
       role="status"
       aria-label="Empty state"
@@ -47,37 +48,30 @@ const EmptyState: React.FC<EmptyStateProps> = ({
           <div
             className="w-full h-full rounded-full opacity-30"
             style={{
-              background: `conic-gradient(
-                from 0deg,
-                #1a1a1a 0deg 30deg,
-                #2a2a2a 30deg 60deg,
-                #1a1a1a 60deg 90deg,
-                #2a2a2a 90deg 120deg,
-                #1a1a1a 120deg 150deg,
-                #2a2a2a 150deg 180deg,
-                #1a1a1a 180deg 210deg,
-                #2a2a2a 210deg 240deg,
-                #1a1a1a 240deg 270deg,
-                #2a2a2a 270deg 300deg,
-                #1a1a1a 300deg 330deg,
-                #2a2a2a 330deg 360deg
-              )`,
+              background: 'radial-gradient(circle, rgba(139,0,0,0.2) 0%, transparent 70%)',
             }}
-          >
-            <div
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black"
-              style={{ boxShadow: '0 0 0 2px #333, 0 0 0 4px #1a1a1a' }}
-            />
-          </div>
-          <div
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border-2 border-crimson/20"
           />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <svg
+              className="w-12 h-12 text-crimson/40"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+              />
+            </svg>
+          </div>
         </div>
       )}
-      <h3 className="font-heading text-2xl text-text-heading mb-3 tracking-wide">
+      <h3 className="font-heading text-2xl text-parchment-white mb-3 tracking-wide">
         {title}
       </h3>
-      <p className="font-body text-text-muted italic max-w-md leading-relaxed">
+      <p className="font-body text-lg text-text-muted max-w-md italic leading-relaxed">
         {poeticMessage}
       </p>
       {action && (

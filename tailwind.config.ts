@@ -8,6 +8,8 @@ export default {
     extend: {
       colors: {
         black: "#000000",
+        "gothic-black": "#0a0a0a",
+        "parchment-white": "#e0d5c1",
         crimson: "#8B0000",
         "crimson-hover": "#a00000",
         "crimson-light": "#cc3333",
@@ -30,7 +32,7 @@ export default {
       fontFamily: {
         heading: ["Playfair Display", "Georgia", "serif"],
         body: ["Cormorant Garamond", "Georgia", "serif"],
-        gothic: ["Playfair Display", "Georgia", "serif"],
+        "gothic-serif": ["Playfair Display", "Georgia", "serif"],
       },
       keyframes: {
         "vinyl-spin": {
@@ -46,10 +48,6 @@ export default {
           "50%": { boxShadow: "0 0 20px rgba(139, 0, 0, 0.6)" },
         },
         "fade-in": {
-          "0%": { opacity: "0" },
-          "100%": { opacity: "1" },
-        },
-        "fade-in-up": {
           "0%": { opacity: "0", transform: "translateY(10px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
@@ -65,37 +63,58 @@ export default {
           "0%, 100%": { opacity: "0.6" },
           "50%": { opacity: "1" },
         },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        "skull-float": {
+          "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
+          "25%": { transform: "translateY(-5px) rotate(-2deg)" },
+          "75%": { transform: "translateY(-5px) rotate(2deg)" },
+        },
+        "rose-sway": {
+          "0%, 100%": { transform: "rotate(-3deg)" },
+          "50%": { transform: "rotate(3deg)" },
+        },
         "distressed-flicker": {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.97" },
         },
+        "neon-pulse": {
+          "0%, 100%": { textShadow: "0 0 7px rgba(255, 0, 68, 0.6), 0 0 10px rgba(255, 0, 68, 0.4)" },
+          "50%": { textShadow: "0 0 14px rgba(255, 0, 68, 0.8), 0 0 20px rgba(255, 0, 68, 0.6)" },
+        },
       },
       animation: {
-        "vinyl-spin": "vinyl-spin 2s linear infinite",
-        "spin-slow": "spin-slow 3s linear infinite",
+        "vinyl-spin": "vinyl-spin 3s linear infinite",
+        "spin-slow": "spin-slow 8s linear infinite",
         "hover-glow": "hover-glow 2s ease-in-out infinite",
         "fade-in": "fade-in 0.5s ease-out",
-        "fade-in-up": "fade-in-up 0.5s ease-out",
         "slide-in-right": "slide-in-right 0.3s ease-out",
         "slide-out-right": "slide-out-right 0.3s ease-in",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
-        "distressed-flicker": "distressed-flicker 0.15s ease-in-out infinite",
+        "float": "float 3s ease-in-out infinite",
+        "skull-float": "skull-float 4s ease-in-out infinite",
+        "rose-sway": "rose-sway 3s ease-in-out infinite",
+        "distressed-flicker": "distressed-flicker 0.15s infinite",
+        "neon-pulse": "neon-pulse 1.5s ease-in-out infinite",
       },
       backgroundImage: {
-        "distressed": "repeating-linear-gradient(45deg, transparent, transparent 1px, rgba(255, 255, 255, 0.03) 1px, rgba(255, 255, 255, 0.03) 2px)",
-        "distressed-dark": "repeating-linear-gradient(45deg, transparent, transparent 1px, rgba(0, 0, 0, 0.05) 1px, rgba(0, 0, 0, 0.05) 2px)",
-        "grit": "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")",
+        "gothic-gradient": "linear-gradient(135deg, #0a0a0a 0%, #1a0000 50%, #0a0a0a 100%)",
+        "crimson-glow": "radial-gradient(circle, rgba(139,0,0,0.15) 0%, transparent 70%)",
+        "purple-glow": "radial-gradient(circle, rgba(74,0,130,0.15) 0%, transparent 70%)",
+        "distressed-texture": "repeating-linear-gradient(45deg, transparent, transparent 1px, rgba(255,255,255,0.03) 1px, rgba(255,255,255,0.03) 2px)",
+        "vinyl-texture": "repeating-radial-gradient(circle at 50% 50%, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px)",
       },
       boxShadow: {
-        "crimson-glow": "0 0 10px rgba(139, 0, 0, 0.4), 0 0 20px rgba(139, 0, 0, 0.2)",
-        "purple-glow": "0 0 10px rgba(74, 0, 130, 0.4), 0 0 20px rgba(74, 0, 130, 0.2)",
-        "neon-crimson": "0 0 5px rgba(255, 0, 68, 0.5), 0 0 10px rgba(255, 0, 68, 0.3)",
-        "neon-purple": "0 0 5px rgba(176, 0, 255, 0.5), 0 0 10px rgba(176, 0, 255, 0.3)",
-        "inner-glow": "inset 0 0 30px rgba(0, 0, 0, 0.5)",
+        "crimson-glow": "0 0 15px rgba(139, 0, 0, 0.3), 0 0 30px rgba(139, 0, 0, 0.1)",
+        "purple-glow": "0 0 15px rgba(74, 0, 130, 0.3), 0 0 30px rgba(74, 0, 130, 0.1)",
+        "neon-crimson": "0 0 7px rgba(255, 0, 68, 0.6), 0 0 10px rgba(255, 0, 68, 0.4)",
+        "neon-purple": "0 0 7px rgba(176, 0, 255, 0.6), 0 0 10px rgba(176, 0, 255, 0.4)",
+        "inner-glow": "inset 0 0 30px rgba(139, 0, 0, 0.1)",
       },
-      transitionDuration: {
-        "400": "400ms",
-        "600": "600ms",
+      borderRadius: {
+        "vinyl": "50%",
       },
     },
   },
