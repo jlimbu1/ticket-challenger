@@ -1,4 +1,6 @@
-import { useReducer, useEffect, useCallback } from 'react';
+'use client';
+
+import { createContext, useContext, useReducer, useEffect, useCallback, ReactNode } from 'react';
 
 export interface CartItem {
   id: string;
@@ -26,6 +28,12 @@ type CartAction =
   | { type: 'LOAD_CART'; payload: CartItem[] };
 
 const CART_STORAGE_KEY = 'ticket-challenger-cart';
+
+const initialState: CartState = {
+  items: [],
+  animationState: 'idle',
+  lastAddedItemId: null,
+};
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
@@ -97,36 +105,44 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 }
 
 function loadCartFromStorage(): CartItem[] {
+  if (typeof window === 'undefined') return [];
   try {
     const stored = localStorage.getItem(CART_STORAGE_KEY);
     if (stored) {
-      const parsed = JSON.parse(stored);
+      const parsed: CartItem[] = JSON.parse(stored);
       if (Array.isArray(parsed)) {
         return parsed;
       }
     }
+    return [];
   } catch {
-    // Invalid stored data, return empty array
+    console.warn('Failed to load cart from localStorage');
+    return [];
   }
-  return [];
 }
 
 function saveCartToStorage(items: CartItem[]): void {
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   } catch {
-    // Storage full or unavailable, silently fail
+    console.warn('Failed to save cart to localStorage');
   }
 }
 
-export function useCart() {
-  const [state, dispatch] = useReducer(cartReducer, {
-    items: [],
-    animationState: 'idle' as AnimationState,
-    lastAddedItemId: null,
-  });
+export interface CartContextValue {
+  state: CartState;
+  dispatch: React.Dispatch<CartAction>;
+}
 
-  // Load cart from localStorage on mount
+export const CartContext = createContext<CartContextValue>({
+  state: initialState,
+  dispatch: () => undefined,
+});
+
+export function CartProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(cartReducer, initialState);
+
+  // Load cart from localStorage on mount (client-side only)
   useEffect(() => {
     const storedItems = loadCartFromStorage();
     if (storedItems.length > 0) {
@@ -134,60 +150,22 @@ export function useCart() {
     }
   }, []);
 
-  // Save cart to localStorage on change
+  // Save cart to localStorage whenever it changes
   useEffect(() => {
     saveCartToStorage(state.items);
   }, [state.items]);
 
-  // Reset animation state after 1 second
-  useEffect(() => {
-    if (state.animationState === 'spinning') {
-      const timer = setTimeout(() => {
-        dispatch({ type: 'SET_ANIMATION_IDLE' });
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [state.animationState]);
-
-  const addItem = useCallback((item: CartItem) => {
-    dispatch({ type: 'ADD_ITEM', payload: item });
-  }, []);
-
-  const removeItem = useCallback((id: string) => {
-    dispatch({ type: 'REMOVE_ITEM', payload: id });
-  }, []);
-
-  const updateQuantity = useCallback((id: string, quantity: number) => {
-    if (quantity < 1) {
-      dispatch({ type: 'REMOVE_ITEM', payload: id });
-      return;
-    }
-    dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
-  }, []);
-
-  const clearCart = useCallback(() => {
-    dispatch({ type: 'CLEAR_CART' });
-  }, []);
-
-  const total = state.items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
+  return (
+    <CartContext.Provider value={{ state, dispatch }}>
+      {children}
+    </CartContext.Provider>
   );
+}
 
-  const itemCount = state.items.reduce(
-    (count, item) => count + item.quantity,
-    0
-  );
-
-  return {
-    items: state.items,
-    total,
-    itemCount,
-    animationState: state.animationState,
-    lastAddedItemId: state.lastAddedItemId,
-    addItem,
-    removeItem,
-    updateQuantity,
-    clearCart,
-  };
+export function useCart() {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
 }
