@@ -84,9 +84,9 @@ const itemTotal = computed(() => {
           {{ formatPrice(itemTotal) }}
         </p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-shrink-0">
         <button
-          class="w-7 h-7 rounded-full border border-crimson-700/50 flex items-center justify-center text-crimson-300 hover:bg-crimson-800/50 hover:text-crimson-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-7 h-7 rounded-full border border-crimson-700/50 flex items-center justify-center text-crimson-300 hover:bg-crimson-800/30 hover:text-crimson-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="quantity <= 1"
           @click="handleQuantityChange(quantity - 1)"
           data-testid="cart-item-decrease"
@@ -96,13 +96,13 @@ const itemTotal = computed(() => {
           </svg>
         </button>
         <span
-          class="w-8 text-center text-sm font-medium text-crimson-200"
+          class="w-8 text-center text-sm font-medium text-crimson-100"
           data-testid="cart-item-quantity"
         >
           {{ quantity }}
         </span>
         <button
-          class="w-7 h-7 rounded-full border border-crimson-700/50 flex items-center justify-center text-crimson-300 hover:bg-crimson-800/50 hover:text-crimson-100 transition-colors"
+          class="w-7 h-7 rounded-full border border-crimson-700/50 flex items-center justify-center text-crimson-300 hover:bg-crimson-800/30 hover:text-crimson-100 transition-colors"
           @click="handleQuantityChange(quantity + 1)"
           data-testid="cart-item-increase"
         >
@@ -111,7 +111,7 @@ const itemTotal = computed(() => {
           </svg>
         </button>
         <button
-          class="ml-2 p-1.5 rounded text-crimson-400 hover:text-red-400 hover:bg-red-900/20 transition-colors"
+          class="ml-2 p-1.5 rounded text-crimson-500 hover:text-crimson-300 hover:bg-crimson-800/30 transition-colors"
           @click="emit('remove', props.eventId, props.ticketType)"
           data-testid="cart-item-remove"
         >

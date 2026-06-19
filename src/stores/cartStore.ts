@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 export interface CartItem {
   id: string
@@ -37,6 +37,7 @@ function saveCartToStorage(items: CartItem[]): void {
 
 export const useCartStore = defineStore('cart', () => {
   const items = ref<CartItem[]>(loadCartFromStorage())
+  const lastAddedItemId = ref<string | null>(null)
 
   const total = computed(() => {
     return items.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
@@ -46,46 +47,63 @@ export const useCartStore = defineStore('cart', () => {
     return items.value.reduce((count, item) => count + item.quantity, 0)
   })
 
+  watch(
+    items,
+    (newItems) => {
+      saveCartToStorage(newItems)
+    },
+    { deep: true }
+  )
+
   function addItem(item: CartItem): void {
-    const existingIndex = items.value.findIndex(
+    if (!item.productId || !item.id) {
+      console.error('CartItem must have productId and id')
+      return
+    }
+
+    const existingItem = items.value.find(
       (i) => i.productId === item.productId && i.id === item.id
     )
-    if (existingIndex >= 0) {
-      items.value[existingIndex].quantity += item.quantity
+
+    if (existingItem) {
+      existingItem.quantity += item.quantity
     } else {
       items.value.push({ ...item })
     }
-    saveCartToStorage(items.value)
+
+    lastAddedItemId.value = item.id
   }
 
   function removeItem(productId: string, ticketType?: string): void {
     if (ticketType) {
       items.value = items.value.filter(
-        (item) => !(item.productId === productId && item.id === ticketType)
+        (item) => !(item.productId === productId && item.title === ticketType)
       )
     } else {
       items.value = items.value.filter((item) => item.productId !== productId)
     }
-    saveCartToStorage(items.value)
   }
 
   function updateQuantity(productId: string, ticketType: string, quantity: number): void {
+    const clampedQuantity = Math.max(1, quantity)
+
     const item = items.value.find(
-      (i) => i.productId === productId && i.id === ticketType
+      (i) => i.productId === productId && i.title === ticketType
     )
+
     if (item) {
-      item.quantity = quantity
-      saveCartToStorage(items.value)
+      item.quantity = clampedQuantity
     }
   }
 
   function clearCart(): void {
     items.value = []
-    saveCartToStorage(items.value)
+    lastAddedItemId.value = null
   }
 
   return {
     items,
+    lastAddedItemId,
     total,
     itemCount,
     addItem,
