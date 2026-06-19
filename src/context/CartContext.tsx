@@ -48,10 +48,12 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         return { ...state, items: updatedItems };
       }
 
-      return {
-        ...state,
-        items: [...state.items, { product, quantity }],
+      const newItem: CartItem = {
+        id: `${product.id}-${Date.now()}`,
+        product,
+        quantity,
       };
+      return { ...state, items: [...state.items, newItem] };
     }
     case 'REMOVE_ITEM': {
       const productId = action.payload;
@@ -71,42 +73,65 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       return {
         ...state,
         items: state.items.map((item) =>
-          item.product.id === productId ? { ...item, quantity } : item
+          item.product.id === productId
+            ? { ...item, quantity }
+            : item
         ),
       };
     }
-    case 'CLEAR_CART':
+    case 'CLEAR_CART': {
       return { ...state, items: [] };
-    case 'LOAD_CART':
+    }
+    case 'LOAD_CART': {
       return { ...state, items: action.payload };
+    }
     default:
       return state;
   }
 }
 
-function CartProvider({ children }: { children: ReactNode }) {
+function loadCartFromStorage(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item: unknown): item is CartItem =>
+        typeof item === 'object' &&
+        item !== null &&
+        typeof (item as CartItem).id === 'string' &&
+        typeof (item as CartItem).product === 'object' &&
+        (item as CartItem).product !== null &&
+        typeof (item as CartItem).product.id === 'string' &&
+        typeof (item as CartItem).quantity === 'number' &&
+        (item as CartItem).quantity > 0
+    );
+  } catch {
+    return [];
+  }
+}
+
+function saveCartToStorage(items: CartItem[]): void {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  } catch {
+    // localStorage full or unavailable — silently fail
+  }
+}
+
+export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(CART_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as CartItem[];
-        if (Array.isArray(parsed)) {
-          dispatch({ type: 'LOAD_CART', payload: parsed });
-        }
-      }
-    } catch {
-      // Ignore parse errors, start with empty cart
+    const storedItems = loadCartFromStorage();
+    if (storedItems.length > 0) {
+      dispatch({ type: 'LOAD_CART', payload: storedItems });
     }
   }, []);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.items));
-    } catch {
-      // Ignore storage errors
-    }
+    saveCartToStorage(state.items);
   }, [state.items]);
 
   const addToCart = useCallback((product: Product, quantity: number = 1) => {
@@ -137,17 +162,17 @@ function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const itemCount = useMemo(() => {
-    return state.items.reduce((total, item) => total + item.quantity, 0);
+    return state.items.reduce((sum, item) => sum + item.quantity, 0);
   }, [state.items]);
 
   const totalPrice = useMemo(() => {
     return state.items.reduce(
-      (total, item) => total + item.product.price * item.quantity,
+      (sum, item) => sum + item.product.price * item.quantity,
       0
     );
   }, [state.items]);
 
-  const value = useMemo<CartContextValue>(
+  const value = useMemo(
     () => ({
       items: state.items,
       addToCart,
@@ -163,13 +188,10 @@ function CartProvider({ children }: { children: ReactNode }) {
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
-function useCart(): CartContextValue {
+export function useCart(): CartContextValue {
   const context = useContext(CartContext);
   if (!context) {
     throw new Error('useCart must be used within a CartProvider');
   }
   return context;
 }
-
-export { CartContext, CartProvider, useCart };
-export type { CartContextValue };

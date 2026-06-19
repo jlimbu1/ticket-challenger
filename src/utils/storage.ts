@@ -1,3 +1,5 @@
+"use client";
+
 import { v4 as uuidv4 } from 'uuid';
 
 export type TranscriptionSource = 'file' | 'microphone';
@@ -54,47 +56,90 @@ function setStoredTranscriptions(transcriptions: Transcription[]): void {
   }
 }
 
-export function saveTranscription(transcription: Omit<Transcription, 'id'>): Transcription {
-  const id = generateId();
-  const newTranscription: Transcription = { ...transcription, id };
+export function saveTranscription(
+  text: string,
+  duration: number,
+  source: TranscriptionSource
+): Transcription {
+  const transcription: Transcription = {
+    id: generateId(),
+    text,
+    timestamp: new Date().toISOString(),
+    duration,
+    source,
+  };
+
   const transcriptions = getStoredTranscriptions();
-  transcriptions.push(newTranscription);
-  if (transcriptions.length > MAX_ENTRIES) {
-    transcriptions.splice(0, transcriptions.length - MAX_ENTRIES);
-  }
-  setStoredTranscriptions(transcriptions);
-  return newTranscription;
+  transcriptions.push(transcription);
+
+  // Keep only the most recent MAX_ENTRIES
+  const trimmed = transcriptions.slice(-MAX_ENTRIES);
+  setStoredTranscriptions(trimmed);
+
+  return transcription;
 }
 
-export function loadTranscriptions(): Transcription[] {
+export function getTranscriptions(): Transcription[] {
   return getStoredTranscriptions();
 }
 
-export function deleteTranscription(id: string): void {
+export function getTranscriptionSummaries(): TranscriptionSummary[] {
+  const transcriptions = getStoredTranscriptions();
+  return transcriptions.map((t) => ({
+    id: t.id,
+    textPreview: t.text.length > 100 ? t.text.substring(0, 100) + '...' : t.text,
+    timestamp: t.timestamp,
+    duration: t.duration,
+    source: t.source,
+  }));
+}
+
+export function deleteTranscription(id: string): boolean {
   const transcriptions = getStoredTranscriptions();
   const filtered = transcriptions.filter((t) => t.id !== id);
+  if (filtered.length === transcriptions.length) {
+    return false;
+  }
   setStoredTranscriptions(filtered);
+  return true;
 }
 
 export function clearTranscriptions(): void {
+  setStoredTranscriptions([]);
+}
+
+// Cart storage helpers
+const CART_STORAGE_KEY = 'ticket-challenger-cart';
+
+export function safeGetCart<T>(fallback: T): T {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    if (raw === null) return fallback;
+    const parsed = JSON.parse(raw);
+    return parsed as T;
   } catch {
-    // localStorage unavailable — silently fail
+    return fallback;
   }
 }
 
-export function getTranscriptionSummary(transcription: Transcription): TranscriptionSummary {
-  const maxPreviewLength = 100;
-  const textPreview =
-    transcription.text.length > maxPreviewLength
-      ? transcription.text.substring(0, maxPreviewLength) + '...'
-      : transcription.text;
-  return {
-    id: transcription.id,
-    textPreview,
-    timestamp: transcription.timestamp,
-    duration: transcription.duration,
-    source: transcription.source,
-  };
+export function safeSetCart<T>(data: T): boolean {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(data));
+    return true;
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+      console.error('localStorage quota exceeded for cart data');
+    } else {
+      console.error('Failed to save cart to localStorage:', e);
+    }
+    return false;
+  }
+}
+
+export function clearCartStorage(): void {
+  try {
+    localStorage.removeItem(CART_STORAGE_KEY);
+  } catch (e) {
+    console.error('Failed to clear cart from localStorage:', e);
+  }
 }
