@@ -23,7 +23,7 @@
         tabindex="0"
         @click="handleCheckout"
       >
-        CHECKOUT
+        <span>CHECKOUT</span>
       </div>
     </template>
   </div>

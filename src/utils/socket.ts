@@ -7,12 +7,14 @@ export const connectSocket = (token = null) => {
   // If socket already exists, return it
   if (socket) return socket;
 
-  console.log(import.meta.env.VITE_API_URL);
+  console.log(import.meta.env.VITE_SOCKET_URL);
 
   // Create new connection
-  socket = io(import.meta.env.VITE_API_URL, {
+  socket = io(import.meta.env.VITE_SOCKET_URL, {
     auth: token ? { token } : null,
     autoConnect: false,
+    path: "/socket.io",
+    transports: ["websocket", "polling"],
   });
 
   // Basic listeners

@@ -23,7 +23,7 @@
             >
               <td>{{ session.username }}</td>
               <td>{{ session._score }}</td>
-              <td>{{ new Date(session.updatedAt).toLocaleDateString() }}</td>
+              <td>{{ formattedDate(new Date(session.updatedAt)) }}</td>
             </tr>
           </tbody>
         </table>
@@ -51,6 +51,31 @@ const ticketingSessionList = computed(() => apiStore.ticketingSessionList);
 const handleShowSession = (id: string) => {
   router.push({ name: "summaryPage", params: { id } });
 };
+
+function formattedDate(date) {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  // Check if the date is today
+  const isToday = now.toDateString() === date.toDateString();
+
+  if (diffInSeconds < 60) {
+    return diffInSeconds === 0 ? "Just now" : `${diffInSeconds} sec ago`;
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes} min ago`;
+  } else if (isToday) {
+    return `${diffInHours} hour ago`;
+  } else if (diffInDays === 1) {
+    return "Yesterday";
+  } else if (diffInDays < 7) {
+    return `${diffInDays} days ago`;
+  } else {
+    return date.toLocaleDateString();
+  }
+}
 
 const fetchSession = async () => {
   try {
