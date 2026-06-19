@@ -97,21 +97,18 @@ export const useCartStore = defineStore('cart', () => {
 
   function updateQuantity(productId: string, ticketType: string, quantity: number): void {
     const clampedQuantity = Math.max(1, quantity)
-
-    const itemIndex = items.value.findIndex(
-      (i) => i.productId === productId && i.title === ticketType
+    const index = items.value.findIndex(
+      (item) => item.productId === productId && item.title === ticketType
     )
-
-    if (itemIndex !== -1) {
-      const existingItem = items.value[itemIndex]
+    if (index !== -1) {
       const updatedItem: CartItem = {
-        ...existingItem,
+        ...items.value[index],
         quantity: clampedQuantity
       }
       const newItems = [
-        ...items.value.slice(0, itemIndex),
+        ...items.value.slice(0, index),
         updatedItem,
-        ...items.value.slice(itemIndex + 1)
+        ...items.value.slice(index + 1)
       ]
       items.value = newItems
     }
