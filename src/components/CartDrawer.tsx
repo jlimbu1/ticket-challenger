@@ -1,141 +1,175 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useCart, CartItem as CartItemType } from '../hooks/useCart';
-import CartItemComponent from './CartItem';
+<script setup lang="ts">
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
+import CartItemComponent from './CartItem.vue'
+import EmptyStateComponent from './EmptyState.vue'
+import { useCartStore } from '../stores/cartStore'
 
-interface CartDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
+const props = defineProps<{
+  isOpen: boolean
+  onClose: () => void
+}>()
+
+const emit = defineEmits<{
+  close: []
+}>()
+
+const cartStore = useCartStore()
+const drawerRef = ref<HTMLDivElement | null>(null)
+const isAnimating = ref(false)
+
+const items = computed(() => cartStore.items)
+const total = computed(() => cartStore.total)
+const itemCount = computed(() => cartStore.itemCount)
+const animationState = computed(() => cartStore.animationState)
+const lastAddedItemId = computed(() => cartStore.lastAddedItemId)
+
+let animationTimer: ReturnType<typeof setTimeout> | null = null
+
+watch(animationState, (newState) => {
+  if (newState === 'spinning') {
+    isAnimating.value = true
+    animationTimer = setTimeout(() => {
+      isAnimating.value = false
+      animationTimer = null
+    }, 1000)
+  }
+})
+
+onUnmounted(() => {
+  if (animationTimer) {
+    clearTimeout(animationTimer)
+  }
+})
+
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && props.isOpen) {
+    emit('close')
+  }
 }
 
-const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
-  const { items, total, itemCount, animationState, lastAddedItemId, removeItem, updateQuantity, clearCart } = useCart();
-  const drawerRef = useRef<HTMLDivElement>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
+onMounted(() => {
+  document.addEventListener('keydown', handleKeyDown)
+})
 
-  useEffect(() => {
-    if (animationState === 'spinning') {
-      setIsAnimating(true);
-      const timer = setTimeout(() => {
-        setIsAnimating(false);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [animationState]);
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeyDown)
+  document.body.style.overflow = ''
+})
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
+watch(() => props.isOpen, (newIsOpen) => {
+  if (newIsOpen) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+})
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+const handleOverlayClick = (event: MouseEvent) => {
+  if (event.target === event.currentTarget) {
+    emit('close')
+  }
+}
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+const handleRemoveItem = (itemId: string) => {
+  cartStore.removeItem(itemId)
+}
 
-  const handleOverlayClick = (event: React.MouseEvent) => {
-    if (event.target === event.currentTarget) {
-      onClose();
-    }
-  };
+const handleUpdateQuantity = (itemId: string, quantity: number) => {
+  cartStore.updateQuantity(itemId, quantity)
+}
 
-  const formatPrice = (price: number): string => {
-    return `$${price.toFixed(2)}`;
-  };
+const handleCheckout = () => {
+  emit('close')
+}
+</script>
 
-  return (
-    <>
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 z-40 transition-opacity duration-300"
-          onClick={handleOverlayClick}
-          data-testid="cart-overlay"
-        />
-      )}
+<template>
+  <Teleport to="body">
+    <div
+      v-if="props.isOpen"
+      class="fixed inset-0 z-50 flex justify-end"
+      data-testid="cart-drawer-overlay"
+    >
       <div
-        ref={drawerRef}
+        class="absolute inset-0 bg-black/50 transition-opacity duration-300"
+        @click="handleOverlayClick"
+      />
+      <div
+        ref="drawerRef"
+        class="relative w-full max-w-md bg-crimson-950 border-l border-crimson-800/50 shadow-2xl transform transition-transform duration-300 ease-in-out"
+        :class="props.isOpen ? 'translate-x-0' : 'translate-x-full'"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Shopping cart"
         data-testid="cart-drawer"
-        className={`fixed top-0 right-0 h-full w-full max-w-md bg-gray-900 border-l border-crimson-800/50 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
       >
-        <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-4 border-b border-crimson-800/30">
-            <h2 className="text-xl font-gothic text-crimson-400">
-              Your Collection
+        <div class="flex flex-col h-full">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-crimson-800/50">
+            <h2 class="text-xl font-bold text-crimson-100">
+              Cart
+              <span
+                v-if="itemCount > 0"
+                class="ml-2 text-sm font-normal text-crimson-400"
+                data-testid="cart-item-count"
+              >
+                ({{ itemCount }} {{ itemCount === 1 ? 'item' : 'items' }})
+              </span>
             </h2>
             <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-crimson-400 transition-colors duration-200 p-2"
+              class="text-crimson-400 hover:text-crimson-200 transition-colors p-1"
+              @click="emit('close')"
               aria-label="Close cart"
               data-testid="cart-close-button"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4">
-            {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <svg className="w-16 h-16 text-crimson-800/50 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                </svg>
-                <p className="text-gray-400 text-lg font-gothic italic">
-                  The shelves are bare, the records silent...
-                </p>
-                <p className="text-gray-600 text-sm mt-2">
-                  Add some vinyl to begin your collection
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {items.map((item: CartItemType) => (
-                  <CartItemComponent
-                    key={item.id}
-                    item={item}
-                    isAnimating={isAnimating && lastAddedItemId === item.id}
-                    onRemove={removeItem}
-                    onUpdateQuantity={updateQuantity}
-                  />
-                ))}
-              </div>
-            )}
+          <div class="flex-1 overflow-y-auto px-6 py-4">
+            <div v-if="items.length === 0" data-testid="cart-empty-state">
+              <EmptyStateComponent
+                title="Your cart is empty"
+                message="Add some items to get started"
+                icon="cart"
+                action="Browse Events"
+              />
+            </div>
+            <div v-else class="space-y-2" data-testid="cart-items-list">
+              <CartItemComponent
+                v-for="item in items"
+                :key="item.id"
+                :item="item"
+                :is-animating="isAnimating && item.id === lastAddedItemId"
+                @remove="handleRemoveItem"
+                @update-quantity="handleUpdateQuantity"
+              />
+            </div>
           </div>
 
-          {items.length > 0 && (
-            <div className="border-t border-crimson-800/30 p-4 space-y-4">
-              <div className="flex items-center justify-between text-gray-300">
-                <span className="text-sm">Items ({itemCount})</span>
-                <span className="text-lg font-gothic text-crimson-400">
-                  {formatPrice(total)}
-                </span>
-              </div>
-              <button
-                onClick={clearCart}
-                className="w-full py-2 px-4 bg-crimson-900/30 text-crimson-400 border border-crimson-800/50 rounded hover:bg-crimson-900/50 transition-colors duration-200 text-sm"
-                data-testid="clear-cart-button"
-              >
-                Clear Collection
-              </button>
+          <div
+            v-if="items.length > 0"
+            class="border-t border-crimson-800/50 px-6 py-4 space-y-4"
+            data-testid="cart-footer"
+          >
+            <div class="flex justify-between items-center text-lg">
+              <span class="text-crimson-300">Total</span>
+              <span class="font-bold text-crimson-100" data-testid="cart-total">
+                ${{ total.toFixed(2) }}
+              </span>
             </div>
-          )}
+            <button
+              class="w-full bg-crimson-600 hover:bg-crimson-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="items.length === 0"
+              @click="handleCheckout"
+              data-testid="cart-checkout-button"
+            >
+              Proceed to Checkout
+            </button>
+          </div>
         </div>
       </div>
-    </>
-  );
-};
-
-export default CartDrawer;
+    </div>
+  </Teleport>
+</template>

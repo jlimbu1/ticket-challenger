@@ -1,17 +1,12 @@
+<script setup lang="ts">
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import React from 'react';
-import CartDrawer from '../../src/components/CartDrawer';
-import { useCart } from '../../src/hooks/useCart';
+import { mount } from '@vue/test-utils';
+import { createPinia, setActivePinia } from 'pinia';
+import { nextTick } from 'vue';
+import CartDrawer from '../../src/components/CartDrawer.vue';
+import { useCartStore } from '../../src/stores/cartStore';
 
-vi.mock('../../src/hooks/useCart', () => ({
-  useCart: vi.fn(),
-}));
-
-const mockUseCart = useCart as ReturnType<typeof vi.fn>;
-
-const mockCartItems = [
+const createMockItems = () => [
   {
     id: 'item-1',
     productId: 'prod-1',
@@ -23,333 +18,438 @@ const mockCartItems = [
   {
     id: 'item-2',
     productId: 'prod-2',
-    title: 'Three Cheers for Sweet Revenge',
+    title: 'American Idiot',
     price: 24.99,
     quantity: 1,
-    imageUrl: '/images/three-cheers.jpg',
+    imageUrl: '/images/american-idiot.jpg',
   },
 ];
 
-const defaultCartState = {
-  items: [],
-  total: 0,
-  itemCount: 0,
-  animationState: 'idle' as const,
-  lastAddedItemId: null,
-  addItem: vi.fn(),
-  removeItem: vi.fn(),
-  updateQuantity: vi.fn(),
-  clearCart: vi.fn(),
-};
-
 describe('CartDrawer', () => {
   beforeEach(() => {
-    mockUseCart.mockReturnValue({ ...defaultCartState });
+    setActivePinia(createPinia());
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should render with correct initial state when closed', () => {
-    const { container } = render(
-      <CartDrawer isOpen={false} onClose={vi.fn()} />
-    );
-
-    const drawer = container.querySelector('[data-testid="cart-drawer"]');
-    expect(drawer).toBeInTheDocument();
-    expect(drawer).toHaveClass('translate-x-full');
-  });
-
-  it('should slide in when open', () => {
-    const { container } = render(
-      <CartDrawer isOpen={true} onClose={vi.fn()} />
-    );
-
-    const drawer = container.querySelector('[data-testid="cart-drawer"]');
-    expect(drawer).toBeInTheDocument();
-    expect(drawer).toHaveClass('translate-x-0');
-  });
-
-  it('should display empty cart message with poetic text', () => {
-    render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
-
-    expect(screen.getByText(/The shelves are bare, the records silent/i)).toBeInTheDocument();
-  });
-
-  it('should display cart items when present', () => {
-    mockUseCart.mockReturnValue({
-      ...defaultCartState,
-      items: mockCartItems,
-      total: 84.97,
-      itemCount: 3,
+  it('should render when isOpen is true', () => {
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
     });
 
-    render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
-
-    expect(screen.getByText('The Black Parade')).toBeInTheDocument();
-    expect(screen.getByText('Three Cheers for Sweet Revenge')).toBeInTheDocument();
-    expect(screen.getByText('$84.97')).toBeInTheDocument();
+    expect(wrapper.find('[data-testid="cart-drawer"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="cart-drawer-overlay"]').exists()).toBe(true);
   });
 
-  it('should display item count in header', () => {
-    mockUseCart.mockReturnValue({
-      ...defaultCartState,
-      items: mockCartItems,
-      total: 84.97,
-      itemCount: 3,
+  it('should not render when isOpen is false', () => {
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: false,
+        onClose: vi.fn(),
+      },
     });
 
-    render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
-
-    expect(screen.getByText(/3/)).toBeInTheDocument();
+    expect(wrapper.find('[data-testid="cart-drawer"]').exists()).toBe(false);
   });
 
-  it('should call onClose when close button is clicked', async () => {
+  it('should display empty state when cart has no items', () => {
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
+    });
+
+    expect(wrapper.find('[data-testid="empty-state"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="cart-items"]').exists()).toBe(false);
+  });
+
+  it('should display cart items when cart has items', () => {
+    const cartStore = useCartStore();
+    const mockItems = createMockItems();
+    cartStore.items = mockItems;
+    cartStore.total = mockItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    cartStore.itemCount = mockItems.reduce((sum, item) => sum + item.quantity, 0);
+
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
+    });
+
+    expect(wrapper.find('[data-testid="empty-state"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="cart-items"]').exists()).toBe(true);
+    expect(wrapper.findAll('[data-testid="cart-item"]')).toHaveLength(2);
+  });
+
+  it('should display correct total price', () => {
+    const cartStore = useCartStore();
+    const mockItems = createMockItems();
+    const expectedTotal = mockItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    cartStore.items = mockItems;
+    cartStore.total = expectedTotal;
+    cartStore.itemCount = mockItems.reduce((sum, item) => sum + item.quantity, 0);
+
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
+    });
+
+    expect(wrapper.find('[data-testid="cart-total"]').text()).toBe(`$${expectedTotal.toFixed(2)}`);
+  });
+
+  it('should display correct item count', () => {
+    const cartStore = useCartStore();
+    const mockItems = createMockItems();
+    const expectedCount = mockItems.reduce((sum, item) => sum + item.quantity, 0);
+    cartStore.items = mockItems;
+    cartStore.total = mockItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    cartStore.itemCount = expectedCount;
+
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
+    });
+
+    expect(wrapper.find('[data-testid="cart-item-count"]').text()).toBe(String(expectedCount));
+  });
+
+  it('should emit close when overlay is clicked', async () => {
     const onClose = vi.fn();
-    render(<CartDrawer isOpen={true} onClose={onClose} />);
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose,
+      },
+    });
 
-    const closeButton = screen.getByRole('button', { name: /close/i });
-    await userEvent.click(closeButton);
-
+    await wrapper.find('[data-testid="cart-drawer-overlay"]').trigger('click');
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should call onClose when overlay is clicked', async () => {
+  it('should emit close when Escape key is pressed', async () => {
     const onClose = vi.fn();
-    const { container } = render(<CartDrawer isOpen={true} onClose={onClose} />);
+    mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose,
+      },
+    });
 
-    const overlay = container.querySelector('[data-testid="cart-overlay"]');
-    expect(overlay).toBeInTheDocument();
-    await userEvent.click(overlay!);
-
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should call onClose when Escape key is pressed', () => {
+  it('should not emit close when other keys are pressed', async () => {
     const onClose = vi.fn();
-    render(<CartDrawer isOpen={true} onClose={onClose} />);
-
-    fireEvent.keyDown(document, { key: 'Escape' });
-
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call removeItem when remove button is clicked', async () => {
-    const removeItem = vi.fn();
-    mockUseCart.mockReturnValue({
-      ...defaultCartState,
-      items: mockCartItems,
-      total: 84.97,
-      itemCount: 3,
-      removeItem,
+    mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose,
+      },
     });
 
-    render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
-
-    const removeButtons = screen.getAllByRole('button', { name: /remove/i });
-    await userEvent.click(removeButtons[0]);
-
-    expect(removeItem).toHaveBeenCalledWith('item-1');
-  });
-
-  it('should call updateQuantity when quantity is changed', async () => {
-    const updateQuantity = vi.fn();
-    mockUseCart.mockReturnValue({
-      ...defaultCartState,
-      items: mockCartItems,
-      total: 84.97,
-      itemCount: 3,
-      updateQuantity,
-    });
-
-    render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
-
-    const quantityInputs = screen.getAllByRole('spinbutton');
-    await userEvent.clear(quantityInputs[0]);
-    await userEvent.type(quantityInputs[0], '3');
-
-    expect(updateQuantity).toHaveBeenCalledWith('item-1', 3);
-  });
-
-  it('should call clearCart when clear all button is clicked', async () => {
-    const clearCart = vi.fn();
-    mockUseCart.mockReturnValue({
-      ...defaultCartState,
-      items: mockCartItems,
-      total: 84.97,
-      itemCount: 3,
-      clearCart,
-    });
-
-    render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
-
-    const clearButton = screen.getByRole('button', { name: /clear all/i });
-    await userEvent.click(clearButton);
-
-    expect(clearCart).toHaveBeenCalledTimes(1);
-  });
-
-  it('should show spinning animation when item is added', () => {
-    mockUseCart.mockReturnValue({
-      ...defaultCartState,
-      items: mockCartItems,
-      total: 84.97,
-      itemCount: 3,
-      animationState: 'spinning',
-      lastAddedItemId: 'item-1',
-    });
-
-    const { container } = render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
-
-    const spinningItem = container.querySelector('[data-testid="cart-item-spinning"]');
-    expect(spinningItem).toBeInTheDocument();
-  });
-
-  it('should disable body scroll when open', () => {
-    render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
-
-    expect(document.body.style.overflow).toBe('hidden');
-  });
-
-  it('should restore body scroll when closed', () => {
-    const { rerender } = render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
-
-    expect(document.body.style.overflow).toBe('hidden');
-
-    rerender(<CartDrawer isOpen={false} onClose={vi.fn()} />);
-
-    expect(document.body.style.overflow).toBe('');
-  });
-
-  it('should not render overlay when closed', () => {
-    const { container } = render(
-      <CartDrawer isOpen={false} onClose={vi.fn()} />
-    );
-
-    const overlay = container.querySelector('[data-testid="cart-overlay"]');
-    expect(overlay).not.toBeInTheDocument();
-  });
-
-  it('should display total price correctly with multiple items', () => {
-    mockUseCart.mockReturnValue({
-      ...defaultCartState,
-      items: mockCartItems,
-      total: 84.97,
-      itemCount: 3,
-    });
-
-    render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
-
-    expect(screen.getByText('$84.97')).toBeInTheDocument();
-  });
-
-  it('should display total price as $0.00 when cart is empty', () => {
-    render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
-
-    expect(screen.getByText('$0.00')).toBeInTheDocument();
-  });
-
-  it('should handle single item removal correctly', async () => {
-    const removeItem = vi.fn();
-    mockUseCart.mockReturnValue({
-      ...defaultCartState,
-      items: [mockCartItems[0]],
-      total: 59.98,
-      itemCount: 2,
-      removeItem,
-    });
-
-    render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
-
-    const removeButton = screen.getByRole('button', { name: /remove/i });
-    await userEvent.click(removeButton);
-
-    expect(removeItem).toHaveBeenCalledWith('item-1');
-  });
-
-  it('should handle quantity decrease to zero by removing item', async () => {
-    const removeItem = vi.fn();
-    const updateQuantity = vi.fn();
-    mockUseCart.mockReturnValue({
-      ...defaultCartState,
-      items: [mockCartItems[0]],
-      total: 59.98,
-      itemCount: 2,
-      removeItem,
-      updateQuantity,
-    });
-
-    render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
-
-    const quantityInput = screen.getByRole('spinbutton');
-    await userEvent.clear(quantityInput);
-    await userEvent.type(quantityInput, '0');
-
-    expect(removeItem).toHaveBeenCalledWith('item-1');
-    expect(updateQuantity).not.toHaveBeenCalled();
-  });
-
-  it('should not call onClose when clicking inside drawer', async () => {
-    const onClose = vi.fn();
-    const { container } = render(<CartDrawer isOpen={true} onClose={onClose} />);
-
-    const drawer = container.querySelector('[data-testid="cart-drawer"]');
-    await userEvent.click(drawer!);
-
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it('should not emit close when Escape is pressed and drawer is closed', async () => {
+    const onClose = vi.fn();
+    mount(CartDrawer, {
+      props: {
+        isOpen: false,
+        onClose,
+      },
+    });
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('should apply animation class when isAnimating is true', async () => {
+    const cartStore = useCartStore();
+    cartStore.animationState = 'spinning';
+    cartStore.items = createMockItems();
+    cartStore.total = 84.97;
+    cartStore.itemCount = 3;
+
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
+    });
+
+    await nextTick();
+    expect(wrapper.find('[data-testid="cart-drawer"]').classes()).toContain('animate-spin');
+  });
+
+  it('should remove animation class after timeout', async () => {
+    vi.useFakeTimers();
+    const cartStore = useCartStore();
+    cartStore.animationState = 'spinning';
+    cartStore.items = createMockItems();
+    cartStore.total = 84.97;
+    cartStore.itemCount = 3;
+
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
+    });
+
+    await nextTick();
+    expect(wrapper.find('[data-testid="cart-drawer"]').classes()).toContain('animate-spin');
+
+    vi.advanceTimersByTime(1000);
+    await nextTick();
+    expect(wrapper.find('[data-testid="cart-drawer"]').classes()).not.toContain('animate-spin');
+
+    vi.useRealTimers();
+  });
+
+  it('should clean up event listeners on unmount', () => {
+    const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener');
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
+    });
+
+    wrapper.unmount();
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+    removeEventListenerSpy.mockRestore();
+  });
+
+  it('should restore body overflow on unmount', () => {
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
+    });
+
+    document.body.style.overflow = 'hidden';
+    wrapper.unmount();
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('should handle close button click', async () => {
+    const onClose = vi.fn();
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose,
+      },
+    });
+
+    await wrapper.find('[data-testid="cart-drawer-close"]').trigger('click');
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('should render with correct aria attributes', () => {
-    render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
+    });
 
-    const drawer = screen.getByRole('dialog');
-    expect(drawer).toHaveAttribute('aria-modal', 'true');
-    expect(drawer).toHaveAttribute('aria-label', 'Shopping cart');
+    expect(wrapper.find('[data-testid="cart-drawer"]').attributes('role')).toBe('dialog');
+    expect(wrapper.find('[data-testid="cart-drawer"]').attributes('aria-modal')).toBe('true');
+    expect(wrapper.find('[data-testid="cart-drawer"]').attributes('aria-label')).toBe('Shopping cart');
   });
 
-  it('should handle rapid add/remove operations', async () => {
-    const removeItem = vi.fn();
-    mockUseCart.mockReturnValue({
-      ...defaultCartState,
-      items: mockCartItems,
-      total: 84.97,
-      itemCount: 3,
-      removeItem,
+  it('should handle single item cart correctly', () => {
+    const cartStore = useCartStore();
+    const singleItem = [createMockItems()[0]];
+    cartStore.items = singleItem;
+    cartStore.total = singleItem[0].price * singleItem[0].quantity;
+    cartStore.itemCount = singleItem[0].quantity;
+
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
     });
 
-    render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
-
-    const removeButtons = screen.getAllByRole('button', { name: /remove/i });
-    await userEvent.click(removeButtons[0]);
-    await userEvent.click(removeButtons[1]);
-
-    expect(removeItem).toHaveBeenCalledTimes(2);
-    expect(removeItem).toHaveBeenCalledWith('item-1');
-    expect(removeItem).toHaveBeenCalledWith('item-2');
+    expect(wrapper.findAll('[data-testid="cart-item"]')).toHaveLength(1);
+    expect(wrapper.find('[data-testid="cart-total"]').text()).toBe('$59.98');
+    expect(wrapper.find('[data-testid="cart-item-count"]').text()).toBe('2');
   });
 
-  it('should display correct item count in header when items change', () => {
-    mockUseCart.mockReturnValue({
-      ...defaultCartState,
-      items: mockCartItems,
-      total: 84.97,
-      itemCount: 3,
+  it('should handle zero quantity items gracefully', () => {
+    const cartStore = useCartStore();
+    const zeroQuantityItem = {
+      ...createMockItems()[0],
+      quantity: 0,
+    };
+    cartStore.items = [zeroQuantityItem];
+    cartStore.total = 0;
+    cartStore.itemCount = 0;
+
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
     });
 
-    const { rerender } = render(<CartDrawer isOpen={true} onClose={vi.fn()} />);
+    expect(wrapper.find('[data-testid="cart-total"]').text()).toBe('$0.00');
+    expect(wrapper.find('[data-testid="cart-item-count"]').text()).toBe('0');
+  });
 
-    expect(screen.getByText(/3/)).toBeInTheDocument();
+  it('should handle very large quantities', () => {
+    const cartStore = useCartStore();
+    const largeQuantityItem = {
+      ...createMockItems()[0],
+      quantity: 999,
+    };
+    cartStore.items = [largeQuantityItem];
+    cartStore.total = largeQuantityItem.price * largeQuantityItem.quantity;
+    cartStore.itemCount = largeQuantityItem.quantity;
 
-    mockUseCart.mockReturnValue({
-      ...defaultCartState,
-      items: [mockCartItems[0]],
-      total: 59.98,
-      itemCount: 2,
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
     });
 
-    rerender(<CartDrawer isOpen={true} onClose={vi.fn()} />);
+    expect(wrapper.find('[data-testid="cart-item-count"]').text()).toBe('999');
+    expect(wrapper.find('[data-testid="cart-total"]').text()).toBe('$29960.01');
+  });
 
-    expect(screen.getByText(/2/)).toBeInTheDocument();
+  it('should handle missing image URL gracefully', () => {
+    const cartStore = useCartStore();
+    const itemWithoutImage = {
+      ...createMockItems()[0],
+      imageUrl: '',
+    };
+    cartStore.items = [itemWithoutImage];
+    cartStore.total = itemWithoutImage.price * itemWithoutImage.quantity;
+    cartStore.itemCount = itemWithoutImage.quantity;
+
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
+    });
+
+    const image = wrapper.find('[data-testid="cart-item-image"]');
+    expect(image.attributes('src')).toBe('');
+    expect(image.attributes('alt')).toBe(itemWithoutImage.title);
+  });
+
+  it('should handle items with zero price', () => {
+    const cartStore = useCartStore();
+    const freeItem = {
+      ...createMockItems()[0],
+      price: 0,
+    };
+    cartStore.items = [freeItem];
+    cartStore.total = 0;
+    cartStore.itemCount = freeItem.quantity;
+
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
+    });
+
+    expect(wrapper.find('[data-testid="cart-total"]').text()).toBe('$0.00');
+  });
+
+  it('should handle multiple items with same product ID', () => {
+    const cartStore = useCartStore();
+    const baseItem = createMockItems()[0];
+    const duplicateItems = [
+      { ...baseItem, id: 'item-1' },
+      { ...baseItem, id: 'item-2' },
+    ];
+    cartStore.items = duplicateItems;
+    cartStore.total = duplicateItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    cartStore.itemCount = duplicateItems.reduce((sum, item) => sum + item.quantity, 0);
+
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
+    });
+
+    expect(wrapper.findAll('[data-testid="cart-item"]')).toHaveLength(2);
+    expect(wrapper.find('[data-testid="cart-total"]').text()).toBe('$119.96');
+  });
+
+  it('should handle rapid open/close transitions', async () => {
+    const onClose = vi.fn();
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose,
+      },
+    });
+
+    expect(wrapper.find('[data-testid="cart-drawer"]').exists()).toBe(true);
+
+    await wrapper.setProps({ isOpen: false });
+    expect(wrapper.find('[data-testid="cart-drawer"]').exists()).toBe(false);
+
+    await wrapper.setProps({ isOpen: true });
+    expect(wrapper.find('[data-testid="cart-drawer"]').exists()).toBe(true);
+  });
+
+  it('should not throw when onClose is not provided', () => {
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: undefined,
+      },
+    });
+
+    expect(() => {
+      wrapper.find('[data-testid="cart-drawer-overlay"]').trigger('click');
+    }).not.toThrow();
+  });
+
+  it('should handle animation state changes correctly', async () => {
+    const cartStore = useCartStore();
+    cartStore.items = createMockItems();
+    cartStore.total = 84.97;
+    cartStore.itemCount = 3;
+
+    const wrapper = mount(CartDrawer, {
+      props: {
+        isOpen: true,
+        onClose: vi.fn(),
+      },
+    });
+
+    expect(wrapper.find('[data-testid="cart-drawer"]').classes()).not.toContain('animate-spin');
+
+    cartStore.animationState = 'spinning';
+    await nextTick();
+    expect(wrapper.find('[data-testid="cart-drawer"]').classes()).toContain('animate-spin');
+
+    cartStore.animationState = 'idle';
+    await nextTick();
+    expect(wrapper.find('[data-testid="cart-drawer"]').classes()).not.toContain('animate-spin');
   });
 });
+</script>
