@@ -14,6 +14,7 @@ import orderDetailPage from "@/views/order-detail-page.vue";
 import profilePage from "@/views/profile-page.vue";
 import adminEventsPage from "@/views/admin-events-page.vue";
 import adminEventFormPage from "@/views/admin-event-form-page.vue";
+import adminProductsPage from "@/views/admin-products-page.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -99,6 +100,11 @@ const router = createRouter({
       name: "adminEventEdit",
       component: adminEventFormPage,
       props: true,
+    },
+    {
+      path: "/admin/products",
+      name: "adminProductsPage",
+      component: adminProductsPage,
     },
   ],
 });
