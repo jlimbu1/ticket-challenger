@@ -1,8 +1,8 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Product, CartItem, CartState } from '@/types';
+import { defineStore } from 'pinia';
+import { ref, computed, watch } from 'vue';
+import type { Product, CartItem } from '@/types';
 
-const CART_STORAGE_KEY = 'black-parade-cart';
+const CART_STORAGE_KEY = 'ticket-challenger-cart';
 
 function findItem(items: CartItem[], productId: string): CartItem | undefined {
   return items.find((item) => item.product.id === productId);
@@ -15,87 +15,109 @@ function validateQuantity(quantity: number): number {
   return Math.floor(quantity);
 }
 
-export const useCartStore = create<CartState>()(
-  persist(
-    (set, get) => ({
-      items: [],
-
-      addItem: (product: Product, quantity: number = 1) => {
-        if (!product || !product.id) {
-          return;
-        }
-
-        const safeQuantity = validateQuantity(quantity);
-        if (safeQuantity === 0) {
-          return;
-        }
-
-        set((state) => {
-          const existing = findItem(state.items, product.id);
-          if (existing) {
-            return {
-              items: state.items.map((item) =>
-                item.product.id === product.id
-                  ? { ...item, quantity: item.quantity + safeQuantity }
-                  : item
-              ),
-            };
-          }
-          return {
-            items: [...state.items, { product, quantity: safeQuantity }],
-          };
-        });
-      },
-
-      removeItem: (productId: string) => {
-        if (!productId) {
-          return;
-        }
-
-        set((state) => ({
-          items: state.items.filter((item) => item.product.id !== productId),
-        }));
-      },
-
-      updateQuantity: (productId: string, quantity: number) => {
-        if (!productId) {
-          return;
-        }
-
-        const safeQuantity = validateQuantity(quantity);
-
-        set((state) => {
-          if (safeQuantity === 0) {
-            return {
-              items: state.items.filter((item) => item.product.id !== productId),
-            };
-          }
-
-          return {
-            items: state.items.map((item) =>
-              item.product.id === productId
-                ? { ...item, quantity: safeQuantity }
-                : item
-            ),
-          };
-        });
-      },
-
-      clearCart: () => {
-        set({ items: [] });
-      },
-    }),
-    {
-      name: CART_STORAGE_KEY,
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ items: state.items }),
-      onRehydrateStorage: () => {
-        return (state, error) => {
-          if (error) {
-            console.error('Failed to rehydrate cart from localStorage:', error);
-          }
-        };
-      },
+function loadCartFromStorage(): CartItem[] {
+  try {
+    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
     }
-  )
-);
+  } catch {
+    // Invalid stored data, start fresh
+  }
+  return [];
+}
+
+function saveCartToStorage(items: CartItem[]): void {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  } catch {
+    // Storage full or unavailable — silently fail, cart still works in memory
+  }
+}
+
+export const useCartStore = defineStore('cart', () => {
+  const items = ref<CartItem[]>(loadCartFromStorage());
+
+  const total = computed(() => {
+    return items.value.reduce((sum, item) => {
+      return sum + item.product.price * item.quantity;
+    }, 0);
+  });
+
+  const itemCount = computed(() => {
+    return items.value.reduce((sum, item) => sum + item.quantity, 0);
+  });
+
+  watch(
+    items,
+    (newItems) => {
+      saveCartToStorage(newItems);
+    },
+    { deep: true }
+  );
+
+  function addItem(product: Product, quantity: number = 1): void {
+    if (!product || !product.id) {
+      return;
+    }
+
+    const safeQuantity = validateQuantity(quantity);
+    if (safeQuantity === 0) {
+      return;
+    }
+
+    const existing = findItem(items.value, product.id);
+    if (existing) {
+      existing.quantity += safeQuantity;
+    } else {
+      items.value.push({ product, quantity: safeQuantity });
+    }
+  }
+
+  function removeItem(productId: string): void {
+    if (!productId) {
+      return;
+    }
+
+    const index = items.value.findIndex((item) => item.product.id === productId);
+    if (index !== -1) {
+      items.value.splice(index, 1);
+    }
+  }
+
+  function updateQuantity(productId: string, quantity: number): void {
+    if (!productId) {
+      return;
+    }
+
+    const safeQuantity = validateQuantity(quantity);
+
+    const existing = findItem(items.value, productId);
+    if (!existing) {
+      return;
+    }
+
+    if (safeQuantity === 0) {
+      removeItem(productId);
+    } else {
+      existing.quantity = safeQuantity;
+    }
+  }
+
+  function clearCart(): void {
+    items.value = [];
+  }
+
+  return {
+    items,
+    total,
+    itemCount,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+  };
+});
