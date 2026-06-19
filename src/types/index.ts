@@ -9,15 +9,21 @@ export interface Product {
 }
 
 export interface CartItem {
-  product: Product;
+  id: string;
+  productId: string;
+  title: string;
+  price: number;
   quantity: number;
+  imageUrl: string;
 }
 
 export interface CartState {
   items: CartItem[];
-  addItem: (product: Product, quantity?: number) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  total: number;
+  itemCount: number;
+  addItem: (item: CartItem) => void;
+  removeItem: (productId: string, ticketType?: string) => void;
+  updateQuantity: (productId: string, ticketType: string, quantity: number) => void;
   clearCart: () => void;
 }
 

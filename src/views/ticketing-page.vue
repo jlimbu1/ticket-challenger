@@ -1,7 +1,116 @@
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useApiStore } from "@/stores/apiStore";
+import { useCartStore } from "@/stores/cartStore";
+import {
+  ITicketCartInfo,
+  ITicketUpdateData,
+  TicketingSessionStatus,
+} from "@/interface";
+import { useSocket } from "@/composables/useSocket";
+import spinner from "@/components/spinner.vue";
+import TicketItem from "@/components/ticket-item.vue";
+
+const route = useRoute();
+const router = useRouter();
+const apiStore = useApiStore();
+const cartStore = useCartStore();
+const { socket } = useSocket();
+
+const loading = ref(false);
+const error = ref<string | null>(null);
+const ticketsQuantity = ref<ITicketCartInfo[]>([]);
+const lastUpdated = ref("");
+const sessionStatus = ref<TicketingSessionStatus>(TicketingSessionStatus.CREATED);
+
+const isInProgress = computed(() => {
+  return sessionStatus.value === TicketingSessionStatus.IN_PROGRESS;
+});
+
+function handleTicketIncrement(ticket: ITicketCartInfo): void {
+  const existingItem = cartStore.items.find(
+    (item) => item.productId === ticket._id
+  );
+  if (existingItem) {
+    cartStore.updateQuantity(ticket._id, "general", existingItem.quantity + 1);
+  } else {
+    cartStore.addItem({
+      id: ticket._id,
+      productId: ticket._id,
+      title: ticket.name,
+      price: ticket.price,
+      quantity: 1,
+      imageUrl: "",
+    });
+  }
+}
+
+function handleTicketDecrement(ticket: ITicketCartInfo): void {
+  const existingItem = cartStore.items.find(
+    (item) => item.productId === ticket._id
+  );
+  if (existingItem) {
+    if (existingItem.quantity <= 1) {
+      cartStore.removeItem(ticket._id, "general");
+    } else {
+      cartStore.updateQuantity(ticket._id, "general", existingItem.quantity - 1);
+    }
+  }
+}
+
+function handleCheckout(): void {
+  router.push({ name: "checkoutPage" });
+}
+
+async function fetchSessionData(sessionId: string): Promise<void> {
+  loading.value = true;
+  error.value = null;
+  try {
+    const session = await apiStore.getTicketingSession(sessionId);
+    if (session) {
+      sessionStatus.value = session.status;
+      ticketsQuantity.value = session.tickets.map((t: ITicketUpdateData) => ({
+        _id: t._id,
+        name: t.name,
+        price: t.price,
+        isSoldOut: t.remaining <= 0,
+        quantity: 0,
+      }));
+      lastUpdated.value = new Date(session.updatedAt).toLocaleTimeString();
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to load session";
+    error.value = message;
+    console.error("Failed to fetch ticketing session:", err);
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(() => {
+  const sessionId = route.params.sessionId as string;
+  if (sessionId) {
+    fetchSessionData(sessionId);
+  }
+});
+
+onBeforeUnmount(() => {
+  socket?.off("ticketUpdate");
+});
+</script>
+
 <template>
   <div class="container">
     <div v-if="loading">
       <spinner />
+    </div>
+
+    <div v-else-if="error" class="error-message">
+      <p>{{ error }}</p>
+      <button class="custom-btn mt-3" @click="router.push({ name: 'homePage' })">
+        Back to Home
+      </button>
     </div>
 
     <template v-else-if="isInProgress">
@@ -9,9 +118,9 @@
       <p class="last-updated">Last Updated: {{ lastUpdated }}</p>
       <div class="content">
         <div class="tickets-container">
-          <ticket-item
+          <TicketItem
             v-for="ticket in ticketsQuantity"
-            :key="ticket._id + ticket.quantity"
+            :key="ticket._id"
             :ticket="ticket"
             @increment="handleTicketIncrement"
             @decrement="handleTicketDecrement"
@@ -26,146 +135,54 @@
         CHECKOUT
       </div>
     </template>
+
+    <div v-else class="waiting-message">
+      <p>Waiting for session to start...</p>
+      <spinner />
+    </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { computed, ref, onMounted, onBeforeUnmount } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useApiStore } from "@/stores/apiStore";
-import {
-  ITicketCartInfo,
-  ITicketUpdateData,
-  TicketingSessionStatus,
-} from "@/interface";
-import { useSocket } from "@/composables/useSocket";
-import spinner from "@/components/spinner.vue";
-import TicketItem from "@/components/ticket-item.vue";
+<style scoped>
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
 
-const route = useRoute();
-const router = useRouter();
-const apiStore = useApiStore();
-const { socket } = useSocket();
+.last-updated {
+  font-size: 0.875rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
 
-const loading = ref(false);
-const error = ref<string | null>(null);
-const ticketsQuantity = ref<ITicketCartInfo[]>([]);
-const lastUpdated = ref(new Date().toLocaleTimeString());
+.tickets-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
 
-const isCreated = computed(
-  () => apiStore.ticketingSession?.status === TicketingSessionStatus.CREATED
-);
-const isInProgress = computed(
-  () => apiStore.ticketingSession?.status === TicketingSessionStatus.IN_PROGRESS
-);
-const isWaiting = computed(
-  () => apiStore.ticketingSession?.status === TicketingSessionStatus.WAITING
-);
-const isCompleted = computed(
-  () => apiStore.ticketingSession?.status === TicketingSessionStatus.COMPLETED
-);
-const isCancelled = computed(
-  () => apiStore.ticketingSession?.status === TicketingSessionStatus.CANCELLED
-);
+.error-message {
+  text-align: center;
+  padding: 2rem;
+  color: #dc2626;
+}
 
-const fetchSession = async () => {
-  try {
-    loading.value = true;
-    await apiStore.fetchTicketingSession(route.params.id as string);
+.waiting-message {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
 
-    if (isWaiting.value || isCreated.value)
-      router.push({ name: "queuePage", params: { id: route.params.id } });
+.float-right {
+  float: right;
+}
 
-    if (isCompleted.value)
-      router.push({ name: "summaryPage", params: { id: route.params.id } });
+.mt-5 {
+  margin-top: 1.25rem;
+}
 
-    if (isCancelled.value)
-      router.push({
-        name: "expiredSessionPage",
-        params: { id: route.params.id },
-      });
-  } catch (err) {
-    error.value = "Failed to load session";
-    console.error("Session fetch error:", err);
-  } finally {
-    loading.value = false;
-  }
-};
-
-const handleTicketSale = (data: {
-  updates: ITicketUpdateData[];
-  timestamp: string;
-}) => {
-  ticketsQuantity.value = ticketsQuantity.value?.map((x) => ({
-    ...x,
-    isSoldOut: data?.updates?.find((y) => y._id === x._id)?.remaining === 0,
-    quantity:
-      data?.updates?.find((y) => y._id === x._id)?.remaining === 0
-        ? 0
-        : x.quantity,
-  }));
-  lastUpdated.value = new Date(data.timestamp).toLocaleTimeString();
-};
-
-const handleTicketIncrement = (ticketId: string) => {
-  const indexToUpdate = ticketsQuantity.value.findIndex(
-    (x) => x._id === ticketId
-  );
-  ticketsQuantity.value[indexToUpdate].quantity++;
-};
-
-const handleTicketDecrement = (ticketId: string) => {
-  const indexToUpdate = ticketsQuantity.value.findIndex(
-    (x) => x._id === ticketId
-  );
-  ticketsQuantity.value[indexToUpdate].quantity--;
-};
-
-const handleCheckout = async () => {
-  await apiStore.checkoutTicketingSession(
-    route.params.id as string,
-    ticketsQuantity.value
-  );
-
-  // reset quantity
-  ticketsQuantity.value = ticketsQuantity.value?.map((x) => ({
-    ...x,
-    quantity: 0,
-  }));
-
-  await fetchSession();
-};
-
-// Lifecycle hooks
-onMounted(async () => {
-  await fetchSession();
-  ticketsQuantity.value = (await apiStore.fetchTickets())?.map((x) => ({
-    _id: x._id,
-    name: x.name,
-    price: x.price,
-    isSoldOut: false,
-    quantity: 0,
-  }));
-
-  socket.emit("subscribeToSession", route.params.id);
-  socket.on("subscriptionConfirmed", (data) => {
-    console.log("Successfully subscribed to session:", data.sessionId);
-  });
-
-  // Set up socket listeners
-  socket.on("ticketUpdate", handleTicketSale);
-
-  // Handle socket connection errors
-  socket.on("connect_error", (err) => {
-    console.error("Socket connection error:", err);
-    error.value = "Connection error - please refresh";
-  });
-});
-
-onBeforeUnmount(() => {
-  socket.off("ticketUpdate");
-  socket.off("connect_error");
-});
-</script>
-
-<style scoped></style>
+.mt-3 {
+  margin-top: 0.75rem;
+}
+</style>

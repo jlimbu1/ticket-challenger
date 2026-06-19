@@ -1,121 +1,74 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+<script setup lang="ts">
+import { ref, onErrorCaptured, type Ref } from 'vue'
 
 interface ErrorBoundaryProps {
-  children: ReactNode;
-  fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  fallback?: string
+  onError?: (error: Error, errorInfo: string) => void
 }
 
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-  errorInfo: ErrorInfo | null;
+const props = withDefaults(defineProps<ErrorBoundaryProps>(), {
+  fallback: '',
+  onError: undefined,
+})
+
+const hasError: Ref<boolean> = ref(false)
+const error: Ref<Error | null> = ref(null)
+const errorInfo: Ref<string> = ref('')
+
+onErrorCaptured((err: Error, instance: any, info: string) => {
+  hasError.value = true
+  error.value = err
+  errorInfo.value = info
+
+  if (props.onError) {
+    props.onError(err, info)
+  }
+
+  console.error('ErrorBoundary caught an error:', err, info)
+
+  return false
+})
+
+const handleReset = (): void => {
+  hasError.value = false
+  error.value = null
+  errorInfo.value = ''
 }
+</script>
 
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-      errorInfo: null,
-    };
-  }
-
-  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
-    return {
-      hasError: true,
-      error,
-    };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    this.setState({ errorInfo });
-    if (this.props.onError) {
-      this.props.onError(error, errorInfo);
-    }
-    console.error(
-      'ErrorBoundary caught an error:',
-      error,
-      errorInfo
-    );
-  }
-
-  private handleReset = (): void => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null,
-    });
-  };
-
-  render(): ReactNode {
-    if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
-
-      const errorMessage = this.state.error?.message || 'An unknown error occurred';
-      const errorStack = this.state.error?.stack || '';
-      const componentStack = this.state.errorInfo?.componentStack || '';
-
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-black p-4">
-          <div className="max-w-lg w-full bg-gradient-to-b from-darkGray to-black border-2 border-crimson rounded-lg overflow-hidden shadow-2xl shadow-crimson/30">
-            <div className="relative p-8 text-center">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-crimson via-deepPurple to-crimson" />
-              
-              <div className="mb-6">
-                <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-crimson to-deepPurple flex items-center justify-center animate-pulse">
-                  <span className="text-4xl text-white font-gothic">!</span>
-                </div>
-              </div>
-
-              <h2 className="text-3xl font-gothic font-bold text-crimson mb-2">
-                The Record Skips
-              </h2>
-              
-              <p className="text-gray-400 font-body mb-6 italic">
-                Something went wrong in the darkness...
-              </p>
-
-              <div className="bg-black/50 border border-crimson/30 rounded p-4 mb-6 text-left">
-                <p className="text-crimson text-sm font-mono mb-2">
-                  Error: {errorMessage}
-                </p>
-                {errorStack && (
-                  <details className="mt-2">
-                    <summary className="text-gray-500 text-xs cursor-pointer hover:text-gray-300">
-                      View technical details
-                    </summary>
-                    <pre className="mt-2 text-xs text-gray-500 font-mono overflow-auto max-h-32 whitespace-pre-wrap">
-                      {errorStack}
-                      {componentStack && `\n\nComponent Stack:\n${componentStack}`}
-                    </pre>
-                  </details>
-                )}
-              </div>
-
-              <button
-                onClick={this.handleReset}
-                className="font-gothic tracking-wider uppercase px-8 py-3 bg-gradient-to-r from-crimson to-deepPurple text-white rounded-md transition-all duration-300 hover:brightness-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-crimson focus:ring-offset-2 focus:ring-offset-black"
-              >
-                Try Again
-              </button>
-            </div>
-
-            <div className="border-t border-crimson/20 px-8 py-4 bg-black/50">
-              <p className="text-gray-600 text-xs text-center font-body">
-                If this persists, the ritual may need to be performed again
-              </p>
-            </div>
-          </div>
+<template>
+  <div v-if="hasError" data-testid="error-boundary">
+    <div v-if="props.fallback" v-html="props.fallback" />
+    <div v-else class="min-h-screen flex items-center justify-center bg-gray-900">
+      <div class="max-w-md w-full mx-auto p-8 text-center">
+        <div class="mb-6">
+          <svg
+            class="w-16 h-16 mx-auto text-red-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 2.502-3.5 0-1.833-1.54-3.5-3.5-3.5h-1.5c-1.833 0-3.5-1.667-3.5-3.5S10.667 5 12.5 5H14"
+            />
+          </svg>
         </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-export default ErrorBoundary;
+        <h2 class="text-2xl font-bold text-white mb-4">Something went wrong</h2>
+        <p class="text-gray-400 mb-6">
+          {{ error?.message || 'An unexpected error occurred. Please try again.' }}
+        </p>
+        <button
+          class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+          @click="handleReset"
+        >
+          Try Again
+        </button>
+      </div>
+    </div>
+  </div>
+  <slot v-else />
+</template>

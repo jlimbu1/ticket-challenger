@@ -1,31 +1,30 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { useCart } from '../../src/hooks/useCart';
+import { setActivePinia, createPinia } from 'pinia';
+import { useCartStore } from '../../src/stores/cartStore';
 
 const CART_STORAGE_KEY = 'ticket-challenger-cart';
 
-const mockProduct = {
-  id: 'prod-1',
-  name: 'The Black Parade',
+const mockItem = {
+  id: 'item-1',
+  productId: 'prod-1',
+  title: 'The Black Parade',
   price: 29.99,
-  image: '/images/black-parade.jpg',
-  description: 'My Chemical Romance\'s magnum opus on 180g black vinyl. Includes exclusive poster.',
-  category: 'vinyl' as const,
-  stock: 15,
+  quantity: 1,
+  imageUrl: '/images/black-parade.jpg',
 };
 
-const mockProduct2 = {
-  id: 'prod-2',
-  name: 'Three Cheers for Sweet Revenge',
+const mockItem2 = {
+  id: 'item-2',
+  productId: 'prod-2',
+  title: 'Three Cheers for Sweet Revenge',
   price: 24.99,
-  image: '/images/three-cheers.jpg',
-  description: 'The album that defined a generation. Blood red vinyl pressing.',
-  category: 'vinyl' as const,
-  stock: 22,
+  quantity: 2,
+  imageUrl: '/images/three-cheers.jpg',
 };
 
-describe('useCart', () => {
+describe('useCartStore', () => {
   beforeEach(() => {
+    setActivePinia(createPinia());
     localStorage.clear();
   });
 
@@ -34,382 +33,337 @@ describe('useCart', () => {
   });
 
   it('should initialize with empty cart', () => {
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    expect(result.current.items).toEqual([]);
-    expect(result.current.totalPrice).toBe(0);
-    expect(result.current.itemCount).toBe(0);
+    expect(store.items).toEqual([]);
+    expect(store.total).toBe(0);
+    expect(store.itemCount).toBe(0);
   });
 
   it('should add an item to the cart', () => {
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
+    store.addItem(mockItem);
 
-    expect(result.current.items).toHaveLength(1);
-    expect(result.current.items[0].product).toEqual(mockProduct);
-    expect(result.current.items[0].quantity).toBe(1);
-    expect(result.current.itemCount).toBe(1);
-    expect(result.current.totalPrice).toBe(29.99);
+    expect(store.items).toHaveLength(1);
+    expect(store.items[0]).toEqual(mockItem);
+    expect(store.total).toBe(29.99);
+    expect(store.itemCount).toBe(1);
   });
 
-  it('should increment quantity when adding duplicate item', () => {
-    const { result } = renderHook(() => useCart());
+  it('should increase quantity when adding an existing item', () => {
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
+    store.addItem(mockItem);
+    store.addItem({ ...mockItem, quantity: 2 });
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
-
-    expect(result.current.items).toHaveLength(1);
-    expect(result.current.items[0].quantity).toBe(2);
-    expect(result.current.itemCount).toBe(2);
-    expect(result.current.totalPrice).toBe(59.98);
+    expect(store.items).toHaveLength(1);
+    expect(store.items[0].quantity).toBe(3);
+    expect(store.total).toBe(89.97);
+    expect(store.itemCount).toBe(3);
   });
 
   it('should add multiple different items', () => {
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
+    store.addItem(mockItem);
+    store.addItem(mockItem2);
 
-    act(() => {
-      result.current.addToCart(mockProduct2);
-    });
-
-    expect(result.current.items).toHaveLength(2);
-    expect(result.current.itemCount).toBe(2);
-    expect(result.current.totalPrice).toBe(54.98);
-  });
-
-  it('should add item with custom quantity', () => {
-    const { result } = renderHook(() => useCart());
-
-    act(() => {
-      result.current.addToCart(mockProduct, 3);
-    });
-
-    expect(result.current.items).toHaveLength(1);
-    expect(result.current.items[0].quantity).toBe(3);
-    expect(result.current.itemCount).toBe(3);
-    expect(result.current.totalPrice).toBe(89.97);
+    expect(store.items).toHaveLength(2);
+    expect(store.total).toBe(79.97);
+    expect(store.itemCount).toBe(3);
   });
 
   it('should remove an item from the cart', () => {
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
+    store.addItem(mockItem);
+    store.addItem(mockItem2);
+    store.removeItem(mockItem.productId);
 
-    act(() => {
-      result.current.addToCart(mockProduct2);
-    });
+    expect(store.items).toHaveLength(1);
+    expect(store.items[0]).toEqual(mockItem2);
+    expect(store.total).toBe(49.98);
+    expect(store.itemCount).toBe(2);
+  });
 
-    act(() => {
-      result.current.removeFromCart('prod-1');
-    });
+  it('should remove an item with ticket type', () => {
+    const store = useCartStore();
 
-    expect(result.current.items).toHaveLength(1);
-    expect(result.current.items[0].product.id).toBe('prod-2');
-    expect(result.current.itemCount).toBe(1);
-    expect(result.current.totalPrice).toBe(24.99);
+    const itemWithType = { ...mockItem, id: 'item-1-general', ticketType: 'general' };
+    store.addItem(itemWithType);
+    store.removeItem(mockItem.productId, 'general');
+
+    expect(store.items).toHaveLength(0);
+    expect(store.total).toBe(0);
+    expect(store.itemCount).toBe(0);
+  });
+
+  it('should not remove items with different ticket type', () => {
+    const store = useCartStore();
+
+    const itemGeneral = { ...mockItem, id: 'item-1-general', ticketType: 'general' };
+    const itemVip = { ...mockItem, id: 'item-1-vip', ticketType: 'vip' };
+    store.addItem(itemGeneral);
+    store.addItem(itemVip);
+    store.removeItem(mockItem.productId, 'general');
+
+    expect(store.items).toHaveLength(1);
+    expect(store.items[0].ticketType).toBe('vip');
   });
 
   it('should update quantity of an item', () => {
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
+    store.addItem(mockItem);
+    store.updateQuantity(mockItem.productId, '', 5);
 
-    act(() => {
-      result.current.updateQuantity('prod-1', 5);
-    });
+    expect(store.items[0].quantity).toBe(5);
+    expect(store.total).toBe(149.95);
+    expect(store.itemCount).toBe(5);
+  });
 
-    expect(result.current.items[0].quantity).toBe(5);
-    expect(result.current.itemCount).toBe(5);
-    expect(result.current.totalPrice).toBe(149.95);
+  it('should update quantity with ticket type', () => {
+    const store = useCartStore();
+
+    const itemWithType = { ...mockItem, id: 'item-1-general', ticketType: 'general' };
+    store.addItem(itemWithType);
+    store.updateQuantity(mockItem.productId, 'general', 3);
+
+    expect(store.items[0].quantity).toBe(3);
+    expect(store.total).toBe(89.97);
   });
 
   it('should remove item when quantity is set to 0', () => {
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
+    store.addItem(mockItem);
+    store.updateQuantity(mockItem.productId, '', 0);
 
-    act(() => {
-      result.current.updateQuantity('prod-1', 0);
-    });
-
-    expect(result.current.items).toHaveLength(0);
-    expect(result.current.itemCount).toBe(0);
-    expect(result.current.totalPrice).toBe(0);
+    expect(store.items).toHaveLength(0);
+    expect(store.total).toBe(0);
+    expect(store.itemCount).toBe(0);
   });
 
   it('should remove item when quantity is set to negative', () => {
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
+    store.addItem(mockItem);
+    store.updateQuantity(mockItem.productId, '', -1);
 
-    act(() => {
-      result.current.updateQuantity('prod-1', -1);
-    });
-
-    expect(result.current.items).toHaveLength(0);
-    expect(result.current.itemCount).toBe(0);
-    expect(result.current.totalPrice).toBe(0);
+    expect(store.items).toHaveLength(0);
+    expect(store.total).toBe(0);
+    expect(store.itemCount).toBe(0);
   });
 
   it('should clear the cart', () => {
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
+    store.addItem(mockItem);
+    store.addItem(mockItem2);
+    store.clearCart();
 
-    act(() => {
-      result.current.addToCart(mockProduct2);
-    });
-
-    act(() => {
-      result.current.clearCart();
-    });
-
-    expect(result.current.items).toEqual([]);
-    expect(result.current.itemCount).toBe(0);
-    expect(result.current.totalPrice).toBe(0);
-  });
-
-  it('should handle removing from empty cart without error', () => {
-    const { result } = renderHook(() => useCart());
-
-    expect(() => {
-      act(() => {
-        result.current.removeFromCart('nonexistent');
-      });
-    }).not.toThrow();
-
-    expect(result.current.items).toEqual([]);
-    expect(result.current.itemCount).toBe(0);
-    expect(result.current.totalPrice).toBe(0);
-  });
-
-  it('should handle clearing empty cart without error', () => {
-    const { result } = renderHook(() => useCart());
-
-    expect(() => {
-      act(() => {
-        result.current.clearCart();
-      });
-    }).not.toThrow();
-
-    expect(result.current.items).toEqual([]);
-    expect(result.current.itemCount).toBe(0);
-    expect(result.current.totalPrice).toBe(0);
-  });
-
-  it('should handle updating quantity of nonexistent item without error', () => {
-    const { result } = renderHook(() => useCart());
-
-    expect(() => {
-      act(() => {
-        result.current.updateQuantity('nonexistent', 5);
-      });
-    }).not.toThrow();
-
-    expect(result.current.items).toEqual([]);
-    expect(result.current.itemCount).toBe(0);
-    expect(result.current.totalPrice).toBe(0);
+    expect(store.items).toHaveLength(0);
+    expect(store.total).toBe(0);
+    expect(store.itemCount).toBe(0);
   });
 
   it('should persist cart to localStorage on add', () => {
-    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
+    store.addItem(mockItem);
 
-    expect(setItemSpy).toHaveBeenCalledWith(
-      CART_STORAGE_KEY,
-      expect.any(String)
-    );
-
-    const storedData = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]');
-    expect(storedData).toHaveLength(1);
-    expect(storedData[0].product.id).toBe('prod-1');
-    expect(storedData[0].quantity).toBe(1);
+    const stored = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]');
+    expect(stored).toHaveLength(1);
+    expect(stored[0]).toEqual(mockItem);
   });
 
   it('should persist cart to localStorage on remove', () => {
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
+    store.addItem(mockItem);
+    store.addItem(mockItem2);
+    store.removeItem(mockItem.productId);
 
-    act(() => {
-      result.current.addToCart(mockProduct2);
-    });
+    const stored = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]');
+    expect(stored).toHaveLength(1);
+    expect(stored[0]).toEqual(mockItem2);
+  });
 
-    act(() => {
-      result.current.removeFromCart('prod-1');
-    });
+  it('should persist cart to localStorage on update quantity', () => {
+    const store = useCartStore();
 
-    const storedData = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]');
-    expect(storedData).toHaveLength(1);
-    expect(storedData[0].product.id).toBe('prod-2');
+    store.addItem(mockItem);
+    store.updateQuantity(mockItem.productId, '', 5);
+
+    const stored = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]');
+    expect(stored[0].quantity).toBe(5);
   });
 
   it('should persist cart to localStorage on clear', () => {
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
+    store.addItem(mockItem);
+    store.clearCart();
 
-    act(() => {
-      result.current.clearCart();
-    });
-
-    const storedData = localStorage.getItem(CART_STORAGE_KEY);
-    expect(storedData).toBe('[]');
+    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    expect(stored).toBe('[]');
   });
 
-  it('should restore cart from localStorage on mount', () => {
-    const cartData = [
-      {
-        id: 'cart-item-1',
-        product: mockProduct,
-        quantity: 2,
-      },
-    ];
+  it('should load cart from localStorage on initialization', () => {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify([mockItem, mockItem2]));
 
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartData));
+    const store = useCartStore();
 
-    const { result } = renderHook(() => useCart());
-
-    expect(result.current.items).toHaveLength(1);
-    expect(result.current.items[0].product.id).toBe('prod-1');
-    expect(result.current.items[0].quantity).toBe(2);
-    expect(result.current.itemCount).toBe(2);
-    expect(result.current.totalPrice).toBe(59.98);
+    expect(store.items).toHaveLength(2);
+    expect(store.items[0]).toEqual(mockItem);
+    expect(store.items[1]).toEqual(mockItem2);
+    expect(store.total).toBe(79.97);
+    expect(store.itemCount).toBe(3);
   });
 
   it('should handle corrupted localStorage data gracefully', () => {
-    localStorage.setItem(CART_STORAGE_KEY, 'invalid json data');
+    localStorage.setItem(CART_STORAGE_KEY, 'invalid-json');
 
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    expect(result.current.items).toEqual([]);
-    expect(result.current.itemCount).toBe(0);
-    expect(result.current.totalPrice).toBe(0);
+    expect(store.items).toEqual([]);
+    expect(store.total).toBe(0);
+    expect(store.itemCount).toBe(0);
   });
 
-  it('should handle localStorage quota error gracefully', () => {
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new DOMException('QuotaExceededError', 'QuotaExceededError');
-    });
+  it('should handle non-array localStorage data gracefully', () => {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify({ invalid: 'data' }));
 
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    expect(() => {
-      act(() => {
-        result.current.addToCart(mockProduct);
-      });
-    }).not.toThrow();
-
-    expect(result.current.items).toHaveLength(1);
-    expect(result.current.items[0].product.id).toBe('prod-1');
+    expect(store.items).toEqual([]);
+    expect(store.total).toBe(0);
+    expect(store.itemCount).toBe(0);
   });
 
-  it('should calculate total price correctly with mixed quantities', () => {
-    const { result } = renderHook(() => useCart());
-
-    act(() => {
-      result.current.addToCart(mockProduct, 2);
+  it('should handle localStorage setItem failure gracefully', () => {
+    const store = useCartStore();
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('Storage full');
     });
 
-    act(() => {
-      result.current.addToCart(mockProduct2, 3);
+    store.addItem(mockItem);
+
+    expect(store.items).toHaveLength(1);
+    expect(setItemSpy).toHaveBeenCalled();
+
+    setItemSpy.mockRestore();
+  });
+
+  it('should handle localStorage getItem failure gracefully', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('Storage error');
     });
 
-    const expectedTotal = (29.99 * 2) + (24.99 * 3);
-    expect(result.current.totalPrice).toBe(expectedTotal);
-    expect(result.current.itemCount).toBe(5);
+    const store = useCartStore();
+
+    expect(store.items).toEqual([]);
+    expect(store.total).toBe(0);
+    expect(store.itemCount).toBe(0);
+  });
+
+  it('should compute total correctly with multiple items', () => {
+    const store = useCartStore();
+
+    store.addItem(mockItem);
+    store.addItem(mockItem2);
+
+    expect(store.total).toBe(79.97);
+  });
+
+  it('should compute itemCount correctly with multiple items', () => {
+    const store = useCartStore();
+
+    store.addItem(mockItem);
+    store.addItem(mockItem2);
+
+    expect(store.itemCount).toBe(3);
   });
 
   it('should handle adding item with quantity 0', () => {
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct, 0);
-    });
+    store.addItem({ ...mockItem, quantity: 0 });
 
-    expect(result.current.items).toHaveLength(0);
-    expect(result.current.itemCount).toBe(0);
-    expect(result.current.totalPrice).toBe(0);
+    expect(store.items).toHaveLength(0);
+    expect(store.total).toBe(0);
+    expect(store.itemCount).toBe(0);
   });
 
   it('should handle adding item with negative quantity', () => {
-    const { result } = renderHook(() => useCart());
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct, -1);
-    });
+    store.addItem({ ...mockItem, quantity: -1 });
 
-    expect(result.current.items).toHaveLength(0);
-    expect(result.current.itemCount).toBe(0);
-    expect(result.current.totalPrice).toBe(0);
+    expect(store.items).toHaveLength(0);
+    expect(store.total).toBe(0);
+    expect(store.itemCount).toBe(0);
   });
 
-  it('should handle adding item with default quantity when not specified', () => {
-    const { result } = renderHook(() => useCart());
+  it('should handle removing non-existent item gracefully', () => {
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
+    store.addItem(mockItem);
+    store.removeItem('non-existent-id');
 
-    expect(result.current.items[0].quantity).toBe(1);
+    expect(store.items).toHaveLength(1);
   });
 
-  it('should update localStorage after quantity change', () => {
-    const { result } = renderHook(() => useCart());
+  it('should handle updating quantity of non-existent item gracefully', () => {
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
+    store.addItem(mockItem);
+    store.updateQuantity('non-existent-id', '', 5);
 
-    act(() => {
-      result.current.updateQuantity('prod-1', 10);
-    });
-
-    const storedData = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]');
-    expect(storedData[0].quantity).toBe(10);
+    expect(store.items).toHaveLength(1);
+    expect(store.items[0].quantity).toBe(1);
   });
 
-  it('should remove item from localStorage when quantity set to 0', () => {
-    const { result } = renderHook(() => useCart());
+  it('should handle clearing empty cart gracefully', () => {
+    const store = useCartStore();
 
-    act(() => {
-      result.current.addToCart(mockProduct);
-    });
+    store.clearCart();
 
-    act(() => {
-      result.current.updateQuantity('prod-1', 0);
-    });
+    expect(store.items).toEqual([]);
+    expect(store.total).toBe(0);
+    expect(store.itemCount).toBe(0);
+  });
 
-    const storedData = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]');
-    expect(storedData).toHaveLength(0);
+  it('should handle adding item with same productId but different ticketType', () => {
+    const store = useCartStore();
+
+    const itemGeneral = { ...mockItem, id: 'item-1-general', ticketType: 'general' };
+    const itemVip = { ...mockItem, id: 'item-1-vip', ticketType: 'vip' };
+    store.addItem(itemGeneral);
+    store.addItem(itemVip);
+
+    expect(store.items).toHaveLength(2);
+    expect(store.total).toBe(59.98);
+    expect(store.itemCount).toBe(2);
+  });
+
+  it('should handle updating quantity with ticket type for non-existent item', () => {
+    const store = useCartStore();
+
+    store.addItem(mockItem);
+    store.updateQuantity('non-existent-id', 'general', 5);
+
+    expect(store.items).toHaveLength(1);
+    expect(store.items[0].quantity).toBe(1);
+  });
+
+  it('should handle removing item with ticket type for non-existent item', () => {
+    const store = useCartStore();
+
+    store.addItem(mockItem);
+    store.removeItem('non-existent-id', 'general');
+
+    expect(store.items).toHaveLength(1);
   });
 });
