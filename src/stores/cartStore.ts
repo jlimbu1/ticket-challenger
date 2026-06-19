@@ -61,14 +61,25 @@ export const useCartStore = defineStore('cart', () => {
       return
     }
 
-    const existingItem = items.value.find(
+    const existingIndex = items.value.findIndex(
       (i) => i.productId === item.productId && i.id === item.id
     )
 
-    if (existingItem) {
-      existingItem.quantity += item.quantity
+    if (existingIndex !== -1) {
+      const existingItem = items.value[existingIndex]
+      const updatedItem: CartItem = {
+        ...existingItem,
+        quantity: existingItem.quantity + item.quantity
+      }
+      const newItems = [
+        ...items.value.slice(0, existingIndex),
+        updatedItem,
+        ...items.value.slice(existingIndex + 1)
+      ]
+      items.value = newItems
     } else {
-      items.value.push({ ...item })
+      const newItem: CartItem = { ...item }
+      items.value = [...items.value, newItem]
     }
 
     lastAddedItemId.value = item.id
@@ -87,12 +98,22 @@ export const useCartStore = defineStore('cart', () => {
   function updateQuantity(productId: string, ticketType: string, quantity: number): void {
     const clampedQuantity = Math.max(1, quantity)
 
-    const item = items.value.find(
+    const itemIndex = items.value.findIndex(
       (i) => i.productId === productId && i.title === ticketType
     )
 
-    if (item) {
-      item.quantity = clampedQuantity
+    if (itemIndex !== -1) {
+      const existingItem = items.value[itemIndex]
+      const updatedItem: CartItem = {
+        ...existingItem,
+        quantity: clampedQuantity
+      }
+      const newItems = [
+        ...items.value.slice(0, itemIndex),
+        updatedItem,
+        ...items.value.slice(itemIndex + 1)
+      ]
+      items.value = newItems
     }
   }
 
@@ -109,6 +130,6 @@ export const useCartStore = defineStore('cart', () => {
     addItem,
     removeItem,
     updateQuantity,
-    clearCart,
+    clearCart
   }
 })

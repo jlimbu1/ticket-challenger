@@ -61,14 +61,21 @@ export const useCartStore = defineStore('cart', () => {
       return
     }
 
-    const existingItem = items.value.find(
+    const existingIndex = items.value.findIndex(
       (i) => i.productId === item.productId && i.id === item.id
     )
 
-    if (existingItem) {
-      existingItem.quantity += item.quantity
+    if (existingIndex !== -1) {
+      const existingItem = items.value[existingIndex]
+      const updatedItem: CartItem = {
+        ...existingItem,
+        quantity: existingItem.quantity + item.quantity
+      }
+      const newItems = [...items.value]
+      newItems[existingIndex] = updatedItem
+      items.value = newItems
     } else {
-      items.value.push({ ...item })
+      items.value = [...items.value, { ...item }]
     }
 
     lastAddedItemId.value = item.id
@@ -85,13 +92,17 @@ export const useCartStore = defineStore('cart', () => {
   }
 
   function updateQuantity(productId: string, ticketType: string, quantity: number): void {
-    const item = items.value.find(
-      (i) => i.productId === productId && i.title === ticketType
-    )
+    const clampedQuantity = Math.max(1, quantity)
 
-    if (item) {
-      item.quantity = Math.max(1, quantity)
-    }
+    items.value = items.value.map((item) => {
+      if (item.productId === productId && item.title === ticketType) {
+        return {
+          ...item,
+          quantity: clampedQuantity
+        }
+      }
+      return item
+    })
   }
 
   function clearCart(): void {
@@ -107,6 +118,6 @@ export const useCartStore = defineStore('cart', () => {
     addItem,
     removeItem,
     updateQuantity,
-    clearCart,
+    clearCart
   }
 })
