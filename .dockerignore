@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.vscode
+deploy
+default
+ticketchallenger
+ticketing-server
+TicketChallengerServer
+TicketChallengerClient
+*.md
+.env

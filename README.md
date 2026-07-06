@@ -125,3 +125,56 @@ MONGODB_URI=mongodb://localhost:27017/ticketchallenger
 CLIENT_URL=http://localhost:5173
 PORT=3000
 ```
+
+## Docker (for Dokploy / local testing)
+
+```bash
+# Build and run locally
+docker compose up --build
+
+# Access at http://localhost (Traefik routes /api + /socket.io to backend)
+```
+
+## Deployment
+
+### Option A: GCP Free Tier + Dokploy (recommended for multi-project)
+
+Dokploy is a self-hosted Vercel/Heroku alternative. Deploy any number of projects on the same VM.
+
+**Architecture:**
+```
+Browser → Cloudflare (SSL) → GCP e2-micro
+                                │
+                          Dokploy (Traefik)
+                           ┌────────┴────────┐
+                    Frontend (Nginx)    Backend (Express)
+                    Serves dist/        Port 3000
+                                              │
+                                        MongoDB Atlas
+```
+
+**Setup:**
+
+1. Create a GCP e2-micro VM (Ubuntu 24.04, allow HTTP/HTTPS traffic)
+2. SSH in and run:
+   ```bash
+   curl -sSL https://dokploy.com/install.sh | sudo bash
+   ```
+3. Open `http://<VM_IP>:3000` and create your Dokploy account
+4. Create a Project → Create Service → Compose
+   - Source: Git → `https://github.com/jlimbu1/ticket-challenger.git`
+   - Compose path: `./docker-compose.yml`
+   - Deploy
+5. Set Cloudflare DNS A record: `ticketing` → VM IP (proxy ON)
+6. Cloudflare SSL/TLS → Flexible
+
+Or use the automated setup script:
+```bash
+./deploy/setup-gcp-dokploy.sh
+```
+
+**Adding more projects:** Create a new Project in Dokploy, point to any Git repo with a `docker-compose.yml`. Add a Cloudflare DNS A record for the domain pointing to the same VM IP. Traefik routes by domain automatically.
+
+### Option B: GCP / Oracle Cloud + Nginx + PM2
+
+See `deploy/setup-gcp.sh` or `deploy/setup.sh` for traditional Nginx + PM2 deployment.
