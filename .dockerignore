@@ -10,4 +10,4 @@ ticketing-server
 TicketChallengerServer
 TicketChallengerClient
 *.md
-.env
+
