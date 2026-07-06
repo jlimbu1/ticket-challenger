@@ -6,12 +6,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    networks:
-      - dokploy-network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.ticketing-frontend.rule=Host(`ticketing.jimmycorp.org`)"
@@ -22,24 +16,14 @@ services:
     build:
       context: ./TicketChallengerServer
       dockerfile: Dockerfile
-    networks:
-      - dokploy-network
     environment:
       - PORT=3000
       - MONGODB_URI=${MONGODB_URI}
       - NODE_ENV=production
       - CLIENT_URL=https://ticketing.jimmycorp.org
-    deploy:
-      resources:
-        limits:
-          memory: 384M
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.ticketing-backend.rule=Host(`ticketing.jimmycorp.org`) && (PathPrefix(`/api`) || PathPrefix(`/socket.io`))"
       - "traefik.http.routers.ticketing-backend.entrypoints=web"
       - "traefik.http.routers.ticketing-backend.priority=200"
       - "traefik.http.services.ticketing-backend.loadbalancer.server.port=3000"
-
-networks:
-  dokploy-network:
-    external: true
