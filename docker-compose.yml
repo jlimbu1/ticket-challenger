@@ -1,16 +1,12 @@
-# Deploy as a "Compose" application in Dokploy
-# Traefik labels route requests to the correct container
-
 services:
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.ticketing-frontend.rule=Host(`ticketing.jimmycorp.org`)"
-      - "traefik.http.routers.ticketing-frontend.entrypoints=web"
-      - "traefik.http.services.ticketing-frontend.loadbalancer.server.port=80"
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
 
   backend:
     build:
@@ -21,9 +17,3 @@ services:
       - MONGODB_URI=${MONGODB_URI}
       - NODE_ENV=production
       - CLIENT_URL=https://ticketing.jimmycorp.org
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.ticketing-backend.rule=Host(`ticketing.jimmycorp.org`) && (PathPrefix(`/api`) || PathPrefix(`/socket.io`))"
-      - "traefik.http.routers.ticketing-backend.entrypoints=web"
-      - "traefik.http.routers.ticketing-backend.priority=200"
-      - "traefik.http.services.ticketing-backend.loadbalancer.server.port=3000"
