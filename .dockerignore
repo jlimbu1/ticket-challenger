@@ -2,7 +2,8 @@ node_modules
 dist
 .git
 .vscode
-deploy
+deploy/*
+!deploy/nginx-spa.conf
 default
 ticketchallenger
 ticketing-server
