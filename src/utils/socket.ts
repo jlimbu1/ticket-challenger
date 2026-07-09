@@ -7,10 +7,8 @@ export const connectSocket = (token = null) => {
   // If socket already exists, return it
   if (socket) return socket;
 
-  console.log(import.meta.env.VITE_SOCKET_URL);
-
   // Create new connection
-  socket = io(import.meta.env.VITE_SOCKET_URL, {
+  socket = io({
     auth: token ? { token } : null,
     autoConnect: false,
     path: "/socket.io",
