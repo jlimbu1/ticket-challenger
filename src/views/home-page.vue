@@ -1,6 +1,5 @@
 <template>
   <main class="container">
-    <h1>TICKET CHALLENGER</h1>
     <div class="content">
       <div class="custom-input" :class="{ 'has-text': username }">
         <label for="username">Username:</label>
