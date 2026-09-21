@@ -7,7 +7,7 @@ and the global rules in `~/agent/AGENTS.md`.
 
 - Stack: Vue 3 + Vite (client), Express 5 + Socket.IO 4 + MongoDB/Mongoose 8 (server), nginx
 - Repo: https://github.com/jlimbu1/ticket-challenger
-- Deploy: https://ticketing.jimmycorp.org (Docker/Dokploy + nginx; configs in `deploy/`)
+- Deploy: https://ticketing.jimmycorp.org (Hetzner CX23 + Dokploy + Docker/nginx; configs in `deploy/`; Dokploy UI https://dokploy.jimmycorp.org)
 - Environments: prod only — see `../docs/overview.md`
 
 ## Build, test, run
