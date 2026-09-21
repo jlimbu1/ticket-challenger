@@ -40,6 +40,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useApiStore } from "@/stores/apiStore";
 import { TicketingSessionStatus } from "@/interface";
 import { useSocket } from "@/composables/useSocket";
+import { getSessionSecret } from "@/utils/helpers";
 import spinner from "@/components/spinner.vue";
 import recaptcha from "@/components/recaptcha.vue";
 
@@ -180,7 +181,10 @@ const handleQueueComplete = () => {
 onMounted(async () => {
   await fetchSession();
 
-  socket.emit("subscribeToSession", route.params.id);
+  socket.emit("subscribeToSession", {
+    sessionId: route.params.id,
+    secret: getSessionSecret(route.params.id as string),
+  });
   socket.on("subscriptionConfirmed", (data) => {
     console.log("Successfully subscribed to session:", data.sessionId);
   });

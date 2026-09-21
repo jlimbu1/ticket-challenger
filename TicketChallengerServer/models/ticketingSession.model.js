@@ -14,6 +14,12 @@ const ticketingSessionSchema = new mongoose.Schema({
   username: {
     type: String,
     required: true,
+    trim: true,
+    maxlength: 24,
+  },
+  secretHash: {
+    type: String,
+    required: true,
   },
   tickets: [
     {

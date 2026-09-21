@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import api from "@/api";
+import { getSessionSecret, saveSessionSecret } from "@/utils/helpers";
 import type {
   ITicket,
   ITicketCartInfo,
@@ -70,6 +71,9 @@ export const useApiStore = defineStore("api", {
       try {
         const response = await api.postTicketingSession(data);
         this.ticketingSession = response.data;
+        if (response?.secret && response.data?._id) {
+          saveSessionSecret(response.data._id, response.secret);
+        }
         return response.data;
       } catch (error) {
         console.error("Error creating ticketing session:", error);
@@ -82,7 +86,10 @@ export const useApiStore = defineStore("api", {
       success: boolean;
     }> {
       try {
-        const response = await api.startTicketingSessionQueue(id);
+        const response = await api.startTicketingSessionQueue(
+          id,
+          getSessionSecret(id)
+        );
         this.ticketingSession = response.data;
         return response.data;
       } catch (error) {
@@ -100,7 +107,11 @@ export const useApiStore = defineStore("api", {
       message: string;
     }> {
       try {
-        const response = await api.checkoutTicketingSession(id, data);
+        const response = await api.checkoutTicketingSession(
+          id,
+          data,
+          getSessionSecret(id)
+        );
         this.ticketingSession = response.data;
         return response.data;
       } catch (error) {

@@ -22,10 +22,18 @@ export default {
   async postTicketingSession(data) {
     return (await apiClient.post("/ticketing-sessions", data)).data;
   },
-  async startTicketingSessionQueue(id) {
-    return (await apiClient.patch(`/ticketing-sessions/startQueue/${id}`)).data;
+  async startTicketingSessionQueue(id, secret) {
+    return (
+      await apiClient.patch(`/ticketing-sessions/startQueue/${id}`, null, {
+        headers: secret ? { Authorization: `Bearer ${secret}` } : {},
+      })
+    ).data;
   },
-  async checkoutTicketingSession(id, data) {
-    return (await apiClient.patch(`/ticketing-sessions/checkout/${id}`, data)).data;
+  async checkoutTicketingSession(id, data, secret) {
+    return (
+      await apiClient.patch(`/ticketing-sessions/checkout/${id}`, data, {
+        headers: secret ? { Authorization: `Bearer ${secret}` } : {},
+      })
+    ).data;
   },
 };

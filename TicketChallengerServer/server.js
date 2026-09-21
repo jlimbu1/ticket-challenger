@@ -8,11 +8,17 @@ import { TicketingSession } from "./models/ticketingSession.model.js";
 import { Server } from "socket.io";
 import { createServer } from "http";
 import { startQueueUpdates } from "./helpers/ticketingSession.helpers.js";
+import { verifySessionSecret } from "./middleware/auth.js";
+import { rateLimit } from "./middleware/rateLimit.js";
 
 dotenv.config();
 
 const app = express();
 const server = createServer(app);
+
+// Behind nginx/Cloudflare — trust one proxy hop so rate limiting
+// sees the real client IP from X-Forwarded-For.
+app.set("trust proxy", 1);
 
 // Middleware
 app.use(
@@ -25,6 +31,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(rateLimit({ windowMs: 60000, max: 120 }));
 
 // MongoDB Connection
 const connectDB = async () => {
@@ -60,7 +67,22 @@ io.on("connection", (socket) => {
 
   const subscribedRooms = new Set();
 
-  socket.on("subscribeToSession", async (sessionId) => {
+  socket.on("subscribeToSession", async ({ sessionId, secret } = {}) => {
+    if (!sessionId || !secret) {
+      socket.emit("subscriptionRejected", {
+        reason: "Missing session credentials",
+      });
+      return;
+    }
+
+    const sessionDoc = await TicketingSession.findById(sessionId).select(
+      "secretHash"
+    );
+    if (!sessionDoc || !verifySessionSecret(sessionDoc.secretHash, secret)) {
+      socket.emit("subscriptionRejected", { reason: "Unauthorized" });
+      return;
+    }
+
     // Check if session already has a client
     if (activeSessions.has(sessionId)) {
       const existingSocketId = activeSessions.get(sessionId);

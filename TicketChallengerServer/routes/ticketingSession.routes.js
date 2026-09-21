@@ -7,10 +7,16 @@ import {
   sellTickets,
   startQueueUpdates,
 } from "../helpers/ticketingSession.helpers.js";
+import {
+  generateSecret,
+  hashSecret,
+  requireSessionSecret,
+} from "../middleware/auth.js";
+import { rateLimit } from "../middleware/rateLimit.js";
 
 const router = express.Router();
 
-router.post("/", async (req, res) => {
+router.post("/", rateLimit({ windowMs: 60000, max: 10 }), async (req, res) => {
   try {
     const io = req.app.get("io");
     const username = req.body?.username;
@@ -34,19 +40,26 @@ router.post("/", async (req, res) => {
       })
     );
 
+    const secret = generateSecret();
+
     const session = new TicketingSession({
       username,
       tickets: sessionTickets,
       status: STATUS.CREATED,
+      secretHash: hashSecret(secret),
     });
 
     await session.save();
 
     sellTickets(io, session._id?.toString(), TicketingSession);
 
+    const data = session.toObject();
+    delete data.secretHash;
+
     res.status(201).json({
       success: true,
-      data: session,
+      data,
+      secret,
     });
   } catch (error) {
     console.error("Error creating session:", error);
@@ -63,7 +76,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.patch("/startQueue/:id", async (req, res) => {
+router.patch("/startQueue/:id", requireSessionSecret, async (req, res) => {
   try {
     const session = await TicketingSession.findById(req.params.id);
     const io = req.app.get("io");
@@ -129,6 +142,22 @@ router.get("/", async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Invalid pagination parameters",
+      });
+    }
+
+    const allowedSortFields = new Set([
+      "createdAt",
+      "updatedAt",
+      "username",
+      "queuePosition",
+      "initialQueuePosition",
+      "status",
+      "_score",
+    ]);
+    if (!allowedSortFields.has(sortBy)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid sort field",
       });
     }
 
@@ -315,7 +344,11 @@ router.get("/:id", async (req, res) => {
 /**
  * complete the TicketingSession
  */
-router.patch("/checkout/:id", async (req, res) => {
+router.patch(
+  "/checkout/:id",
+  rateLimit({ windowMs: 60000, max: 10 }),
+  requireSessionSecret,
+  async (req, res) => {
   try {
     const requestedTickets = req.body;
     const sessionId = req.params.id;
@@ -339,11 +372,11 @@ router.patch("/checkout/:id", async (req, res) => {
       });
     }
 
-    // Check if session is already completed
-    if (session.status === STATUS.COMPLETED) {
+    // Only allow checkout once the queue has completed
+    if (session.status !== STATUS.IN_PROGRESS) {
       return res.status(400).json({
         success: false,
-        error: "Session already completed",
+        error: `Cannot checkout: session is ${session.status}`,
       });
     }
 

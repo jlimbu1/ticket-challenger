@@ -39,6 +39,7 @@ import {
   TicketingSessionStatus,
 } from "@/interface";
 import { useSocket } from "@/composables/useSocket";
+import { getSessionSecret } from "@/utils/helpers";
 import spinner from "@/components/spinner.vue";
 import TicketItem from "@/components/ticket-item.vue";
 
@@ -147,7 +148,10 @@ onMounted(async () => {
     quantity: 0,
   }));
 
-  socket.emit("subscribeToSession", route.params.id);
+  socket.emit("subscribeToSession", {
+    sessionId: route.params.id,
+    secret: getSessionSecret(route.params.id as string),
+  });
   socket.on("subscriptionConfirmed", (data) => {
     console.log("Successfully subscribed to session:", data.sessionId);
   });
