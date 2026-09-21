@@ -24,7 +24,7 @@ export default {
   },
   async startTicketingSessionQueue(id, secret) {
     return (
-      await apiClient.patch(`/ticketing-sessions/startQueue/${id}`, null, {
+      await apiClient.patch(`/ticketing-sessions/startQueue/${id}`, {}, {
         headers: secret ? { Authorization: `Bearer ${secret}` } : {},
       })
     ).data;

@@ -156,9 +156,10 @@ app.use((req, res) => {
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
     success: false,
-    error: "Internal Server Error",
+    error: status === 500 ? "Internal Server Error" : err.message,
   });
 });
 
