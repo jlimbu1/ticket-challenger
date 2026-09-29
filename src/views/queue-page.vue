@@ -121,10 +121,11 @@ const progressPercentage = computed(() => {
 });
 
 // Methods
-const enterQueue = () => {
+const enterQueue = async () => {
   try {
     loading.value = true;
-    apiStore.startTicketingSessionQueue(route.params.id as string);
+    await apiStore.startTicketingSessionQueue(route.params.id as string);
+    window.clarity?.("event", "queue_entered");
   } catch (err) {
     error.value = "Failed to enter queue";
     console.error("Queue entry error:", err);
@@ -170,6 +171,7 @@ const handleQueueUpdate = (data: {
 };
 
 const handleQueueComplete = () => {
+  window.clarity?.("event", "queue_completed");
   if (apiStore.ticketingSession) {
     apiStore.ticketingSession.status = TicketingSessionStatus.IN_PROGRESS;
     apiStore.ticketingSession.queuePosition = 0;

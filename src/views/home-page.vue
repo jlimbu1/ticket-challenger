@@ -64,6 +64,7 @@ function createTicketingSession() {
     .createTicketingSession({ username: username.value })
     .then(() => {
       console.log("Ticketing session created successfully");
+      window.clarity?.("event", "session_created");
       goTo("queuePage", { id: apiStore?.ticketingSession?._id });
     })
     .catch((error) => {

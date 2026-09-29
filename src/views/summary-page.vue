@@ -9,7 +9,7 @@
       <div class="content">
         <div class="flex gap-3 mt-3 align-middle">
           <span class="p-2">Username: </span>
-          <h2>{{ apiStore.ticketingSession?.username }}</h2>
+          <h2 data-clarity-mask="true">{{ apiStore.ticketingSession?.username }}</h2>
         </div>
         <table>
           <thead>

@@ -127,6 +127,7 @@ const handleCheckout = async () => {
     route.params.id as string,
     ticketsQuantity.value
   );
+  window.clarity?.("event", "checkout_completed");
 
   // reset quantity
   ticketsQuantity.value = ticketsQuantity.value?.map((x) => ({
