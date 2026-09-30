@@ -1,13 +1,13 @@
 {
-  "apps": [
-    {
-      "name": "ticketchallenger-backend",
-      "script": "server.js",
-      "env": {
-        "PORT": 3000,
-        "NODE_ENV": "production",
-        "CLIENT_URL": "https://ticketing.jimmycorp.org"
-      }
-    }
-  ]
+    "apps": [
+        {
+            "name": "ticketchallenger-backend",
+            "script": "server.js",
+            "env": {
+                "PORT": 3000,
+                "NODE_ENV": "production",
+                "CLIENT_URL": "https://ticketing.jimmycorp.org"
+            }
+        }
+    ]
 }

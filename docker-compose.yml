@@ -1,21 +1,21 @@
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    depends_on:
-      - backend
-    ports:
-      - "80"
-    restart: unless-stopped
+    frontend:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        depends_on:
+            - backend
+        ports:
+            - '80'
+        restart: unless-stopped
 
-  backend:
-    build:
-      context: ./TicketChallengerServer
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    environment:
-      - PORT=3000
-      - MONGODB_URI=${MONGODB_URI}
-      - NODE_ENV=production
-      - CLIENT_URL=https://ticketing.jimmycorp.org
+    backend:
+        build:
+            context: ./TicketChallengerServer
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        environment:
+            - PORT=3000
+            - MONGODB_URI=${MONGODB_URI}
+            - NODE_ENV=production
+            - CLIENT_URL=https://ticketing.jimmycorp.org

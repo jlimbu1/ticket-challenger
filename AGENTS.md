@@ -47,4 +47,4 @@ No test suite yet; `node --check <file>` for syntax.
 
 ## Contacts
 
-- Owner: Jimmy (JCorp)
+- Owner: Jimmy (JimmyCorp)

@@ -1,3 +1,3 @@
 <template>
-  <img class="loading-gif" src="/loading.gif" alt="loading gif" />
+    <img class="loading-gif" src="/loading.gif" alt="loading gif" />
 </template>

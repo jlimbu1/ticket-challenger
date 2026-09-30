@@ -41,28 +41,29 @@ TicketChallenger/
 
 ## Pages
 
-| Route | Page | Description |
-|-------|------|-------------|
-| `/` | Home | Event listing |
-| `/queue/:id` | Queue | Join event queue with real-time position |
-| `/ticketing/:id` | Ticketing | Select tickets within session |
-| `/summary/:id` | Summary | Session summary after ticketing |
-| `/checkout` | Checkout | Cart checkout with form validation |
-| `/confirmation/:orderId` | Confirmation | Order confirmation |
-| `/orders` | Order History | List of past orders |
-| `/orders/:orderId` | Order Detail | Single order view |
-| `/profile` | Profile | User profile management |
-| `/highscore` | Highscores | Leaderboard |
-| `/info` | Info | Event information |
-| `/expired/:id` | Expired Session | Session timeout page |
-| `/admin/events` | Admin Events | Manage events |
-| `/admin/events/new` | Admin Event Create | Create new event |
-| `/admin/events/:eventId/edit` | Admin Event Edit | Edit event |
-| `/admin/products` | Admin Products | Manage ticket products |
+| Route                         | Page               | Description                              |
+| ----------------------------- | ------------------ | ---------------------------------------- |
+| `/`                           | Home               | Event listing                            |
+| `/queue/:id`                  | Queue              | Join event queue with real-time position |
+| `/ticketing/:id`              | Ticketing          | Select tickets within session            |
+| `/summary/:id`                | Summary            | Session summary after ticketing          |
+| `/checkout`                   | Checkout           | Cart checkout with form validation       |
+| `/confirmation/:orderId`      | Confirmation       | Order confirmation                       |
+| `/orders`                     | Order History      | List of past orders                      |
+| `/orders/:orderId`            | Order Detail       | Single order view                        |
+| `/profile`                    | Profile            | User profile management                  |
+| `/highscore`                  | Highscores         | Leaderboard                              |
+| `/info`                       | Info               | Event information                        |
+| `/expired/:id`                | Expired Session    | Session timeout page                     |
+| `/admin/events`               | Admin Events       | Manage events                            |
+| `/admin/events/new`           | Admin Event Create | Create new event                         |
+| `/admin/events/:eventId/edit` | Admin Event Edit   | Edit event                               |
+| `/admin/products`             | Admin Products     | Manage ticket products                   |
 
 ## Tech Stack
 
 **Client**
+
 - Vue 3 (Composition API, `<script setup>`)
 - Vite 7
 - Pinia 3 (state management)
@@ -72,6 +73,7 @@ TicketChallenger/
 - Axios
 
 **Server**
+
 - Express 5
 - MongoDB + Mongoose 8
 - Socket.io 4
@@ -114,12 +116,14 @@ Serve `dist/` via any static server or deploy alongside the backend.
 ## Environment Variables
 
 **Client** (`.env`)
+
 ```
 VITE_API_URL=http://localhost:3000
 VITE_SOCKET_URL=wss://localhost:3000
 ```
 
 **Server** (`.env`)
+
 ```
 MONGODB_URI=mongodb://localhost:27017/ticketchallenger
 CLIENT_URL=http://localhost:5173
@@ -142,6 +146,7 @@ docker compose up --build
 Dokploy is a self-hosted Vercel/Heroku alternative. Deploy any number of projects on the same VM.
 
 **Architecture:**
+
 ```
 Browser → Cloudflare (SSL) → GCP e2-micro
                                 │
@@ -157,18 +162,19 @@ Browser → Cloudflare (SSL) → GCP e2-micro
 
 1. Create a GCP e2-micro VM (Ubuntu 24.04, allow HTTP/HTTPS traffic)
 2. SSH in and run:
-   ```bash
-   curl -sSL https://dokploy.com/install.sh | sudo bash
-   ```
+    ```bash
+    curl -sSL https://dokploy.com/install.sh | sudo bash
+    ```
 3. Open `http://<VM_IP>:3000` and create your Dokploy account
 4. Create a Project → Create Service → Compose
-   - Source: Git → `https://github.com/jlimbu1/ticket-challenger.git`
-   - Compose path: `./docker-compose.yml`
-   - Deploy
+    - Source: Git → `https://github.com/jlimbu1/ticket-challenger.git`
+    - Compose path: `./docker-compose.yml`
+    - Deploy
 5. Set Cloudflare DNS A record: `ticketing` → VM IP (proxy ON)
 6. Cloudflare SSL/TLS → Flexible
 
 Or use the automated setup script:
+
 ```bash
 ./deploy/setup-gcp-dokploy.sh
 ```

@@ -45,8 +45,8 @@ node --check TicketChallengerServer/server.js   # syntax check (no tests yet)
 
 ## Environments
 
-| Env | URL | Notes |
-| --- | --- | --- |
+| Env  | URL                             | Notes                               |
+| ---- | ------------------------------- | ----------------------------------- |
 | prod | https://ticketing.jimmycorp.org | Dokploy/Docker + nginx; DB in Atlas |
 
 ## Gotchas

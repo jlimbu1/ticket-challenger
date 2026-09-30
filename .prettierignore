@@ -1,0 +1,15 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+dist-ssr/
+
+# generated lockfiles (managed by npm)
+package-lock.json
+
+# nginx / deploy configs — keep as-is
+deploy/
+default
+ticketchallenger
+ticketing-server
